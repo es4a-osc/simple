@@ -1,0 +1,54 @@
+' Copyright 2009 Google Inc.
+'
+' Licensed under the Apache License, Version 2.0 (the "License");
+' you may not use this file except in compliance with the License.
+' You may obtain a copy of the License at
+'
+'      http://www.apache.org/licenses/LICENSE-2.0
+'
+' Unless required by applicable law or agreed to in writing, software
+' distributed under the License is distributed on an "AS IS" BASIS,
+' WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+' See the License for the specific language governing permissions and
+' limitations under the License.
+
+变量 x 为 整数型
+变量 y 为 整数型
+
+事件 OrientationSensor1.方向改变(yaw 为 单精度小数型, pitch 为 单精度小数型, roll 为 单精度小数型)
+	如果 roll < -20 则
+		x = 算术运算.取最小值(Canvas1.宽度, x + 1)
+	否则如果 roll > 20 则
+		x = 算术运算.取最大值(0, x - 1)
+	结束 如果
+	如果 pitch < -20 则
+		y = 算术运算.取最小值(Canvas1.高度, y + 1)
+	否则如果 pitch > 20 则
+		y = 算术运算.取最大值(0, y - 1)
+	结束 如果
+	Canvas1.画点(x, y)
+结束 事件
+
+事件 EtchSketch.初始化()
+	x = Canvas1.宽度 / 2
+	y = Canvas1.高度 / 2
+结束 事件
+
+事件 AccelerometerSensor1.摇晃()
+	Canvas1.清空()
+结束 事件
+
+$属性
+	$资源 $窗口
+	$定义 EtchSketch $为 窗口
+		布局 = 3
+		背景颜色 = &HFFFFFFFF
+		标题 = "EtchSketch: Tilt to draw - Shake to clear"
+		$定义 Canvas1 $为 画板
+		$结束 $定义
+		$定义 OrientationSensor1 $为 方向传感器
+		$结束 $定义
+		$定义 AccelerometerSensor1 $为 加速度传感器
+		$结束 $定义
+	$结束 $定义
+$结束 $属性
