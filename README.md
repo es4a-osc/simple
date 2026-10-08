@@ -10,7 +10,7 @@
 
 下面是两个用Simple编写的神奇画板（EtchSketch）和俄罗斯方块（Tetris）示例应用程序的屏幕截图。这些应用程序的源代码可以在Simple发行版的源代码的samples目录中找到：
 
-<img src="https://gitee.com/es4a/simple/raw/master/_bak/tetris.jpg" width="240" height="400">
+<img src="tetris.jpg" width="240" height="400">
 
 有关编写简单应用程序的更多信息，请参阅[如何编写Simple应用](#)。
 
@@ -100,7 +100,7 @@ public final class 示例对象 {
 
 ## 相关链接
 - 更新日志 - [CHANGELOG](CHANGELOG.md)
-- 资源下载 - [百度网盘](https://pan.baidu.com/s/1szDDTkgPANIgkKDqxw5zwg)（提取码`5npg`）
+- 资源下载 - [资源仓库](https://dwz.wsd.cx/es4a-xz)
 - 联系邮箱 - [xhwsd@qq.com](https://dwz.wsd.cx/wsd-yx)
 
 > 目前需要JDK版本为1.8（java8），Android API等级为28。
