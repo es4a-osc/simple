@@ -1,14 +1,14 @@
 @ECHO OFF
-REM 构建Simple的编译器和运行库 xhwsd@qq.com 2026-8-31
+REM 构建Simple的编译器和运行库 xhwsd@qq.com 2026-10-10
 
 
 REM ---定义变量---
-REM Ant根目录
-FOR %%I IN ("%~dp0..\sdk\tools\apache-ant-1.9.15") DO SET "ANT_HOME=%%~fI"
 REM JavaSDK根目录
 FOR %%I IN ("%~dp0..\sdk\tools\jdk1.8.0_503") DO SET "JAVA_HOME=%%~fI"
 REM AndroidSDK根目录（编译Simple运行库需要）
 FOR %%I IN ("%~dp0..\sdk\tools\android") DO SET "ANDROID_HOME=%%~fI"
+REM Ant根目录
+FOR %%I IN ("%~dp0tools\apache-ant-1.9.15") DO SET "ANT_HOME=%%~fI"
 REM Simple根目录（编译器和所有运行库JAR包所在的根目录）
 FOR %%I IN ("%~dp0dist\windows") DO SET "SIMPLE_HOME=%%~fI"
 REM Ant编译脚本文件
