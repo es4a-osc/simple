@@ -1,6 +1,6 @@
 # Simple
 
-本仓库基于 [Simple 原项目](https://code.google.com/archive/p/simple/)进行中文化、功能扩展和 Android 兼容性改进，提供编译器、运行库源码及样例和测试。
+本仓库基于谷歌 [Simple](https://code.google.com/archive/p/simple/)进行中文化、功能扩展和 Android 兼容性改进，提供编译器、运行库源码及样例和测试。
 
 ## 目录
 
@@ -20,5 +20,4 @@
 ## 相关链接
 
 - [开源仓库](https://gitee.com/es4a)
-- [扩展下载](https://dwz.wsd.cx/es4a-vsix)
 - [留言反馈](https://dwz.wsd.cx/wsd-ly)

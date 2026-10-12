@@ -14,6 +14,6 @@
 
 结束 过程
 $属性
-    $资源 $对象
-    实现接口 = simple.runtime.smoketests.others.测试接口
+	$资源 $对象
+	实现接口 = simple.runtime.smoketests.others.测试接口
 $结束 $属性
