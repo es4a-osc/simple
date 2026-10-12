@@ -18,6 +18,7 @@ package simple.compiler.expressions;
 
 import simple.classfiles.Method;
 import simple.compiler.Compiler;
+import simple.compiler.Error;
 import simple.compiler.scopes.Scope;
 import simple.compiler.symbols.FunctionSymbol;
 import simple.compiler.symbols.ObjectSymbol;
@@ -70,6 +71,11 @@ public final class MeExpression extends IdentifierExpression {
 
 	@Override
 	public Expression resolve(Compiler compiler, FunctionSymbol currentFunction) {
+		// 静态环境没有当前实例，沿用实例成员检查，在字节码生成前报告同一种错误。
+		if (currentFunction == null || !currentFunction.hasMeArgument()) {
+			compiler.error(getPosition(), Error.errInstanceMemberWithoutMe, toString());
+		}
+
 		// Loaded types aren't resolved explicitly. This will make sure that they are getting resolved
 		// lazily.
 		type.resolve(compiler);
