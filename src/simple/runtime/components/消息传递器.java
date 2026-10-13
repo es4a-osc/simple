@@ -14,6 +14,9 @@ import simple.runtime.variants.Variant;
 @SimpleComponent
 @SimpleObject
 public interface 消息传递器 extends 组件 {
+
+	/* 组件事件 */
+
 	/**
 	 * 收到消息。
 	 *
@@ -22,6 +25,8 @@ public interface 消息传递器 extends 组件 {
 	 */
 	@SimpleEvent
 	void 收到消息(int what, Variant payload);
+
+	/* 组件方法 */
 
 	/**
 	 * 发送消息。

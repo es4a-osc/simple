@@ -29,10 +29,12 @@ import simple.runtime.annotations.SimpleProperty;
 @SimpleObject
 public interface 文本组件 extends 可视组件 {
 
+	/* 组件属性 */
+
 	/**
 	 * 字体粗体属性获取器方法。
 	 *
-	 * @return  {@code true}表示粗体，{@code false}正常。
+	 * @return {@code true}表示粗体，{@code false}正常。
 	 */
 	@SimpleProperty
 	boolean 字体加粗();
@@ -40,7 +42,7 @@ public interface 文本组件 extends 可视组件 {
 	/**
 	 * 字体粗体属性设置器方法。
 	 *
-	 * @param bold   {@code true}表示粗体，{@code false}正常。
+	 * @param bold {@code true}表示粗体，{@code false}正常。
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_BOOLEAN,
@@ -51,7 +53,7 @@ public interface 文本组件 extends 可视组件 {
 	/**
 	 * 字体斜体属性获取器方法。
 	 *
-	 * @return  {@code true}表示倾斜，{@code false}正常。
+	 * @return {@code true}表示倾斜，{@code false}正常。
 	 */
 	@SimpleProperty
 	boolean 字体倾斜();
@@ -59,7 +61,7 @@ public interface 文本组件 extends 可视组件 {
 	/**
 	 * 字体倾斜属性设置器方法。
 	 *
-	 * @param italic  {@code true}表示倾斜，{@code false}正常。
+	 * @param italic {@code true}表示倾斜，{@code false}正常。
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_BOOLEAN,
@@ -70,7 +72,7 @@ public interface 文本组件 extends 可视组件 {
 	/**
 	 * 字体大小属性获取器方法。
 	 *
-	 * @return  字体大小（以像素为单位）
+	 * @return 字体大小（以像素为单位）
 	 */
 	@SimpleProperty
 	float 字体大小();
@@ -78,7 +80,7 @@ public interface 文本组件 extends 可视组件 {
 	/**
 	 * 字体大小属性设置器方法。
 	 *
-	 * @param size  字体大小（以缩放像素为单位）
+	 * @param size 字体大小（以缩放像素为单位）
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_SINGLE,
@@ -89,7 +91,7 @@ public interface 文本组件 extends 可视组件 {
 	/**
 	 * 字体类型属性获取器方法。
 	 *
-	 * @return  其中之一{@link 组件#字体类型_默认}、
+	 * @return 其中之一{@link 组件#字体类型_默认}、
 	 *          {@link 组件#字体类型_衬线}、
 	 *          {@link 组件#字体类型_无衬线}或
 	 *          {@link 组件#字体类型_等宽}
@@ -100,7 +102,7 @@ public interface 文本组件 extends 可视组件 {
 	/**
 	 * 字体类型属性设置器方法。
 	 *
-	 * @param typeface  其中之一{@link 组件#字体类型_默认}、
+	 * @param typeface 其中之一{@link 组件#字体类型_默认}、
 	 *                  {@link 组件#字体类型_衬线}、
 	 *                  {@link 组件#字体类型_无衬线}或
 	 *                  {@link 组件#字体类型_等宽}
@@ -114,7 +116,7 @@ public interface 文本组件 extends 可视组件 {
 	/**
 	 * 内容对齐属性获取器方法。
 	 *
-	 * @return  其中之一{@link 组件#对齐_左}、
+	 * @return 其中之一{@link 组件#对齐_左}、
 	 *          {@link 组件#对齐_水平居中}或
 	 *          {@link 组件#对齐_右}
 	 */
@@ -124,7 +126,7 @@ public interface 文本组件 extends 可视组件 {
 	/**
 	 * 内容对齐属性设置器方法。
 	 *
-	 * @param justification  其中之一{@link 组件#对齐_左}、
+	 * @param justification 其中之一{@link 组件#对齐_左}、
 	 *                       {@link 组件#对齐_水平居中}或
 	 *                       {@link 组件#对齐_右}
 	 */
@@ -137,7 +139,7 @@ public interface 文本组件 extends 可视组件 {
 	/**
 	 * 文本属性获取器方法。
 	 *
-	 * @return  文本框内容
+	 * @return 文本框内容
 	 */
 	@SimpleProperty
 	String 文本();
@@ -145,7 +147,7 @@ public interface 文本组件 extends 可视组件 {
 	/**
 	 * 文本属性设置器方法：设置文本框的内容
 	 *
-	 * @param newtext  文本框中的新文本
+	 * @param newtext 文本框中的新文本
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_STRING,
@@ -156,7 +158,7 @@ public interface 文本组件 extends 可视组件 {
 	/**
 	 * 文本颜色属性获取器方法。
 	 *
-	 * @return  带有alpha的文本RGB颜色
+	 * @return 带有alpha的文本RGB颜色
 	 */
 	@SimpleProperty
 	int 文本颜色();
@@ -164,7 +166,7 @@ public interface 文本组件 extends 可视组件 {
 	/**
 	 * 文本颜色属性设置器方法。
 	 *
-	 * @param argb  带有alpha的文本RGB颜色
+	 * @param argb 带有alpha的文本RGB颜色
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_COLOR,
@@ -190,6 +192,8 @@ public interface 文本组件 extends 可视组件 {
 		initializer = "False"
 	)
 	void 单行模式(boolean singleLine);
+
+	/* 组件方法 */
 
 	/**
 	 * 设置左边图标。

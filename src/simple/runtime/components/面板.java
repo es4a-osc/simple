@@ -30,10 +30,12 @@ import simple.runtime.variants.Variant;
 @SimpleObject
 public interface 面板 extends 可视组件, 组件容器 {
 
+	/* 组件属性 */
+
 	/**
 	 * 布局属性获取器。
 	 *
-	 * @return  布局实例
+	 * @return 布局实例
 	 */
 	@SimpleProperty
 	Variant 布局();
@@ -41,7 +43,7 @@ public interface 面板 extends 可视组件, 组件容器 {
 	/**
 	 * 布局属性设置器：我们为将常量转换为布局对象实例的属性为属性分配一个布局。
 	 *
-	 * @param layoutType  其中之一{@link 组件#布局_线性}，
+	 * @param layoutType 其中之一{@link 组件#布局_线性}，
 	 *                    {@link 组件#布局_表格}或
 	 *                    {@link 组件#布局_单帧}
 	 */
@@ -51,7 +53,7 @@ public interface 面板 extends 可视组件, 组件容器 {
 	)
 	void 布局(Variant layoutType);
 
-	// 覆盖属性默认值
+	/* 覆盖属性默认值 */
 
 	@Override
 	@SimpleProperty(

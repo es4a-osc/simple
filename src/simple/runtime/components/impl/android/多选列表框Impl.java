@@ -101,12 +101,7 @@ public class 多选列表框Impl extends 列表视图组件 implements 多选列
 		return view;
 	}
 
-	// 多选列表框 实现
-
-	@Override
-	public void 项目被滚动(int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-		EventDispatcher.dispatchEvent(this, "项目被滚动", firstVisibleItem, visibleItemCount, totalItemCount);
-	}
+	/* 组件事件 */
 
 	@Override
 	public void 项目被单击(int position) {
@@ -117,6 +112,13 @@ public class 多选列表框Impl extends 列表视图组件 implements 多选列
 	public void 项目被长按(int position) {
 		EventDispatcher.dispatchEvent(this, "项目被长按", position);
 	}
+
+	@Override
+	public void 项目被滚动(int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+		EventDispatcher.dispatchEvent(this, "项目被滚动", firstVisibleItem, visibleItemCount, totalItemCount);
+	}
+
+	/* 组件方法 */
 
 	@Override
 	public boolean 获取焦点() {

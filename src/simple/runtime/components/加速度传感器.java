@@ -31,12 +31,14 @@ import simple.runtime.annotations.SimpleProperty;
 @SimpleObject
 public interface 加速度传感器 extends 传感器组件 {
 
+	/* 组件事件 */
+
 	/**
 	 * 默认加速度改变事件处理方法。
 	 *
-	 * @param xAccel  x轴上的加速度减去Gx
-	 * @param yAccel  y轴上的加速度减去Gy
-	 * @param zAccel  z轴上的加速度减去Gz
+	 * @param xAccel x轴上的加速度减去Gx
+	 * @param yAccel y轴上的加速度减去Gy
+	 * @param zAccel z轴上的加速度减去Gz
 	 */
 	@SimpleEvent
 	void 加速度改变(float xAccel, float yAccel, float zAccel);
@@ -46,6 +48,8 @@ public interface 加速度传感器 extends 传感器组件 {
 	 */
 	@SimpleEvent
 	void 摇晃();
+
+	/* 组件属性 */
 
 	/**
 	 * 可用属性获取器（只读属性）。
@@ -58,7 +62,7 @@ public interface 加速度传感器 extends 传感器组件 {
 	/**
 	 * 启用属性获取器。
 	 *
-	 * @return {@code true}表示传感器生成事件， {@code false}表示传感器未生成事件
+	 * @return {@code true}表示传感器生成事件，{@code false}表示传感器未生成事件
 	 */
 	@SimpleProperty
 	boolean 启用();
@@ -66,7 +70,7 @@ public interface 加速度传感器 extends 传感器组件 {
 	/**
 	 * 启用属性设置器。
 	 *
-	 * @param enabled  {@code true}表示传感器生成事件， {@code false}表示传感器未生成事件
+	 * @param enabled {@code true}表示传感器生成事件，{@code false}表示传感器未生成事件
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_BOOLEAN,
@@ -79,7 +83,7 @@ public interface 加速度传感器 extends 传感器组件 {
 	 *
 	 * <p>要返回有意义的值，必须启用传感器。
 	 *
-	 * @return  x加速属
+	 * @return x加速属
 	 */
 	@SimpleProperty
 	float X加速度();
@@ -89,7 +93,7 @@ public interface 加速度传感器 extends 传感器组件 {
 	 *
 	 * <p>要返回有意义的值，必须启用传感器。
 	 *
-	 * @return  y加速属
+	 * @return y加速属
 	 */
 	@SimpleProperty
 	float Y加速度();
@@ -99,7 +103,7 @@ public interface 加速度传感器 extends 传感器组件 {
 	 *
 	 * <p>要返回有意义的值，必须启用传感器。
 	 *
-	 * @return  z加速属
+	 * @return z加速属
 	 */
 	@SimpleProperty
 	float Z加速度();

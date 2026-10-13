@@ -19,12 +19,13 @@ import simple.runtime.parameters.StringReferenceParameter;
 @SimpleComponent
 @SimpleObject
 @UsesPermissions(permissionNames =
-								// 允许应用程序打开网络套接字。
-								"android.permission.INTERNET," +
-								// 允许应用程序访问精确的位置。
-								"android.permission.ACCESS_FINE_LOCATION," +
-								// 允许应用程序访问大致的位置。
-								"android.permission.ACCESS_COARSE_LOCATION")
+	// 允许应用程序打开网络套接字。
+	"android.permission.INTERNET," +
+	// 允许应用程序访问精确的位置。
+	"android.permission.ACCESS_FINE_LOCATION," +
+	// 允许应用程序访问大致的位置。
+	"android.permission.ACCESS_COARSE_LOCATION"
+)
 public interface 网页浏览框 extends 可视组件 {
 
 	@SimpleDataElement
@@ -42,6 +43,8 @@ public interface 网页浏览框 extends 可视组件 {
 	public static final int 处理方式_取消 = 1;
 	@SimpleDataElement
 	public static final int 处理方式_确认 = 2;
+
+	/* 组件事件 */
 
 	/**
 	 * 触摸手势事件处理方法。
@@ -155,7 +158,7 @@ public interface 网页浏览框 extends 可视组件 {
 	@SimpleEvent
 	void 接口返回(String script, String result);
 
-	// 网页浏览框 属性定义
+	/* 组件属性 */
 
 	/**
 	 * 地址属性获取方法。
@@ -286,6 +289,8 @@ public interface 网页浏览框 extends 可视组件 {
 		initializer = "True"
 	)
 	void 启用JS(boolean flag);
+
+	/* 组件方法 */
 
 	/**
 	 * 加载指定网址。

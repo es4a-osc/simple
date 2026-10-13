@@ -14,6 +14,8 @@ import simple.runtime.annotations.SimpleEvent;
 @SimpleObject
 public interface 水平滑块条 extends 进度组件 {
 
+	/* 组件事件 */
+
 	@SimpleEvent
 	void 开始拖动();
 
@@ -22,6 +24,8 @@ public interface 水平滑块条 extends 进度组件 {
 
 	@SimpleEvent
 	void 位置被改变(int progress);
+
+	/* 组件属性 */
 
 	/**
 	 * 最大高度属性获取方法。

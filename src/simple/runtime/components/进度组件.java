@@ -11,6 +11,8 @@ import simple.runtime.annotations.SimpleProperty;
 @SimpleObject
 public interface 进度组件 extends 可视组件 {
 
+	/* 组件属性 */
+
 	/**
 	 * 最大位置属性获取方法。
 	 *

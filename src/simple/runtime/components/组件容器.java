@@ -30,14 +30,14 @@ public interface 组件容器 {
 	/**
 	 * 将组件添加到容器中。
 	 *
-	 * @param component  要添加的组件
+	 * @param component 要添加的组件
 	 */
 	void addComponent(组件 component);
 
 	/**
 	 * 返回与容器关联的布局。
 	 *
-	 * @return  容器布局
+	 * @return 容器布局
 	 */
 	布局 getLayout();
 }

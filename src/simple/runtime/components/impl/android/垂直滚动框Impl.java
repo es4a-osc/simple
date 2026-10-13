@@ -41,36 +41,14 @@ public class 垂直滚动框Impl extends 视图组件 implements 垂直滚动框
 		return view;
 	}
 
-	@Override
-	public void addComponent(组件 component) {
-		// 判断下组件是否是视图组件
-		if ((component instanceof 视图组件)) {
-			// 把可视组件接口转为实现接口视图组件，并取视图组件的视图
-			View child = ((视图组件) component).getView();
-			ScrollView view = (ScrollView) getView();
-			view.addView(child, new ViewGroup.LayoutParams(
-					ViewGroup.LayoutParams.MATCH_PARENT,
-					ViewGroup.LayoutParams.MATCH_PARENT));
-		}
-
-	}
-
-	@Override
-	public 布局 getLayout() {
-		return null;
-	}
-
-	@Override
-	public ViewGroup getLayoutManager() {
-		return (ViewGroup) getView();
-	}
-
-	/* 垂直滚动框 实现 */
+	/* 组件事件 */
 
 	@Override
 	public void 被滚动(int scrollY, boolean clampedY) {
 		EventDispatcher.dispatchEvent(this, "被滚动", scrollY, clampedY);
 	}
+
+	/* 组件属性 */
 
 	@Override
 	public boolean 启用滚动条() {
@@ -89,6 +67,8 @@ public class 垂直滚动框Impl extends 视图组件 implements 垂直滚动框
 		ScrollView view = (ScrollView) getView();
 		return view.getMaxScrollAmount();
 	}
+
+	/* 组件方法 */
 
 	@Override
 	public void 滚动(int y) {
@@ -116,5 +96,31 @@ public class 垂直滚动框Impl extends 视图组件 implements 垂直滚动框
 				view.fullScroll(130);
 			}
 		});
+	}
+
+	/* 内部接口与平台回调 */
+
+	@Override
+	public void addComponent(组件 component) {
+		// 判断下组件是否是视图组件
+		if ((component instanceof 视图组件)) {
+			// 把可视组件接口转为实现接口视图组件，并取视图组件的视图
+			View child = ((视图组件) component).getView();
+			ScrollView view = (ScrollView) getView();
+			view.addView(child, new ViewGroup.LayoutParams(
+					ViewGroup.LayoutParams.MATCH_PARENT,
+					ViewGroup.LayoutParams.MATCH_PARENT));
+		}
+
+	}
+
+	@Override
+	public 布局 getLayout() {
+		return null;
+	}
+
+	@Override
+	public ViewGroup getLayoutManager() {
+		return (ViewGroup) getView();
 	}
 }

@@ -14,6 +14,8 @@ import simple.runtime.annotations.SimpleObject;
 @SimpleObject
 public interface 多选列表框 extends 列表组件 {
 
+	/* 组件事件 */
+
 	@SimpleEvent
 	void 项目被单击(int index);
 
@@ -22,6 +24,8 @@ public interface 多选列表框 extends 列表组件 {
 
 	@SimpleEvent
 	void 项目被滚动(int firstVisibleItem, int visibleItemCount, int totalItemCount);
+
+	/* 组件方法 */
 
 	@SimpleFunction
 	boolean 获取焦点();

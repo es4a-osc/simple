@@ -30,16 +30,20 @@ import simple.runtime.annotations.SimpleProperty;
 @SimpleObject
 public interface 计时器 extends 组件 {
 
+	/* 组件事件 */
+
 	/**
 	 * 默认计时事件处理器。
 	 */
 	@SimpleEvent
 	void 计时();
 
+	/* 组件属性 */
+
 	/**
 	 * 间隔属性获取器方法。
 	 *
-	 * @return  计时间隔（毫秒）
+	 * @return 计时间隔（毫秒）
 	 */
 	@SimpleProperty
 	int 间隔();
@@ -47,7 +51,7 @@ public interface 计时器 extends 组件 {
 	/**
 	 * 隔属性设置器方法：设置计时事件之间的间隔。
 	 *
-	 * @param interval  计时间隔（毫秒）
+	 * @param interval 计时间隔（毫秒）
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_INTEGER,
@@ -58,7 +62,7 @@ public interface 计时器 extends 组件 {
 	/**
 	 * 启用属性获取器方法。
 	 *
-	 * @return  {@code true}表示运行的计时器，{@code false}停止计时器
+	 * @return {@code true}表示运行的计时器，{@code false}停止计时器
 	 */
 	@SimpleProperty
 	boolean 启用();
@@ -66,7 +70,7 @@ public interface 计时器 extends 组件 {
 	/**
 	 * 启用属性设置器方法：启动或停止计时器。
 	 *
-	 * @param enabled  {@code true}启动计时器，{@code false}停止它
+	 * @param enabled {@code true}启动计时器，{@code false}停止它
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_BOOLEAN,

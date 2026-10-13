@@ -33,6 +33,8 @@ import simple.runtime.annotations.UsesPermissions;
 @UsesPermissions(permissionNames = "android.permission.READ_CONTACTS")
 public interface 邮箱选择器 extends 文本组件 {
 
+	/* 组件事件 */
+
 	/**
 	 * 默认获得焦点事件处理器。
 	 */
@@ -45,10 +47,12 @@ public interface 邮箱选择器 extends 文本组件 {
 	@SimpleEvent
 	void 失去焦点();
 
+	/* 组件属性 */
+
 	/**
 	 * 启用属性获取器。
 	 *
-	 * @return  {@code true}表示启用，{@code false}表示禁用
+	 * @return {@code true}表示启用，{@code false}表示禁用
 	 */
 	@SimpleProperty
 	boolean 启用();
@@ -56,7 +60,7 @@ public interface 邮箱选择器 extends 文本组件 {
 	/**
 	 * 启用属性设置器。
 	 *
-	 * @param enabled  {@code true}表示启用，{@code false}表示禁用
+	 * @param enabled {@code true}表示启用，{@code false}表示禁用
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_BOOLEAN,

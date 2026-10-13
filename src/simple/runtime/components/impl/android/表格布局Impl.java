@@ -34,6 +34,7 @@ import android.widget.TableLayout;
  * @author 树先生 xhwsd@qq.com
  */
 public class 表格布局Impl extends 布局Impl implements 表格布局 {
+
 	/*
 	TableLayout
 	https://developer.android.google.cn/reference/android/widget/TableLayout
@@ -54,7 +55,7 @@ public class 表格布局Impl extends 布局Impl implements 表格布局 {
 	/**
 	 * 创建一个新的表格布局。
 	 *
-	 * @param container  视图容器
+	 * @param container 视图容器
 	 */
 	表格布局Impl(视图组件容器 container) {
 		// 先创建表格布局
@@ -68,61 +69,7 @@ public class 表格布局Impl extends 布局Impl implements 表格布局 {
 		layoutManager.setStretchAllColumns(true);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 *
-	 * Note that table layout uses {@link #placeComponent(视图组件)} to
-	 * actually add the component. This is necessary because you need to set both
-	 * the {@link 可视组件#列()} and {@link 可视组件#行()}
-	 * properties before the component can be put into the layout.
-	 */
-	@Override
-	public void addComponent(视图组件 component) {
-	}
-
-	/**
-	 * 将组件放入其列和行中。
-	 *
-	 * @param component  准备好放入其列和行中的组件
-	 */
-	public void placeComponent(视图组件 component) {
-		ensureTableInitialized();
-
-		int column = component.列();
-		int row = component.行();
-		if (0 <= column && column < columns && 0 <= row && row < rows) {
-			// 取布局管理器（其实就是表格布局的父类）
-			ViewGroup layoutManager = getLayoutManager();
-			// 取指定表格行，然后添加视图
-			((TableRow) layoutManager.getChildAt(row)).addView(component.getView(), new TableRow.LayoutParams(column));
-		}
-	}
-
-	/**
-	 * 确保表已初始化
-	 */
-	private void ensureTableInitialized() {
-		if (!fixed) {
-			// 添加第一个组件后，无法再调整表的大小
-			fixed = true;
-			// 取布局管理器（其实就是表格布局的父类）
-			ViewGroup layoutManager = getLayoutManager();
-			// 取上下文
-			Context context = layoutManager.getContext();
-			// 按行循环
-			for (int row = 0; row < rows; row++) {
-				// 添加表格行
-				layoutManager.addView(new TableRow(context), new TableLayout.LayoutParams(
-					// 表格行宽度适应内容
-					ViewGroup.LayoutParams.WRAP_CONTENT,
-					// 表格行高度适应内容
-					ViewGroup.LayoutParams.WRAP_CONTENT
-				));
-			}
-		}
-	}
-
-	/* 表格布局 实现 */
+	/* 组件属性 */
 
 	@Override
 	public void 行数(int newRows) {
@@ -168,6 +115,8 @@ public class 表格布局Impl extends 布局Impl implements 表格布局 {
 		((TableLayout) getLayoutManager()).setStretchAllColumns(stretchAllColumns);
 	}
 
+	/* 组件方法 */
+
 	@Override
 	public boolean 列是否折叠(int columnIndex) {
 		return ((TableLayout) getLayoutManager()).isColumnCollapsed(columnIndex);
@@ -196,5 +145,63 @@ public class 表格布局Impl extends 布局Impl implements 表格布局 {
 	@Override
 	public void 置列可拉伸(int columnIndex, boolean isStretchable) {
 		((TableLayout) getLayoutManager()).setColumnStretchable(columnIndex, isStretchable);
+	}
+
+	/* 内部接口与平台回调 */
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Note that table layout uses {@link #placeComponent(视图组件)} to
+	 * actually add the component. This is necessary because you need to set both
+	 * the {@link 可视组件#列()} and {@link 可视组件#行()}
+	 * properties before the component can be put into the layout.
+	 */
+	@Override
+	public void addComponent(视图组件 component) {
+	}
+
+	/**
+	 * 将组件放入其列和行中。
+	 *
+	 * @param component 准备好放入其列和行中的组件
+	 */
+	public void placeComponent(视图组件 component) {
+		ensureTableInitialized();
+
+		int column = component.列();
+		int row = component.行();
+		if (0 <= column && column < columns && 0 <= row && row < rows) {
+			// 取布局管理器（其实就是表格布局的父类）
+			ViewGroup layoutManager = getLayoutManager();
+			// 取指定表格行，然后添加视图
+			((TableRow) layoutManager.getChildAt(row)).addView(component.getView(), new TableRow.LayoutParams(column));
+		}
+	}
+
+	/* 内部辅助方法 */
+
+	/**
+	 * 确保表已初始化
+	 */
+	private void ensureTableInitialized() {
+		if (!fixed) {
+			// 添加第一个组件后，无法再调整表的大小
+			fixed = true;
+			// 取布局管理器（其实就是表格布局的父类）
+			ViewGroup layoutManager = getLayoutManager();
+			// 取上下文
+			Context context = layoutManager.getContext();
+			// 按行循环
+			for (int row = 0; row < rows; row++) {
+				// 添加表格行
+				layoutManager.addView(new TableRow(context), new TableLayout.LayoutParams(
+					// 表格行宽度适应内容
+					ViewGroup.LayoutParams.WRAP_CONTENT,
+					// 表格行高度适应内容
+					ViewGroup.LayoutParams.WRAP_CONTENT
+				));
+			}
+		}
 	}
 }

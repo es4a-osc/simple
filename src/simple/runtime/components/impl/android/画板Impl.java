@@ -53,7 +53,7 @@ public final class 画板Impl extends 视图组件 implements 画板 {
 	/**
 	 * 创建一个新的画板组件。
 	 *
-	 * @param container  容纳组件的容器（不可为{@code null}）
+	 * @param container 容纳组件的容器（不可为{@code null}）
 	 */
 	public 画板Impl(组件容器 container) {
 		super(container);
@@ -71,7 +71,7 @@ public final class 画板Impl extends 视图组件 implements 画板 {
 		return view;
 	}
 
-	// 画板 实现
+	/* 组件事件 */
 
 	@Override
 	public void 被按下(int x, int y) {
@@ -92,6 +92,8 @@ public final class 画板Impl extends 视图组件 implements 画板 {
 		public void 触摸手势(int direction) {
 				EventDispatcher.dispatchEvent(this, "触摸手势", direction);
 	}
+
+	/* 组件属性 */
 
 	@Override
 	public int 画笔颜色() {
@@ -117,26 +119,20 @@ public final class 画板Impl extends 视图组件 implements 画板 {
 		}
 	}
 
-	public int 画笔类型() {
-		return paintstyle;
+	@Override
+	public int 背景颜色() {
+		return PaintUtil.extractARGB(backgroundColor);
 	}
 
-	public void 画笔类型(int style) {
-		if (style == 1) {
-			paintColor.setStyle(Paint.Style.FILL);
-		} else {
-			paintColor.setStyle(Paint.Style.STROKE);
-		}
-		paintstyle = style;
+	@Override
+	public void 背景颜色(int argb) {
+		PaintUtil.changePaint(backgroundColor, argb);
+		CanvasView view = (CanvasView) getView();
+		view.canvas.drawPaint(backgroundColor);
+		view.invalidate();
 	}
 
-	public float 字体大小() {
-		return paintColor.getTextSize();
-	}
-
-	public void 字体大小(float size) {
-		paintColor.setTextSize(size);
-	}
+	/* 组件方法 */
 
 	@Override
 	public void 清空() {
@@ -166,6 +162,29 @@ public final class 画板Impl extends 视图组件 implements 画板 {
 		view.invalidate();
 	}
 
+	/* 内部接口与平台回调 */
+
+	public int 画笔类型() {
+		return paintstyle;
+	}
+
+	public void 画笔类型(int style) {
+		if (style == 1) {
+			paintColor.setStyle(Paint.Style.FILL);
+		} else {
+			paintColor.setStyle(Paint.Style.STROKE);
+		}
+		paintstyle = style;
+	}
+
+	public float 字体大小() {
+		return paintColor.getTextSize();
+	}
+
+	public void 字体大小(float size) {
+		paintColor.setTextSize(size);
+	}
+
 	public void 画贝塞尔曲线(int qx, int qy, int fx, int fy, int zx, int zy) {
 		Path path = new Path();
 		path.moveTo(qx, qy);
@@ -193,19 +212,6 @@ public final class 画板Impl extends 视图组件 implements 画板 {
 		CanvasView view = (CanvasView) getView();
 		RectF dst = new RectF(x, y, x + w, y + h);
 		view.canvas.drawArc(dst, startAngle, sweepAngle, useCenter, paintColor);
-		view.invalidate();
-	}
-
-	@Override
-	public int 背景颜色() {
-		return PaintUtil.extractARGB(backgroundColor);
-	}
-
-	@Override
-	public void 背景颜色(int argb) {
-		PaintUtil.changePaint(backgroundColor, argb);
-		CanvasView view = (CanvasView) getView();
-		view.canvas.drawPaint(backgroundColor);
 		view.invalidate();
 	}
 

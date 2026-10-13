@@ -41,7 +41,7 @@ public final class 标签Impl extends 文本视图组件 implements 标签 {
 	/**
 	 * 创建一个新的标签组件。
 	 *
-	 * @param container  容纳组件的容器（不可为{@code null}）
+	 * @param container 容纳组件的容器（不可为{@code null}）
 	 */
 	public 标签Impl(组件容器 container) {
 		super(container);
@@ -148,7 +148,7 @@ public final class 标签Impl extends 文本视图组件 implements 标签 {
 		return view;
 	}
 
-	/* 标签 实现 */
+	/* 组件事件 */
 
 	@Override
 	public void 被按下(int x, int y) {
@@ -179,6 +179,8 @@ public final class 标签Impl extends 文本视图组件 implements 标签 {
 	public void 被长按() {
 		EventDispatcher.dispatchEvent(this, "被长按");
 	}
+
+	/* 内部接口与平台回调 */
 
 	public boolean 滚动() {
 		return ((TextView) getView()).getMovementMethod() != null;

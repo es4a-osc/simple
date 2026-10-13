@@ -15,8 +15,15 @@ import simple.runtime.annotations.SimpleProperty;
 @SimpleObject
 public interface 下拉列表框 extends 可视组件 {
 
+	/* 组件事件 */
+
 	@SimpleEvent
 	void 项目被选择(int index);
+
+	/* 组件属性 */
+
+	@SimpleProperty
+	int 现行选中项();
 
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_INTEGER,
@@ -24,8 +31,7 @@ public interface 下拉列表框 extends 可视组件 {
 	)
 	void 现行选中项(int index);
 
-	@SimpleProperty
-	int 现行选中项();
+	/* 组件方法 */
 
 	@SimpleFunction
 	int 取项目数();

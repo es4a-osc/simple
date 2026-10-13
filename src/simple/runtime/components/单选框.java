@@ -29,6 +29,9 @@ import simple.runtime.annotations.SimpleProperty;
 @SimpleComponent
 @SimpleObject
 public interface 单选框 extends 文本组件 {
+
+	/* 组件事件 */
+
 	/**
 	 * 默认状态改变事件处理器
 	 */
@@ -46,6 +49,8 @@ public interface 单选框 extends 文本组件 {
 	 */
 	@SimpleEvent
 	void 失去焦点();
+
+	/* 组件属性 */
 
 	/**
 	 * 启用属性获取器。

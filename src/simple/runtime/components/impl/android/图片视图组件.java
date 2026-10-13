@@ -33,6 +33,7 @@ import android.widget.ImageView;
  * @author 树先生 xhwsd@qq.com
  */
 public abstract class 图片视图组件 extends 视图组件 implements 图片组件 {
+
 	/*
 	 * android.widget.ImageView：
 	 * https://developer.android.google.cn/reference/android/widget/ImageView
@@ -56,7 +57,7 @@ public abstract class 图片视图组件 extends 视图组件 implements 图片�
 		super(container);
 	}
 
-	/* 图片视图组件 属性实现 */
+	/* 组件属性 */
 
 	@Override
 	public void 图片(String image) {

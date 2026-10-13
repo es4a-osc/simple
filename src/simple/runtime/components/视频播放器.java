@@ -15,8 +15,12 @@ import simple.runtime.annotations.SimpleObject;
 @SimpleObject
 public interface 视频播放器 extends 可视组件 {
 
+	/* 组件事件 */
+
 	@SimpleEvent
 	void 播放完毕();
+
+	/* 组件方法 */
 
 	@SimpleFunction
 	void 播放视频(String paramString);

@@ -34,6 +34,7 @@ import android.widget.TextView;
  * @author 树先生 xhwsd@qq.com
  */
 public abstract class 文本视图组件 extends 视图组件 implements 文本组件 {
+
 	/*
 	android.widget.TextView：
 	https://developer.android.google.cn/reference/android/widget/TextView
@@ -50,11 +51,13 @@ public abstract class 文本视图组件 extends 视图组件 implements 文本�
 
 	/**
 	 * 创建一个新的文本框基础组件
-	 * @param container  容纳组件的容器（不可为{@code null})
+	 * @param container 容纳组件的容器（不可为{@code null})
 	 */
 	protected 文本视图组件(组件容器 container) {
 		super(container);
 	}
+
+	/* 组件属性 */
 
 	@Override
 	public boolean 字体加粗() {
@@ -139,6 +142,8 @@ public abstract class 文本视图组件 extends 视图组件 implements 文本�
 		this.singleLine = singleLine;
 		//TextViewUtil.setSingleLine((TextView) getView(), singleLine);
 	}
+
+	/* 组件方法 */
 
 	@Override
 	public void 置左边图标(String image, int width, int height) {

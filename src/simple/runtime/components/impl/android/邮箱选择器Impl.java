@@ -37,7 +37,7 @@ public final class 邮箱选择器Impl extends 文本视图组件
 	/**
 	 * 创建一个新的邮箱选择器组件。
 	 *
-	 * @param container  将容纳组件的容器（不得为{@code null}）
+	 * @param container 将容纳组件的容器（不得为{@code null}）
 	 */
 	public 邮箱选择器Impl(组件容器 container) {
 		super(container);
@@ -55,7 +55,7 @@ public final class 邮箱选择器Impl extends 文本视图组件
 		return view;
 	}
 
-	/* 邮箱选择器 实现 */
+	/* 组件事件 */
 
 	@Override
 	public void 获得焦点() {
@@ -66,6 +66,8 @@ public final class 邮箱选择器Impl extends 文本视图组件
 	public void 失去焦点() {
 		EventDispatcher.dispatchEvent(this, "失去焦点");
 	}
+
+	/* 组件属性 */
 
 	@Override
 	public boolean 启用() {
@@ -81,7 +83,7 @@ public final class 邮箱选择器Impl extends 文本视图组件
 		view.invalidate();
 	}
 
-	/* OnFocusChangeListener 实现 */
+	/* 内部接口与平台回调 */
 
 	@Override
 	public void onFocusChange(View previouslyFocused, boolean gainFocus) {

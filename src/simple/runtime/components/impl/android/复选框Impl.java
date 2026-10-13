@@ -36,7 +36,7 @@ public final class 复选框Impl extends 文本视图组件
 	/**
 	 * 创建新的复选框组件。
 	 *
-	 * @param container  将容纳组件的容器（不得为{@code null}）。
+	 * @param container 将容纳组件的容器（不得为{@code null}）。
 	 */
 	public 复选框Impl(组件容器 container) {
 		super(container);
@@ -53,7 +53,7 @@ public final class 复选框Impl extends 文本视图组件
 		return view;
 	}
 
-	// 复选框 实现
+	/* 组件事件 */
 
 	@Override
 	public void 状态改变() {
@@ -69,6 +69,8 @@ public final class 复选框Impl extends 文本视图组件
 	public void 失去焦点() {
 		EventDispatcher.dispatchEvent(this, "失去焦点");
 	}
+
+	/* 组件属性 */
 
 	@Override
 	public boolean 启用() {
@@ -94,13 +96,11 @@ public final class 复选框Impl extends 文本视图组件
 		view.invalidate();
 	}
 
-	// OnCheckedChangeListener 实现
+	/* 内部接口与平台回调 */
 
 	public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 		状态改变();
 	}
-
-	// OnFocusChangeListener 实现
 
 	public void onFocusChange(View previouslyFocused, boolean gainFocus) {
 		if (gainFocus) {

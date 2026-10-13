@@ -26,7 +26,7 @@ public final class 权限请求Impl extends 组件Impl implements 权限请求 {
 	/**
 	 * 创建新的组件。
 	 *
-	 * @param container  容纳组件的容器（对于不可见的组件必须是窗口，不可为 {@code null}）
+	 * @param container 容纳组件的容器（对于不可见的组件必须是窗口，不可为 {@code null}）
 	 */
 	public 权限请求Impl(组件容器 container) {
 		super(container);
@@ -46,12 +46,14 @@ public final class 权限请求Impl extends 组件Impl implements 权限请求 {
 		});
 	}
 
-	/* 权限请求 实现 */
+	/* 组件事件 */
 
 	@Override
 	public void 请求结果(String[] permissions, int[] grantResults, String requestMark) {
 		EventDispatcher.dispatchEvent(this, "请求结果", permissions, grantResults, requestMark);
 	}
+
+	/* 组件方法 */
 
 	@Override
 	public String[] 取所有权限() {

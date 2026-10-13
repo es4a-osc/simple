@@ -17,6 +17,8 @@ import simple.runtime.annotations.SimpleFunction;
 @SimpleObject
 public interface 垂直滚动框 extends 可视组件, 组件容器 {
 
+	/* 组件事件 */
+
 	/**
 	 * 被滚动事件事件处理方法。
 	 *
@@ -25,6 +27,8 @@ public interface 垂直滚动框 extends 可视组件, 组件容器 {
 	 */
 	@SimpleEvent
 	void 被滚动(int 滚动距离, boolean 是否到边);
+
+	/* 组件属性 */
 
 	/**
 	 * 启用滚动条属性获取方法。
@@ -49,6 +53,8 @@ public interface 垂直滚动框 extends 可视组件, 组件容器 {
 	 */
 	@SimpleProperty
 	int 最大滚动值();
+
+	/* 组件方法 */
 
 	/**
 	 * 滚动的指点位置。

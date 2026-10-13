@@ -32,19 +32,23 @@ import simple.runtime.annotations.SimpleProperty;
 @SimpleObject
 public interface 方向传感器 extends 传感器组件 {
 
+	/* 组件事件 */
+
 	/**
 	 * Default OrientationChanged event handler.
 	 *
-	 * @param yaw  angle between the magnetic north direction and the
+	 * @param yaw angle between the magnetic north direction and the
 	 *             Y axis, around the Z axis (0 to 359). 0=North, 90=East,
 	 *             180=South, 270=West
-	 * @param pitch  rotation around X axis (-180 to 180), with positive
+	 * @param pitch rotation around X axis (-180 to 180), with positive
 	 *               values when the z-axis moves toward the y-axis.
-	 * @param roll  rotation around Y axis (-90 to 90), with positive
+	 * @param roll rotation around Y axis (-90 to 90), with positive
 	 *              values when the x-axis moves away from the z-axis.
 	 */
 	@SimpleEvent
 	void 方向改变(float yaw, float pitch, float roll);
+
+	/* 组件属性 */
 
 	/**
 	 * Available property getter method (read-only property).
@@ -67,7 +71,7 @@ public interface 方向传感器 extends 传感器组件 {
 	/**
 	 * Enabled property setter method.
 	 *
-	 * @param enabled  {@code true} enables sensor event generation,
+	 * @param enabled {@code true} enables sensor event generation,
 	 *                 {@code false} disables it
 	 */
 	@SimpleProperty(
@@ -81,7 +85,7 @@ public interface 方向传感器 extends 传感器组件 {
 	 *
 	 * <p>To return meaningful values the sensor must be enabled.
 	 *
-	 * @return  current pitch
+	 * @return current pitch
 	 */
 	@SimpleProperty
 	float 俯仰角();
@@ -91,7 +95,7 @@ public interface 方向传感器 extends 传感器组件 {
 	 *
 	 * <p>To return meaningful values the sensor must be enabled.
 	 *
-	 * @return  current roll
+	 * @return current roll
 	 */
 	@SimpleProperty
 	float 翻滚角();
@@ -101,7 +105,7 @@ public interface 方向传感器 extends 传感器组件 {
 	 *
 	 * <p>To return meaningful values the sensor must be enabled.
 	 *
-	 * @return  current yaw
+	 * @return current yaw
 	 */
 	@SimpleProperty
 	float 偏航角();

@@ -13,6 +13,8 @@ import simple.runtime.annotations.SimpleEvent;
 @SimpleObject
 public interface 垂直滑块条 extends 进度组件 {
 
+	/* 组件事件 */
+
 	@SimpleEvent
 	void 开始拖动();
 
@@ -21,5 +23,4 @@ public interface 垂直滑块条 extends 进度组件 {
 
 	@SimpleEvent
 	void 位置被改变(int progress);
-
 }

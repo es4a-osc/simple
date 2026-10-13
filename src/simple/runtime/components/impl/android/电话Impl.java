@@ -42,7 +42,7 @@ public final class 电话Impl extends 组件Impl implements 电话 {
 	/**
 	 * 创建新的电话组件。
 	 *
-	 * @param container  将容纳组件的容器（不得为{@code null}，对于非可见组件也是，必须是窗口）
+	 * @param container 将容纳组件的容器（不得为{@code null}，对于非可见组件也是，必须是窗口）
 	 */
 	public 电话Impl(组件容器 container) {
 		super(container);
@@ -50,12 +50,14 @@ public final class 电话Impl extends 组件Impl implements 电话 {
 		vibrator = (Vibrator) MainActivity.getContext().getSystemService(Context.VIBRATOR_SERVICE);
 	}
 
-	/* 电话 实现 */
+	/* 组件属性 */
 
 	@Override
 	public boolean 可用() {
 		return true;
 	}
+
+	/* 组件方法 */
 
 	@Override
 	public void 呼叫(String phoneNumber) {

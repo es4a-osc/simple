@@ -33,28 +33,34 @@ public abstract class 组件Impl implements 组件 {
 	/**
 	 * 创建一个新组件。
 	 *
-	 * @param container  将容纳组件的容器（不得为{@code null}，因为非可见组件必须是窗口）
+	 * @param container 将容纳组件的容器（不得为{@code null}，因为非可见组件必须是窗口）
 	 */
 	protected 组件Impl(组件容器 container) {
 		componentContainer = container;
 	}
 
-	/**
-	 * 返回持有此组件的组件容器。
-	 *
-	 * @return  组件容器或{@code null}用于窗口等根组件（对于不可见的组件，窗口将被退回）
-	 */
-	protected 组件容器 getComponentContainer() {
-		return componentContainer;
-	}
+	/* 组件事件 */
 
 	@Override
 	public void 初始化() {
 		EventDispatcher.dispatchEvent(this, "初始化");
 	}
 
+	/* 组件方法 */
+
 	@Override
 	public void 销毁() {
 		EventDispatcher.unregisterEvent(this);
+	}
+
+	/* 内部辅助方法 */
+
+	/**
+	 * 返回持有此组件的组件容器。
+	 *
+	 * @return 组件容器或{@code null}用于窗口等根组件（对于不可见的组件，窗口将被退回）
+	 */
+	protected 组件容器 getComponentContainer() {
+		return componentContainer;
 	}
 }

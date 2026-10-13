@@ -30,6 +30,8 @@ import simple.runtime.annotations.SimpleObject;
 @SimpleObject
 public interface 标签 extends 文本组件 {
 
+	/* 组件事件 */
+
 	/**
 	 * 默认按下事件处理方法。
 	 *

@@ -40,7 +40,7 @@ public final class 图片框Impl extends 图片视图组件 implements 图片框
 	/**
 	 * 创建一个新的图片框组件。
 	 *
-	 * @param container  容纳组件的容器（不可为{@code null}）
+	 * @param container 容纳组件的容器（不可为{@code null}）
 	 */
 	public 图片框Impl(组件容器 container) {
 		super(container);
@@ -156,6 +156,8 @@ public final class 图片框Impl extends 图片视图组件 implements 图片框
 
 		return view;
 	}
+
+	/* 组件事件 */
 
 	@Override
 	public void 被按下(int x, int y) {

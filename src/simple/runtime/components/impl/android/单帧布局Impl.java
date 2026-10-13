@@ -29,6 +29,7 @@ import android.widget.FrameLayout;
  * @author 树先生 xhwsd@qq.com
  */
 public class 单帧布局Impl extends 布局Impl implements 单帧布局 {
+
 	/*
 	FrameLayout
 	https://developer.android.google.cn/reference/android/widget/FrameLayout
@@ -40,21 +41,13 @@ public class 单帧布局Impl extends 布局Impl implements 单帧布局 {
 	/**
 	 * 创建一个新的单帧布局。
 	 *
-	 * @param container  视图容器
+	 * @param container 视图容器
 	 */
 	单帧布局Impl(视图组件容器 container) {
 		super(new FrameLayout(MainActivity.getContext()), container);
 	}
 
-	@Override
-	public void addComponent(视图组件 component) {
-		getLayoutManager().addView(component.getView(), new FrameLayout.LayoutParams(
-			FrameLayout.LayoutParams.MATCH_PARENT,
-			FrameLayout.LayoutParams.MATCH_PARENT
-		));
-	}
-
-	/* 单帧布局 实现 */
+	/* 组件方法 */
 
 	@Override
 	public void 添加(窗口 form) {
@@ -62,5 +55,15 @@ public class 单帧布局Impl extends 布局Impl implements 单帧布局 {
 		// 是因为其它布局有操作子组件属性，而如果是是子窗口将不可操作视图属性。
 		// 所以单帧布局做嵌入容器就非常合适。
 		addComponent((窗口Impl) form);
+	}
+
+	/* 内部接口与平台回调 */
+
+	@Override
+	public void addComponent(视图组件 component) {
+		getLayoutManager().addView(component.getView(), new FrameLayout.LayoutParams(
+			FrameLayout.LayoutParams.MATCH_PARENT,
+			FrameLayout.LayoutParams.MATCH_PARENT
+		));
 	}
 }

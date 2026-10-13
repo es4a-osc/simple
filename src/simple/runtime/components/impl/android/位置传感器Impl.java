@@ -45,72 +45,6 @@ import java.util.List;
 public final class 位置传感器Impl extends 组件Impl
 		implements 位置传感器, OnStopListener, OnResumeListener {
 
-	/**
-	 * Class that listens for changes in location, raises appropriate events,
-	 * and provides properties.
-	 *
-	 * @author spertus@google.com (Ellen Spertus)
-	 */
-	private class LocationSensorListener implements LocationListener {
-		/**
-		 * {@inheritDoc}
-		 *
-		 * This sets fields longitude, latitude, altitude, hasLocationData, and
-		 * hasAltitude, then calls LocationSensor.LocationChanged(), all in the
-		 * enclosing class LocationSensor.
-		 */
-		@Override
-		public void onLocationChanged(Location location) {
-			lastLocation = location;
-			longitude = location.getLongitude();
-			latitude = location.getLatitude();
-			// If the current location doesn't have altitude information, the prior
-			// altitude reading is retained.
-			if (location.hasAltitude()) {
-				hasAltitude = true;
-				altitude = location.getAltitude();
-			}
-			hasLocationData = true;
-			位置改变(latitude, longitude, altitude);
-		}
-
-		@Override
-		public void onProviderDisabled(String provider) {
-			stopListening();
-			if (enabled) {
-				tryToStartListening();
-			}
-		}
-
-		@Override
-		public void onProviderEnabled(String provider) {
-			tryToStartListening();
-		}
-
-		@Override
-		public void onStatusChanged(String provider, int status, Bundle extras) {
-			switch (status) {
-				// Ignore TEMPORARILY_UNAVAILABLE, because service usually returns quickly.
-				// case LocationProvider.TEMPORARILY_UNAVAILABLE:
-				case LocationProvider.OUT_OF_SERVICE:
-					// If the provider we were listening to is no longer available,
-					// find another.
-					if (provider.equals(providerName)) {
-						tryToStartListening();
-					}
-					break;
-
-				case LocationProvider.AVAILABLE:
-					// If another provider becomes available and is one we hadn't known
-					// about see if it is better than the one we're currently using.
-					if (!provider.equals(providerName) && !allProviders.contains(provider)) {
-						tryToStartListening();
-					}
-					break;
-			}
-		}
-	}
-
 	// Constant returned by Longitude(), Latitude(), and Altitude() if no value could be obtained for
 	// them. The client can find this out directly by calling HasLongitudeLatitude() or HasAltitude().
 	private static final int UNKNOWN_VALUE = 0;
@@ -154,7 +88,7 @@ public final class 位置传感器Impl extends 组件Impl
 	/**
 	 * Creates a new LocationSensor component.
 	 *
-	 * @param container  container which will hold the component (must not be
+	 * @param container container which will hold the component (must not be
 	 *                   {@code null}, for non-visible component, like this one
 	 *                   must be the form)
 	 */
@@ -173,7 +107,14 @@ public final class 位置传感器Impl extends 组件Impl
 		locationSensorListener = new LocationSensorListener();
 	}
 
-	// 事件
+	/* 组件事件 */
+
+	@Override
+	public void 位置改变(double latitude, double longitude, double altitude) {
+		if (enabled) {
+			EventDispatcher.dispatchEvent(this, "位置改变", latitude, longitude, altitude);
+		}
+	}
 
 	@Override
 	public void 初始化() {
@@ -184,14 +125,7 @@ public final class 位置传感器Impl extends 组件Impl
 		启用(启用());
 	}
 
-	@Override
-	public void 位置改变(double latitude, double longitude, double altitude) {
-		if (enabled) {
-			EventDispatcher.dispatchEvent(this, "位置改变", latitude, longitude, altitude);
-		}
-	}
-
-	// 属性
+	/* 组件属性 */
 
 	@Override
 	public boolean 是否可用() {
@@ -276,6 +210,26 @@ public final class 位置传感器Impl extends 组件Impl
 
 		return "";
 	}
+
+	/* 内部接口与平台回调 */
+
+	// OnResumeListener implementation
+
+	@Override
+	public void onResume() {
+		if (enabled) {
+			tryToStartListening();
+		}
+	}
+
+	// OnStopListener implementation
+
+	@Override
+	public void onStop() {
+		stopListening();
+	}
+
+	/* 内部辅助方法 */
 
 	// Methods to stop and start listening to LocationProviders
 
@@ -363,19 +317,69 @@ public final class 位置传感器Impl extends 组件Impl
 		listening = true;
 	}
 
-	// OnResumeListener implementation
+	/**
+	 * Class that listens for changes in location, raises appropriate events,
+	 * and provides properties.
+	 *
+	 * @author spertus@google.com (Ellen Spertus)
+	 */
+	private class LocationSensorListener implements LocationListener {
+		/**
+		 * {@inheritDoc}
+		 *
+		 * This sets fields longitude, latitude, altitude, hasLocationData, and
+		 * hasAltitude, then calls LocationSensor.LocationChanged(), all in the
+		 * enclosing class LocationSensor.
+		 */
+		@Override
+		public void onLocationChanged(Location location) {
+			lastLocation = location;
+			longitude = location.getLongitude();
+			latitude = location.getLatitude();
+			// If the current location doesn't have altitude information, the prior
+			// altitude reading is retained.
+			if (location.hasAltitude()) {
+				hasAltitude = true;
+				altitude = location.getAltitude();
+			}
+			hasLocationData = true;
+			位置改变(latitude, longitude, altitude);
+		}
 
-	@Override
-	public void onResume() {
-		if (enabled) {
+		@Override
+		public void onProviderDisabled(String provider) {
+			stopListening();
+			if (enabled) {
+				tryToStartListening();
+			}
+		}
+
+		@Override
+		public void onProviderEnabled(String provider) {
 			tryToStartListening();
 		}
-	}
 
-	// OnStopListener implementation
+		@Override
+		public void onStatusChanged(String provider, int status, Bundle extras) {
+			switch (status) {
+				// Ignore TEMPORARILY_UNAVAILABLE, because service usually returns quickly.
+				// case LocationProvider.TEMPORARILY_UNAVAILABLE:
+				case LocationProvider.OUT_OF_SERVICE:
+					// If the provider we were listening to is no longer available,
+					// find another.
+					if (provider.equals(providerName)) {
+						tryToStartListening();
+					}
+					break;
 
-	@Override
-	public void onStop() {
-		stopListening();
+				case LocationProvider.AVAILABLE:
+					// If another provider becomes available and is one we hadn't known
+					// about see if it is better than the one we're currently using.
+					if (!provider.equals(providerName) && !allProviders.contains(provider)) {
+						tryToStartListening();
+					}
+					break;
+			}
+		}
 	}
 }

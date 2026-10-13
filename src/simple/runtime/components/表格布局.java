@@ -28,6 +28,9 @@ import simple.runtime.annotations.SimpleFunction;
  */
 @SimpleObject
 public interface 表格布局 extends 布局 {
+
+	/* 组件属性 */
+
 	/**
 	 * 行数属性设置器方法。
 	 *
@@ -74,7 +77,7 @@ public interface 表格布局 extends 布局 {
 
 	/**
 	 * 所有列可收缩设置器方法。
-	 * 
+	 *
 	 * @param shrinkAllColumns 可收缩所有列
 	 */
 	@SimpleProperty
@@ -88,15 +91,17 @@ public interface 表格布局 extends 布局 {
 
 	/**
 	 * 所有列可拉伸设置器方法。
-	 * 
+	 *
 	 * @param stretchAllColumns 可拉伸所有列
 	 */
 	@SimpleProperty
 	void 所有列可拉伸(boolean stretchAllColumns);
 
+	/* 组件方法 */
+
 	/**
 	 * 检查列是否折叠
-	 * 
+	 *
 	 * @param columnIndex 列索引，从0开始。
 	 * @return 折叠返回真，否则返回假
 	 */
@@ -105,7 +110,7 @@ public interface 表格布局 extends 布局 {
 
 	/**
 	 * 设置列是否折叠
-	 * 
+	 *
 	 * @param columnIndex 列索引，从0开始。
 	 * @param isCollapsed 是否折叠
 	 */
@@ -114,7 +119,7 @@ public interface 表格布局 extends 布局 {
 
 	/**
 	 * 检验列是否可收缩
-	 * 
+	 *
 	 * @param columnIndex 列索引，从0开始。
 	 * @return 可收缩返回真，否则返回假
 	 */
@@ -123,7 +128,7 @@ public interface 表格布局 extends 布局 {
 
 	/**
 	 * 设置列是否可收缩
-	 * 
+	 *
 	 * @param columnIndex 列索引，从0开始。
 	 * @param isShrinkable 是否可收缩
 	 */
@@ -132,7 +137,7 @@ public interface 表格布局 extends 布局 {
 
 	/**
 	 * 检验列是否可拉伸
-	 * 
+	 *
 	 * @param columnIndex 列索引，从0开始。
 	 * @return 可拉伸返回真，否则返回假
 	 */
@@ -141,7 +146,7 @@ public interface 表格布局 extends 布局 {
 
 	/**
 	 * 设置列是否可拉伸
-	 * 
+	 *
 	 * @param columnIndex 列索引，从0开始。
 	 * @param isShrinkable 是否可拉伸
 	 */

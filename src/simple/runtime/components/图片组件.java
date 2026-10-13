@@ -54,6 +54,8 @@ public interface 图片组件 extends 可视组件 {
 	@SimpleDataElement
 	static final int 显示方式_居中缩放 = 3;
 
+	/* 组件属性 */
+
 	/**
 	 * 图片属性设置方法。
 	 *

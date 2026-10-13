@@ -24,7 +24,7 @@ public final class 图片按钮Impl extends 图片视图组件 implements 图片
 	/**
 	 * 创建一个新的图片按钮组件。
 	 *
-	 * @param container  容纳组件的容器（不可为 {@code null}，对于不可见的组件必须是窗口）
+	 * @param container 容纳组件的容器（不可为 {@code null}，对于不可见的组件必须是窗口）
 	 */
 	public 图片按钮Impl(组件容器 container) {
 		super(container);
@@ -146,7 +146,7 @@ public final class 图片按钮Impl extends 图片视图组件 implements 图片
 		return view;
 	}
 
-	// 图片按钮 实现
+	/* 组件事件 */
 
 	@Override
 	public void 获得焦点() {
@@ -188,6 +188,8 @@ public final class 图片按钮Impl extends 图片视图组件 implements 图片
 		EventDispatcher.dispatchEvent(this, "被长按");
 	}
 
+	/* 组件属性 */
+
 	@Override
 	public boolean 启用() {
 		return ViewUtil.isEnabled(getView());
@@ -197,6 +199,8 @@ public final class 图片按钮Impl extends 图片视图组件 implements 图片
 	public void 启用(boolean enabled) {
 		ViewUtil.setEnabled(getView(), enabled);
 	}
+
+	/* 组件方法 */
 
 	@Override
 	public boolean 获取焦点() {

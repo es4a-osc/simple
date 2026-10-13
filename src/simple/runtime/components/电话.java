@@ -34,6 +34,8 @@ import simple.runtime.annotations.UsesPermissions;
 @UsesPermissions(permissionNames = "android.permission.CALL_PHONE")
 public interface 电话 extends 组件 {
 
+	/* 组件属性 */
+
 	/**
 	 * 可用的属性获取方法（只读属性）。
 	 *
@@ -42,10 +44,12 @@ public interface 电话 extends 组件 {
 	@SimpleProperty
 	boolean 可用();
 
+	/* 组件方法 */
+
 	/**
 	 * 呼叫给定电话号码的电话。
 	 *
-	 * @param phoneNumber  仅数字形式的电话号码（无空格、破折号等）
+	 * @param phoneNumber 仅数字形式的电话号码（无空格、破折号等）
 	 */
 	@SimpleFunction
 	void 呼叫(String phoneNumber);
@@ -53,7 +57,7 @@ public interface 电话 extends 组件 {
 	/**
 	 * 振动手机。
 	 *
-	 * @param duration  持续时间（以毫秒为单位）
+	 * @param duration 持续时间（以毫秒为单位）
 	 */
 	@SimpleFunction
 	void 振动(int duration);

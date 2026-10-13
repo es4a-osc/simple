@@ -43,7 +43,7 @@ public class 单选列表框Impl extends 列表视图组件 implements 单选列
 				return textView;
 			}
 		};
-		
+
 		ListView view = new ListView(MainActivity.getContext());
 		view.setFocusable(true);
 		view.setAdapter(adapter);
@@ -101,12 +101,7 @@ public class 单选列表框Impl extends 列表视图组件 implements 单选列
 		return view;
 	}
 
-	/* 单选列表框 实现 */
-
-	@Override
-	public void 项目被滚动(int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-		EventDispatcher.dispatchEvent(this, "项目被滚动", firstVisibleItem, visibleItemCount, totalItemCount);
-	}
+	/* 组件事件 */
 
 	@Override
 	public void 项目被单击(int index) {
@@ -117,6 +112,13 @@ public class 单选列表框Impl extends 列表视图组件 implements 单选列
 	public void 项目被长按(int index) {
 		EventDispatcher.dispatchEvent(this, "项目被长按", index);
 	}
+
+	@Override
+	public void 项目被滚动(int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+		EventDispatcher.dispatchEvent(this, "项目被滚动", firstVisibleItem, visibleItemCount, totalItemCount);
+	}
+
+	/* 组件方法 */
 
 	@Override
 	public boolean 获取焦点() {

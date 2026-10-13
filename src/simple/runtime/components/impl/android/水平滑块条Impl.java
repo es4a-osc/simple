@@ -53,7 +53,7 @@ public class 水平滑块条Impl extends 进度视图组件 implements 水平滑
 		return view;
 	}
 
-	// 水平滑块条 实现
+	/* 组件事件 */
 
 	@Override
 	public void 开始拖动() {
@@ -69,6 +69,8 @@ public class 水平滑块条Impl extends 进度视图组件 implements 水平滑
 	public void 位置被改变(int progress) {
 		EventDispatcher.dispatchEvent(this, "位置被改变", progress);
 	}
+
+	/* 组件属性 */
 
 	@Override
 	public int 最大高度() {

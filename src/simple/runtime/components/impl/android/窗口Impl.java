@@ -102,16 +102,11 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 		});
 	}
 
-	/* 窗口 事件实现 */
+	/* 组件事件 */
 
 	@Override
 	public void 程序被启动(意图 intent) {
 		EventDispatcher.dispatchEvent(this, "程序被启动", intent);
-	}
-
-	@Override
-	public void 程序被销毁() {
-		EventDispatcher.dispatchEvent(this, "程序被销毁");
 	}
 
 	@Override
@@ -122,6 +117,11 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 	@Override
 	public void 程序被停止() {
 		EventDispatcher.dispatchEvent(this, "程序被停止");
+	}
+
+	@Override
+	public void 程序被销毁() {
+		EventDispatcher.dispatchEvent(this, "程序被销毁");
 	}
 
 	@Override
@@ -145,13 +145,13 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 	}
 
 	@Override
-	public void 触摸手势(int direction) {
-		EventDispatcher.dispatchEvent(this, "触摸手势", direction);
+	public void 按下某键(int keycode, BooleanReferenceParameter shield) {
+		EventDispatcher.dispatchEvent(this, "按下某键", keycode, shield);
 	}
 
 	@Override
-	public void 按下某键(int keycode, BooleanReferenceParameter shield) {
-		EventDispatcher.dispatchEvent(this, "按下某键", keycode, shield);
+	public void 触摸手势(int direction) {
+		EventDispatcher.dispatchEvent(this, "触摸手势", direction);
 	}
 
 	@Override
@@ -159,7 +159,7 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 		EventDispatcher.dispatchEvent(this, "选中菜单", caption);
 	}
 
-	/* 窗口 属性实现 */
+	/* 组件属性 */
 
 	@Override
 	public void 背景图片(String imagePath) {
@@ -172,57 +172,6 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 		} catch (IOException ioe) {
 			throw new 文件未存在错误(imagePath);
 		}
-	}
-
-	@Override
-	public int 列() {
-		throw new 属性访问错误();
-	}
-
-	@Override
-	public void 列(int newColumn) {
-		日志输出.warning("(%d) 尝试为窗口组件设置列(%d)", hashCode(), newColumn);
-	}
-
-	@Override
-	public int 行() {
-		throw new 属性访问错误();
-	}
-
-	@Override
-	public void 行(int newRow) {
-		日志输出.warning("(%d) 尝试为窗口组件设置行(%d)", hashCode(), newRow);
-	}
-
-	@Override
-	public Variant 宽度() {
-		return IntegerVariant.getIntegerVariant(viewLayout.getLayoutManager().getWidth());
-	}
-
-	@Override
-	public void 宽度(Variant width) {
-		throw new 属性访问错误();
-	}
-
-	@Override
-	public Variant 高度() {
-		return IntegerVariant.getIntegerVariant(viewLayout.getLayoutManager().getHeight());
-	}
-
-	@Override
-	public void 高度(Variant height) {
-		throw new 属性访问错误();
-	}
-
-	@Override
-	public String 标题() {
-		return title;
-	}
-
-	@Override
-	public void 标题(String newTitle) {
-		title = newTitle;
-		MainActivity.getContext().setTitle(title);
 	}
 
 	@Override
@@ -263,7 +212,58 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 		}
 	}
 
-	/* 窗口 方法实现 */
+	@Override
+	public String 标题() {
+		return title;
+	}
+
+	@Override
+	public void 标题(String newTitle) {
+		title = newTitle;
+		MainActivity.getContext().setTitle(title);
+	}
+
+	@Override
+	public Variant 高度() {
+		return IntegerVariant.getIntegerVariant(viewLayout.getLayoutManager().getHeight());
+	}
+
+	@Override
+	public void 高度(Variant height) {
+		throw new 属性访问错误();
+	}
+
+	@Override
+	public Variant 宽度() {
+		return IntegerVariant.getIntegerVariant(viewLayout.getLayoutManager().getWidth());
+	}
+
+	@Override
+	public void 宽度(Variant width) {
+		throw new 属性访问错误();
+	}
+
+	@Override
+	public int 行() {
+		throw new 属性访问错误();
+	}
+
+	@Override
+	public void 行(int newRow) {
+		日志输出.warning("(%d) 尝试为窗口组件设置行(%d)", hashCode(), newRow);
+	}
+
+	@Override
+	public int 列() {
+		throw new 属性访问错误();
+	}
+
+	@Override
+	public void 列(int newColumn) {
+		日志输出.warning("(%d) 尝试为窗口组件设置列(%d)", hashCode(), newColumn);
+	}
+
+	/* 组件方法 */
 
 	@Override
 	public void 投递消息(final Variant mark, final Variant param) {
@@ -282,14 +282,14 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 		投递消息(mark, null);
 	}
 
+	/* 内部接口与平台回调 */
+
 	/* 面板 */
 
 	@Override
 	protected void addToContainer() {
 		// 无事可做
 	}
-
-	/* 视图组件 实现 */
 
 	@Override
 	public View getView() {

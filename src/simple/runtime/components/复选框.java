@@ -30,7 +30,7 @@ import simple.runtime.annotations.SimpleProperty;
 @SimpleObject
 public interface 复选框 extends 文本组件 {
 
-	// 组件 声明
+	/* 组件事件 */
 
 	/**
 	 * 默认状态改变事件处理器。
@@ -50,10 +50,12 @@ public interface 复选框 extends 文本组件 {
 	@SimpleEvent
 	void 失去焦点();
 
+	/* 组件属性 */
+
 	/**
 	 * 启用属性获取器方法。
 	 *
-	 * @return  {@code true}表示启用，{@code false}禁用
+	 * @return {@code true}表示启用，{@code false}禁用
 	 */
 	@SimpleProperty
 	boolean 启用();
@@ -61,7 +63,7 @@ public interface 复选框 extends 文本组件 {
 	/**
 	 * 启用属性设置器方法。
 	 *
-	 * @param enabled  {@code true}表示启用，{@code false}禁用
+	 * @param enabled {@code true}表示启用，{@code false}禁用
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_BOOLEAN,
@@ -72,7 +74,7 @@ public interface 复选框 extends 文本组件 {
 	/**
 	 * 选中属性获取器方法。
 	 *
-	 * @return  {@code true}表示选中，{@code false}表示未选中
+	 * @return {@code true}表示选中，{@code false}表示未选中
 	 */
 	@SimpleProperty
 	boolean 选中();
@@ -80,7 +82,7 @@ public interface 复选框 extends 文本组件 {
 	/**
 	 * 选中属性设置器方法。
 	 *
-	 * @param value  {@code true}表示选中，{@code false}表示未选中
+	 * @param value {@code true}表示选中，{@code false}表示未选中
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_BOOLEAN,

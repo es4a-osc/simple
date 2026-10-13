@@ -16,6 +16,8 @@ import simple.runtime.collections.意图;
 @SimpleObject
 public abstract interface 广播接收器 extends 组件 {
 
+	/* 组件事件 */
+
 	/**
 	 * 收到广播事件默认处理方法。
 	 *
@@ -24,6 +26,8 @@ public abstract interface 广播接收器 extends 组件 {
 	 */
 	@SimpleEvent
 	void 收到广播(String action, 意图 intent);
+
+	/* 组件属性 */
 
 	/**
 	 * 返回已经注册的动作数量。
@@ -40,6 +44,8 @@ public abstract interface 广播接收器 extends 组件 {
 	 */
 	@SimpleProperty
 	String[] 所有动作();
+
+	/* 组件方法 */
 
 	/**
 	 * 注册一个广播动作；注册后立即开始接收该动作的广播。

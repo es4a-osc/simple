@@ -26,7 +26,7 @@ public abstract class 进度视图组件 extends 视图组件 implements 进度�
 		super(container);
 	}
 
-	// 进度组件 实现
+	/* 组件属性 */
 
 	@Override
 	public int 最大位置() {
@@ -59,5 +59,4 @@ public abstract class 进度视图组件 extends 视图组件 implements 进度�
 			throw new 文件未存在错误(image);
 		}
 	}
-
 }

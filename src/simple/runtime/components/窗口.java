@@ -29,16 +29,19 @@ import simple.runtime.variants.Variant;
  * 根组件容器。所有其他组件需要直接或间接添加到窗口中。
  *
  * @author Herbert Czymontek
+ * @author 树先生 xhwsd@qq.com
  */
 @SimpleComponent
 @SimpleObject
 public interface 窗口 extends 可视组件, 组件容器 {
-	/**
+
+	/* 组件事件 */
+
+	/*
 	关联代码：
-	{@link simple.compiler.parser.Parser#parseFormPropertiesSection() parseFormPropertiesSection}
+	simple.compiler.parser.Parser#parseFormPropertiesSection()
 	*/
 
-	// 定义事件
 
 	/**
 	 * 程序被启动事件默认处理程序：当程序被启动时触发。
@@ -117,8 +120,7 @@ public interface 窗口 extends 可视组件, 组件容器 {
 	/**
 	 * 默认触摸手势事件处理器。
 	 *
-	 * @param direction  常数标识触摸手势方向
-	 *                   (@see 组件)
+	 * @param direction 常数标识触摸手势方向 (@see 组件)
 	 */
 	@SimpleEvent
 	void 触摸手势(int direction);
@@ -126,12 +128,12 @@ public interface 窗口 extends 可视组件, 组件容器 {
 	/**
 	 * 默认菜单事件处理器。
 	 *
-	 * @param caption  字符串标识所选菜单项
+	 * @param caption 字符串标识所选菜单项
 	 */
 	@SimpleEvent
 	void 选中菜单(String caption);
 
-	// 定义属性
+	/* 组件属性 */
 
 	/**
 	 * 背景图片属性设置器方法：为窗口设置背景图片。
@@ -187,7 +189,7 @@ public interface 窗口 extends 可视组件, 组件容器 {
 	/**
 	 * 标题属性获取器方法。
 	 *
-	 * @return  窗口标题
+	 * @return 窗口标题
 	 */
 	@SimpleProperty
 	String 标题();
@@ -219,7 +221,7 @@ public interface 窗口 extends 可视组件, 组件容器 {
 	@SimpleProperty
 	Variant 宽度();
 
-	/* 定义方法 */
+	/* 组件方法 */
 
 	/**
 	 * 将消息投递给窗口，可在线程下调用。

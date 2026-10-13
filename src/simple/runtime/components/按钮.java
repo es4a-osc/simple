@@ -32,7 +32,7 @@ import simple.runtime.annotations.SimpleProperty;
 @SimpleObject
 public interface 按钮 extends 文本组件 {
 
-	/* 组件 事件声明 */
+	/* 组件事件 */
 
 	/**
 	 * 默认获得焦点事件处理程序。
@@ -95,12 +95,12 @@ public interface 按钮 extends 文本组件 {
 	@SimpleEvent
 	void 被长按();
 
-	/* 组件 属性声明 */
+	/* 组件属性 */
 
 	/**
 	 * 启用属性获取器方法。
 	 *
-	 * @return   {@code true}表示启用，{@code false}禁用
+	 * @return {@code true}表示启用，{@code false}禁用
 	 */
 	@SimpleProperty
 	boolean 启用();
@@ -108,7 +108,7 @@ public interface 按钮 extends 文本组件 {
 	/**
 	 * 启用属性设置器方法。
 	 *
-	 * @param enabled  {@code true}已启用，{@ code false}已禁用
+	 * @param enabled {@code true}已启用，{@ code false}已禁用
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_BOOLEAN,
@@ -116,7 +116,7 @@ public interface 按钮 extends 文本组件 {
 	)
 	void 启用(boolean enabled);
 
-	/* 组件 方法声明 */
+	/* 组件方法 */
 
 	/**
 	 * 使其获得焦点。

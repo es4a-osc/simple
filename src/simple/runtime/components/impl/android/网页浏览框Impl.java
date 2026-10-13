@@ -195,7 +195,7 @@ public class 网页浏览框Impl extends 视图组件 implements 网页浏览框
 			@Override
 			public void onProgressChanged(WebView view, int newProgress) {
 				super.onProgressChanged(view, newProgress);
-				
+
 				进度改变(newProgress);
 			}
 
@@ -289,29 +289,7 @@ public class 网页浏览框Impl extends 视图组件 implements 网页浏览框
 		return view;
 	}
 
-	/*
-	 * Web应用接口
-	 */
-	private class WebAppInterface {
-
-		// 当前注册的接口名称
-		String name;
-
-		public WebAppInterface(String name) {
-			this.name = name;
-		}
-
-		@JavascriptInterface
-		public void call(String param) {
-			MainActivity.getContext().runOnUiThread(new Runnable() {
-				public void run() {
-					接口调用(name, param);
-				}
-			});
-		}
-	}
-
-	// 网页浏览框 实现
+	/* 组件事件 */
 
 	@Override
 	public void 触摸手势(int direction) {
@@ -373,14 +351,16 @@ public class 网页浏览框Impl extends 视图组件 implements 网页浏览框
 		EventDispatcher.dispatchEvent(this, "接口返回", script, result);
 	}
 
-	@Override
-	public void 地址(String url) {
-		加载(url);
-	}
+	/* 组件属性 */
 
 	@Override
 	public String 地址() {
 		return ((WebView) getView()).getUrl();
+	}
+
+	@Override
+	public void 地址(String url) {
+		加载(url);
 	}
 
 	@Override
@@ -449,6 +429,8 @@ public class 网页浏览框Impl extends 视图组件 implements 网页浏览框
 	public void 启用JS(boolean flag) {
 		((WebView) getView()).getSettings().setJavaScriptEnabled(flag);
 	}
+
+	/* 组件方法 */
 
 	@Override
 	public void 加载(String url) {
@@ -525,5 +507,27 @@ public class 网页浏览框Impl extends 视图组件 implements 网页浏览框
 			return true;
 		}
 		return false;
+	}
+
+	/*
+	 * Web应用接口
+	 */
+	private class WebAppInterface {
+
+		// 当前注册的接口名称
+		String name;
+
+		public WebAppInterface(String name) {
+			this.name = name;
+		}
+
+		@JavascriptInterface
+		public void call(String param) {
+			MainActivity.getContext().runOnUiThread(new Runnable() {
+				public void run() {
+					接口调用(name, param);
+				}
+			});
+		}
 	}
 }

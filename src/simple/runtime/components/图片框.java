@@ -30,6 +30,8 @@ import simple.runtime.annotations.SimpleProperty;
 @SimpleObject
 public interface 图片框 extends 图片组件 {
 
+	/* 组件事件 */
+
 	/**
 	 * 默认按下事件处理方法。
 	 *
@@ -79,7 +81,7 @@ public interface 图片框 extends 图片组件 {
 	@SimpleEvent
 	void 被长按();
 
-	// 属性初始值重写
+	/* 覆盖属性默认值 */
 
 	@Override
 	@SimpleProperty(

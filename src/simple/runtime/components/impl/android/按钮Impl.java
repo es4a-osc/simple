@@ -42,7 +42,7 @@ public final class 按钮Impl extends 文本视图组件 implements 按钮 {
 	/**
 	 * 创建新的按钮组件。
 	 *
-	 * @param container  包含组件的容器（不可为{@code null}）
+	 * @param container 包含组件的容器（不可为{@code null}）
 	 */
 	public 按钮Impl(组件容器 container) {
 		super(container);
@@ -166,7 +166,7 @@ public final class 按钮Impl extends 文本视图组件 implements 按钮 {
 		return view;
 	}
 
-	/* 按钮 实现 */
+	/* 组件事件 */
 
 	@Override
 	public void 获得焦点() {
@@ -208,6 +208,8 @@ public final class 按钮Impl extends 文本视图组件 implements 按钮 {
 		EventDispatcher.dispatchEvent(this, "被长按");
 	}
 
+	/* 组件属性 */
+
 	@Override
 	public boolean 启用() {
 		return ViewUtil.isEnabled(getView());
@@ -217,6 +219,8 @@ public final class 按钮Impl extends 文本视图组件 implements 按钮 {
 	public void 启用(boolean enabled) {
 		ViewUtil.setEnabled(getView(), enabled);
 	}
+
+	/* 组件方法 */
 
 	@Override
 	public boolean 获取焦点() {

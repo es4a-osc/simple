@@ -52,6 +52,8 @@ public interface 音频播放器 extends 组件 {
 	@SimpleDataElement
 	static final int 信息_元数据更新 = 802; // MediaPlayer.MEDIA_INFO_METADATA_UPDATE
 
+	/* 组件事件 */
+
 	/**
 	 * 当播放器触发错误时，触发该事件。
 	 *
@@ -98,6 +100,8 @@ public interface 音频播放器 extends 组件 {
 	@SimpleEvent
 	void 播放结束();
 
+	/* 组件属性 */
+
 	/**
 	 * 获取文件的播放时长(毫秒), 如果没有可用的时长, 就会返回 -1
 	 *
@@ -138,6 +142,8 @@ public interface 音频播放器 extends 组件 {
 	 */
 	@SimpleProperty
 	void 循环(boolean looping);
+
+	/* 组件方法 */
 
 	/**
 	 * 设置播放数据源。

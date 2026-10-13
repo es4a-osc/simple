@@ -30,6 +30,8 @@ import simple.runtime.annotations.SimpleProperty;
 @SimpleObject
 public interface 密码编辑框 extends 文本组件 {
 
+	/* 组件事件 */
+
 	/**
 	 * 默认获得焦点事件处理器。
 	 */
@@ -42,10 +44,12 @@ public interface 密码编辑框 extends 文本组件 {
 	@SimpleEvent
 	void 失去焦点();
 
+	/* 组件属性 */
+
 	/**
 	 * 启用属性获取器。
 	 *
-	 * @return  {@code true}表示启用，{@code false}表示禁用
+	 * @return {@code true}表示启用，{@code false}表示禁用
 	 */
 	@SimpleProperty
 	boolean 启用();
@@ -53,7 +57,7 @@ public interface 密码编辑框 extends 文本组件 {
 	/**
 	 * 启用属性获取器。
 	 *
-	 * @param enabled  {@code true}表示启用，{@code false}表示禁用
+	 * @param enabled {@code true}表示启用，{@code false}表示禁用
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_BOOLEAN,
@@ -64,7 +68,7 @@ public interface 密码编辑框 extends 文本组件 {
 	/**
 	 * 提示属性获取器。
 	 *
-	 * @return  提示文本
+	 * @return 提示文本
 	 */
 	@SimpleProperty
 	String 提示();
@@ -72,7 +76,7 @@ public interface 密码编辑框 extends 文本组件 {
 	/**
 	 * 提示属性设置器。
 	 *
-	 * @param newhint  提示文本
+	 * @param newhint 提示文本
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_STRING,

@@ -38,20 +38,14 @@ public class 广播接收器Impl extends 组件Impl implements 广播接收器 {
 		};
 	}
 
-	/* 广播接收器 实现 */
-
-	@Override
-	public void 销毁() {
-		unregisterReceiver();
-		actions.clear();
-
-		super.销毁();
-	}
+	/* 组件事件 */
 
 	@Override
 	public void 收到广播(String action, 意图 intent) {
 		EventDispatcher.dispatchEvent(this, "收到广播", action, intent);
 	}
+
+	/* 组件属性 */
 
 	@Override
 	public int 动作计数() {
@@ -62,6 +56,8 @@ public class 广播接收器Impl extends 组件Impl implements 广播接收器 {
 	public String[] 所有动作() {
 		return actions.toArray(new String[actions.size()]);
 	}
+
+	/* 组件方法 */
 
 	@Override
 	public void 注册动作(String action) {
@@ -88,6 +84,14 @@ public class 广播接收器Impl extends 组件Impl implements 广播接收器 {
 	@Override
 	public boolean 具有动作(String action) {
 		return action != null && actions.contains(action);
+	}
+
+	@Override
+	public void 销毁() {
+		unregisterReceiver();
+		actions.clear();
+
+		super.销毁();
 	}
 
 	/* 内部辅助方法 */

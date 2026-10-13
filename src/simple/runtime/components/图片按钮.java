@@ -14,6 +14,9 @@ import simple.runtime.annotations.SimpleProperty;
 @SimpleComponent
 @SimpleObject
 public interface 图片按钮 extends 图片组件 {
+
+	/* 组件事件 */
+
 	/**
 	 * 默认获得焦点事件处理程序。
 	 */
@@ -75,6 +78,8 @@ public interface 图片按钮 extends 图片组件 {
 	@SimpleEvent
 	void 被长按();
 
+	/* 组件属性 */
+
 	/**
 	 * 启用属性获取方法。
 	 *
@@ -93,6 +98,8 @@ public interface 图片按钮 extends 图片组件 {
 		initializer = "True"
 	)
 	void 启用(boolean enabled);
+
+	/* 组件方法 */
 
 	/**
 	 * 使其获得焦点。

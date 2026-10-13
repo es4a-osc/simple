@@ -32,6 +32,8 @@ import simple.runtime.parameters.BooleanReferenceParameter;
 @SimpleObject
 public interface 编辑框 extends 文本组件 {
 
+	/* 组件事件 */
+
 	/**
 	 * 默认获得焦点事件处理器。
 	 */
@@ -55,6 +57,8 @@ public interface 编辑框 extends 文本组件 {
 	@SimpleEvent
 	void 文本改变(String text, BooleanReferenceParameter accept);
 
+	/* 组件属性 */
+
 	/**
 	 * 启用属性获取器方法。
 	 *
@@ -77,7 +81,7 @@ public interface 编辑框 extends 文本组件 {
 	/**
 	 * 提示属性获取器方法。
 	 *
-	 * @return  提示文本
+	 * @return 提示文本
 	 */
 	@SimpleProperty
 	String 提示文本();
@@ -85,7 +89,7 @@ public interface 编辑框 extends 文本组件 {
 	/**
 	 * 提示属性设置器方法。
 	 *
-	 * @param hint  提示文本
+	 * @param hint 提示文本
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_STRING,
@@ -167,6 +171,8 @@ public interface 编辑框 extends 文本组件 {
 		initializer = 组件.输入模式_文本 + ""
 	)
 	void 输入模式(int inputModel);
+
+	/* 组件方法 */
 
 	/**
 	 * 使其获得焦点。

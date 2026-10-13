@@ -48,7 +48,7 @@ public class 面板Impl extends 视图组件 implements 面板, 视图组件容�
 	/**
 	 * 创建一个新的面板组件。
 	 *
-	 * @param container  容器、组件将放入
+	 * @param container 容器、组件将放入
 	 */
 	public 面板Impl(组件容器 container) {
 		super(container);
@@ -61,22 +61,7 @@ public class 面板Impl extends 视图组件 implements 面板, 视图组件容�
 		return null;
 	}
 
-	/* 面板 实现 */
-
-	@Override
-	public int 背景颜色() {
-		return backgroundColor;
-	}
-
-	@Override
-	public void 背景颜色(int argb) {
-		backgroundColor = argb;
-		
-		// 由于Simple属性的排序，尚未设置ViewLayout。
-		if (viewLayout != null) {
-			viewLayout.getLayoutManager().setBackgroundColor(argb);
-		}
-	}
+	/* 组件属性 */
 
 	@Override
 	public Variant 布局() {
@@ -157,33 +142,22 @@ public class 面板Impl extends 视图组件 implements 面板, 视图组件容�
 		}
 	}
 
-	protected void addToContainer() {
-		// 无法在ViewComponent构造函数中提前添加此组件 - 现在执行它
-		getComponentContainer().addComponent(this);
+	@Override
+	public int 背景颜色() {
+		return backgroundColor;
 	}
 
-	/**
-	 * 取当前布局类型
-	 * 
-	 * @return 成功返回布局类型，失败返回0
-	 */
-	protected int getLayoutType() {
-		if (viewLayout instanceof 线性布局Impl) {
-			return  组件.布局_线性;
-		} else if (viewLayout instanceof 表格布局Impl) {
-			return 组件.布局_表格;
-		} else if (viewLayout instanceof 单帧布局Impl) {
-			return 组件.布局_单帧;
-		} else if (viewLayout instanceof 相对布局Impl) {
-			return 组件.布局_相对;
-		} else if (viewLayout instanceof 绝对布局Impl) {
-			return 组件.布局_绝对;
-		} else {
-			return 0;
+	@Override
+	public void 背景颜色(int argb) {
+		backgroundColor = argb;
+
+		// 由于Simple属性的排序，尚未设置ViewLayout。
+		if (viewLayout != null) {
+			viewLayout.getLayoutManager().setBackgroundColor(argb);
 		}
 	}
 
-	/* 组件容器 实现 */
+	/* 内部接口与平台回调 */
 
 	@Override
 	public ViewGroup getLayoutManager() {
@@ -203,10 +177,36 @@ public class 面板Impl extends 视图组件 implements 面板, 视图组件容�
 		return viewLayout;
 	}
 
-	/* 视图组件 实现 */
-
 	@Override
 	public View getView() {
 		return viewLayout == null ? null : viewLayout.getLayoutManager();
+	}
+
+	/* 内部辅助方法 */
+
+	protected void addToContainer() {
+		// 无法在ViewComponent构造函数中提前添加此组件 - 现在执行它
+		getComponentContainer().addComponent(this);
+	}
+
+	/**
+	 * 取当前布局类型
+	 *
+	 * @return 成功返回布局类型，失败返回0
+	 */
+	protected int getLayoutType() {
+		if (viewLayout instanceof 线性布局Impl) {
+			return  组件.布局_线性;
+		} else if (viewLayout instanceof 表格布局Impl) {
+			return 组件.布局_表格;
+		} else if (viewLayout instanceof 单帧布局Impl) {
+			return 组件.布局_单帧;
+		} else if (viewLayout instanceof 相对布局Impl) {
+			return 组件.布局_相对;
+		} else if (viewLayout instanceof 绝对布局Impl) {
+			return 组件.布局_绝对;
+		} else {
+			return 0;
+		}
 	}
 }

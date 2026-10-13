@@ -49,7 +49,7 @@ public final class 方向传感器Impl extends 组件Impl implements 方向传�
 	/**
 	 * 创建一个新的方向传感器组件。
 	 *
-	 * @param container  包含组件的容器（对于不可见的组件不可以为{@code null}，类似容器必须是窗口）
+	 * @param container 包含组件的容器（对于不可见的组件不可以为{@code null}，类似容器必须是窗口）
 	 */
 	public 方向传感器Impl(组件容器 container) {
 		super(container);
@@ -59,12 +59,14 @@ public final class 方向传感器Impl extends 组件Impl implements 方向传�
 				SensorManager.SENSOR_DELAY_GAME);
 	}
 
-	/* OrientationSensor 实现 */
+	/* 组件事件 */
 
 	@Override
 	public void 方向改变(float newYaw, float newPitch, float newRoll) {
 		EventDispatcher.dispatchEvent(this, "方向改变", newYaw, newPitch, newRoll);
 	}
+
+	/* 组件属性 */
 
 	@Override
 	public boolean 可用() {
@@ -113,7 +115,7 @@ public final class 方向传感器Impl extends 组件Impl implements 方向传�
 				Math.pow(Math.min(MAX_VALUE, roll), 2)) / (MAX_VALUE * Math.sqrt(2)));
 	}
 
-	// SensorEventListener 实现
+	/* 内部接口与平台回调 */
 
 	@Override
 	public void onSensorChanged(SensorEvent event) {

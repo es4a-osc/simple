@@ -29,7 +29,7 @@ import simple.runtime.annotations.SimpleObject;
  */
 @SimpleObject
 public interface 组件 {
-	
+
 	/* 对齐常量。 */
 	@SimpleDataElement
 	static final int 水平_对齐_左 = 0;
@@ -76,13 +76,13 @@ public interface 组件 {
 
 	/*
 	组件重心（其实就是停靠）。
-	
+
 	 西北   北  东北
 	    ↖  ↑  ↗
 	  西 ←  中  → 东
 	    ↙　↓　↘
 	 西南   南  东南
-	
+
 	口诀：上北 下南 左西 右东
 	*/
 	@SimpleDataElement
@@ -148,7 +148,6 @@ public interface 组件 {
 	@SimpleDataElement
 	static final int 布局_绝对 = 5; // 该布局已于API3弃用，所以排末尾
 
-
 	@SimpleDataElement
 	static final int 布局_方向_水平 = 0;
 	@SimpleDataElement
@@ -156,7 +155,7 @@ public interface 组件 {
 
 	static final int 布局_无_列 = -1;
 	static final int 布局_无_行 = -1;
-	
+
 	/*
 	相对布局规则 相关常量
 
@@ -166,7 +165,7 @@ public interface 组件 {
 
 	/**
 	 * 主要用于相对父级规则。
-	 * 
+	 *
 	 * <p>{@code RelativeLayout.TRUE}
 	 */
 	@SimpleDataElement
@@ -174,7 +173,7 @@ public interface 组件 {
 
 	/**
 	 * 在某元素左边
-	 * 
+	 *
 	 * <p>{@code RelativeLayout.LEFT_OF}
 	 */
 	@SimpleDataElement
@@ -182,7 +181,7 @@ public interface 组件 {
 
 	/**
 	 * 在某元素右边。
-	 * 
+	 *
 	 * <p>{@code RelativeLayout.RIGHT_OF}
 	 */
 	@SimpleDataElement
@@ -190,7 +189,7 @@ public interface 组件 {
 
 	/**
 	 * 在某元素顶边。
-	 * 
+	 *
 	 * <p>{@code RelativeLayout.ABOVE}
 	 */
 	@SimpleDataElement
@@ -198,7 +197,7 @@ public interface 组件 {
 
 	/**
 	 * 在某元素底边。
-	 * 
+	 *
 	 * <p>{@code RelativeLayout.BELOW}
 	 */
 	@SimpleDataElement
@@ -206,7 +205,7 @@ public interface 组件 {
 
 	/**
 	 * 与某元素对齐基线。
-	 * 
+	 *
 	 * <p>{@code RelativeLayout.ALIGN_BASELINE}
 	 */
 	@SimpleDataElement
@@ -214,7 +213,7 @@ public interface 组件 {
 
 	/**
 	 * 与某元素对齐左边。
-	 * 
+	 *
 	 * <p>{@code RelativeLayout.ALIGN_LEFT}
 	 */
 	@SimpleDataElement
@@ -222,7 +221,7 @@ public interface 组件 {
 
 	/**
 	 * 与某元素对齐顶边。
-	 * 
+	 *
 	 * <p>{@code RelativeLayout.ALIGN_TOP}
 	 */
 	@SimpleDataElement
@@ -230,7 +229,7 @@ public interface 组件 {
 
 	/**
 	 * 与某元素对齐右边。
-	 * 
+	 *
 	 * <p>{@code RelativeLayout.ALIGN_RIGHT}
 	 */
 	@SimpleDataElement
@@ -238,7 +237,7 @@ public interface 组件 {
 
 	/**
 	 * 与某元素对齐底边。
-	 * 
+	 *
 	 * <p>{@code RelativeLayout.ALIGN_BOTTOM}
 	 */
 	@SimpleDataElement
@@ -246,7 +245,7 @@ public interface 组件 {
 
 	/**
 	 * 贴紧父元素左边。
-	 * 
+	 *
 	 * <p>{@code RelativeLayout.ALIGN_PARENT_LEFT}
 	 */
 	@SimpleDataElement
@@ -254,7 +253,7 @@ public interface 组件 {
 
 	/**
 	 * 贴紧父元素顶边。
-	 * 
+	 *
 	 * <p>{@code RelativeLayout.ALIGN_PARENT_TOP}
 	 */
 	@SimpleDataElement
@@ -262,7 +261,7 @@ public interface 组件 {
 
 	/**
 	 * 贴紧父元素右边。
-	 * 
+	 *
 	 * <p>{@code RelativeLayout.ALIGN_PARENT_RIGHT}
 	 */
 	@SimpleDataElement
@@ -270,7 +269,7 @@ public interface 组件 {
 
 	/**
 	 * 贴紧父元素底边。
-	 * 
+	 *
 	 * <p>{@code RelativeLayout.ALIGN_PARENT_BOTTOM}
 	 */
 	@SimpleDataElement
@@ -278,7 +277,7 @@ public interface 组件 {
 
 	/**
 	 * 相对于父元素完全居中（水平和垂直）。
-	 * 
+	 *
 	 * <p>{@code RelativeLayout.CENTER_IN_PARENT}
 	 */
 	@SimpleDataElement
@@ -286,7 +285,7 @@ public interface 组件 {
 
 	/**
 	 * 相对于父元素水平居中。
-	 * 
+	 *
 	 * <p>{@code RelativeLayout.CENTER_HORIZONTAL}
 	 */
 	@SimpleDataElement
@@ -294,7 +293,7 @@ public interface 组件 {
 
 	/**
 	 * 相对于父元素垂直居中。
-	 * 
+	 *
 	 * <p>{@code RelativeLayout.CENTER_VERTICAL}
 	 */
 	@SimpleDataElement
@@ -302,7 +301,7 @@ public interface 组件 {
 
 	/**
 	 * 将子组件的结束边缘与另一个子组件的开始边缘对齐。
-	 * 
+	 *
 	 * <p>添加于API17，相当于{@link 可视组件#布局_规则_左}
 	 * <p>{@code RelativeLayout.START_OF}
 	 */
@@ -311,16 +310,16 @@ public interface 组件 {
 
 	/**
 	 * 将子组件的开始边缘与另一个子组件的结束边缘对齐。
-	 * 
+	 *
 	 * <p>添加于API17，相当于{@link 可视组件#布局_规则_右}
 	 * <p>{@code RelativeLayout.END_OF}
 	 */
 	@SimpleDataElement
 	static final int 布局_规则_结束 = 17;
-	
+
 	/**
 	 * 与某元素对齐开始。
-	 * 
+	 *
 	 * <p>添加于API17，相当于{@link 可视组件#布局_规则_对齐_左}
 	 * <p>{@code RelativeLayout.ALIGN_START}
 	 */
@@ -329,7 +328,7 @@ public interface 组件 {
 
 	/**
 	 * 与某元素对齐结束。
-	 * 
+	 *
 	 * <p>添加于API17，相当于{@link 可视组件#布局_规则_对齐_右}
 	 * <p>{@code RelativeLayout.ALIGN_END}
 	 */
@@ -338,7 +337,7 @@ public interface 组件 {
 
 	/**
 	 * 贴紧父元素开始。
-	 * 
+	 *
 	 * <p>添加于API17，相当于{@link 可视组件#布局_规则_对齐_父_左}
 	 * <p>{@code RelativeLayout.ALIGN_PARENT_START}
 	 */
@@ -347,14 +346,14 @@ public interface 组件 {
 
 	/**
 	 * 贴紧父元素结束。
-	 * 
+	 *
 	 * <p>添加于API17，相当于{@link 可视组件#布局_规则_对齐_父_右}。
 	 * <p>{@code RelativeLayout.ALIGN_PARENT_END}
 	 */
 	@SimpleDataElement
 	static final int 布局_规则_对齐_父_结束 = 21;
 
-	/* 
+	/*
 	字体类型常量。
 
 	参考文档： {@link https://developer.android.google.cn/reference/android/graphics/Typeface}
@@ -381,7 +380,7 @@ public interface 组件 {
 	@SimpleDataElement
 	static final int 长度_适应内容 = -1;
 	@SimpleDataElement
-	static final int 长度_匹配父级 = -2; 
+	static final int 长度_匹配父级 = -2;
 
 	/* 触摸事件常量。 */
 	@SimpleDataElement
@@ -407,7 +406,7 @@ public interface 组件 {
 
 	/*
 	键代码常数。
-	
+
 	参考文档： {@link https://www.cnblogs.com/bluestorm/p/4886662.html}
 	*/
 	@SimpleDataElement
@@ -605,11 +604,15 @@ public interface 组件 {
 	@SimpleDataElement
 	static final int 输入模式_链接 = 4;
 
+	/* 组件事件 */
+
 	/**
 	 * 默认初始化事件处理程序。
 	 */
 	@SimpleEvent
 	void 初始化();
+
+	/* 组件方法 */
 
 	/**
 	 * 销毁释放组件相关资源。

@@ -40,6 +40,7 @@ import android.view.View;
  * @author Herbert Czymontek
  */
 public abstract class 视图组件 extends 组件Impl implements 可视组件 {
+
 	/*
 	android.view.View：
 	https://developer.android.google.cn/reference/android/view/View
@@ -57,18 +58,18 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 	private int row;
 
 	private int left;
-	private int top;  
+	private int top;
 	private int width;
-	private int height; 
+	private int height;
 
 	/**
 	 * 创建新的安卓视图组件。
 	 *
-	 * @param container  将容纳组件的容器（不得为{@code null}，因为非可见组件必须是窗口）
+	 * @param container 将容纳组件的容器（不得为{@code null}，因为非可见组件必须是窗口）
 	 */
 	protected 视图组件(组件容器 container) {
 		super(container);
-		
+
 		// 预先设置，行和列属性会检验如果2个属性都设置了将会添加到布局中
 		column = 布局_无_列;
 		row = 布局_无_行;
@@ -97,23 +98,7 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 	 */
 	protected abstract View createView();
 
-	/**
-	 * 返回用户界面中显示的{@link View}。
-	 *
-	 * @return  视图
-	 */
-	public View getView() {
-		return view;
-	}
-
-	@Override
-	public void 销毁() {
-		// 调用下父类的销毁方法
-		super.销毁();
-
-		// 将视图从父级中移除
-		ViewUtil.removeView(getView());
-	}
+	/* 组件属性 */
 
 	/* 基础 */
 
@@ -151,7 +136,7 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 			width = 像素转换.解析像素(value);
         	((绝对布局Impl) layout).placeComponent(this);
       	} else {
-            ViewUtil.setWidth(getView(), 像素转换.解析像素(value)); 
+            ViewUtil.setWidth(getView(), 像素转换.解析像素(value));
     	}
 	}
 
@@ -168,7 +153,7 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 		if (layout instanceof 绝对布局Impl) {
 			height = 像素转换.解析像素(value);
 			((绝对布局Impl) layout).placeComponent(this);
-		} else {    
+		} else {
 			ViewUtil.setHeight(getView(), 像素转换.解析像素(value));
 		}
 	}
@@ -215,17 +200,6 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 		ViewUtil.setBottomMargin(getView(), 像素转换.解析像素(bottomMargin));
 	}
 
-	@Override
-	public void 置边距(Variant leftMargin, Variant topMargin, Variant rightMargin, Variant bottomMargin) {
-		ViewUtil.setMargin(
-			getView(),
-			像素转换.解析像素(leftMargin),
-			像素转换.解析像素(topMargin),
-			像素转换.解析像素(rightMargin),
-			像素转换.解析像素(bottomMargin)
-		);
-	}
-
 	/* 填充 */
 
 	@Override
@@ -268,18 +242,7 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 		ViewUtil.setBottomPadding(getView(), 像素转换.解析像素(bottomPadding));
 	}
 
-	@Override
-	public void 置填充(Variant leftPadding, Variant topPadding, Variant rightPadding, Variant bottomPadding) {
-		ViewUtil.setPadding(
-			getView(),
-			像素转换.解析像素(leftPadding),
-			像素转换.解析像素(topPadding),
-			像素转换.解析像素(rightPadding),
-			像素转换.解析像素(bottomPadding)
-		);
-	}
-
-	/* 背景 */ 
+	/* 背景 */
 
 	@Override
 	public int 背景颜色() {
@@ -309,7 +272,6 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 			throw new 文件未存在错误(image);
 		}
 	}
-
 
 	/* 对齐，仅当自身位于这些布局时生效：线性布局、表格布局、单帧布局 */
 
@@ -406,7 +368,319 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 			}
 		}
 	}
-	
+
+	@Override
+	public int 位于左边() {
+		return 取瞄点(布局_规则_左);
+	}
+
+	@Override
+	public void 位于左边(int id) {
+		添加规则(布局_规则_左, id);
+	}
+
+	@Override
+	public int 位于顶边() {
+		return 取瞄点(布局_规则_顶);
+	}
+
+	@Override
+	public void 位于顶边(int id) {
+		添加规则(布局_规则_顶, id);
+	}
+
+	@Override
+	public int 位于右边() {
+		return 取瞄点(布局_规则_右);
+	}
+
+	@Override
+	public void 位于右边(int id) {
+		添加规则(布局_规则_右, id);
+	}
+
+	@Override
+	public int 位于底边() {
+		return 取瞄点(布局_规则_底);
+	}
+
+	@Override
+	public void 位于底边(int id) {
+		添加规则(布局_规则_底, id);
+	}
+
+	@Override
+	public int 对齐基线() {
+		return 取瞄点(布局_规则_对齐_基线);
+	}
+
+	@Override
+	public void 对齐基线(int id) {
+		添加规则(布局_规则_对齐_基线, id);
+	}
+
+	@Override
+	public int 对齐左边() {
+		return 取瞄点(布局_规则_对齐_左);
+	}
+
+	@Override
+	public void 对齐左边(int id) {
+		添加规则(布局_规则_对齐_左, id);
+	}
+
+	@Override
+	public int 对齐顶边() {
+		return 取瞄点(布局_规则_对齐_顶);
+	}
+
+	@Override
+	public void 对齐顶边(int id) {
+		添加规则(布局_规则_对齐_顶, id);
+	}
+
+	@Override
+	public int 对齐右边() {
+		return 取瞄点(布局_规则_对齐_右);
+	}
+
+	@Override
+	public void 对齐右边(int id) {
+		添加规则(布局_规则_对齐_右, id);
+	}
+
+	@Override
+	public int 对齐底边() {
+		return 取瞄点(布局_规则_对齐_底);
+	}
+
+	@Override
+	public void 对齐底边(int id) {
+		添加规则(布局_规则_对齐_底, id);
+	}
+
+	@Override
+	public boolean 对齐父左边() {
+		return 取瞄点(布局_规则_对齐_父_左) == 布局_规则_真;
+	}
+
+	@Override
+	public void 对齐父左边(boolean enable) {
+		if (enable) {
+			添加规则(布局_规则_对齐_父_左, 布局_规则_真);
+		} else {
+			删除规则(布局_规则_对齐_父_左);
+		}
+	}
+
+	@Override
+	public boolean 对齐父顶边() {
+		return 取瞄点(布局_规则_对齐_父_顶) == 布局_规则_真;
+	}
+
+	@Override
+	public void 对齐父顶边(boolean enable) {
+		if (enable) {
+			添加规则(布局_规则_对齐_父_顶, 布局_规则_真);
+		} else {
+			删除规则(布局_规则_对齐_父_顶);
+		}
+	}
+
+	@Override
+	public boolean 对齐父右边() {
+		return 取瞄点(布局_规则_对齐_父_右) == 布局_规则_真;
+	}
+
+	@Override
+	public void 对齐父右边(boolean enable) {
+		if (enable) {
+			添加规则(布局_规则_对齐_父_右, 布局_规则_真);
+		} else {
+			删除规则(布局_规则_对齐_父_右);
+		}
+	}
+
+	@Override
+	public boolean 对齐父底边() {
+		return 取瞄点(布局_规则_对齐_父_底) == 布局_规则_真;
+	}
+
+	@Override
+	public void 对齐父底边(boolean enable) {
+		if (enable) {
+			添加规则(布局_规则_对齐_父_底, 布局_规则_真);
+		} else {
+			删除规则(布局_规则_对齐_父_底);
+		}
+	}
+
+	@Override
+	public boolean 居中于父() {
+		return 取瞄点(布局_规则_居中_于_父) == 布局_规则_真;
+	}
+
+	@Override
+	public void 居中于父(boolean enable) {
+		if (enable) {
+			添加规则(布局_规则_居中_于_父, 布局_规则_真);
+		} else {
+			删除规则(布局_规则_居中_于_父);
+		}
+	}
+
+	@Override
+	public boolean 居中水平() {
+		return 取瞄点(布局_规则_居中_水平) == 布局_规则_真;
+	}
+
+	@Override
+	public void 居中水平(boolean enable) {
+		if (enable) {
+			添加规则(布局_规则_居中_水平, 布局_规则_真);
+		} else {
+			删除规则(布局_规则_居中_水平);
+		}
+	}
+
+	@Override
+	public boolean 居中垂直() {
+		return 取瞄点(布局_规则_居中_垂直) == 布局_规则_真;
+	}
+
+	@Override
+	public void 居中垂直(boolean enable) {
+		if (enable) {
+			添加规则(布局_规则_居中_垂直, 布局_规则_真);
+		} else {
+			删除规则(布局_规则_居中_垂直);
+		}
+	}
+
+	@Override
+	public int 位于开始() {
+		return 取瞄点(布局_规则_开始);
+	}
+
+	@Override
+	public void 位于开始(int id) {
+		添加规则(布局_规则_开始, id);
+	}
+
+	@Override
+	public int 位于结束() {
+		return 取瞄点(布局_规则_结束);
+	}
+
+	@Override
+	public void 位于结束(int id) {
+		添加规则(布局_规则_结束, id);
+	}
+
+	@Override
+	public int 对齐开始() {
+		return 取瞄点(布局_规则_对齐_开始);
+	}
+
+	@Override
+	public void 对齐开始(int id) {
+		添加规则(布局_规则_对齐_开始, id);
+	}
+
+	@Override
+	public int 对齐结束() {
+		return 取瞄点(布局_规则_对齐_结束);
+	}
+
+	@Override
+	public void 对齐结束(int id) {
+		添加规则(布局_规则_对齐_结束, id);
+	}
+
+	@Override
+	public boolean 对齐父开始() {
+		return 取瞄点(布局_规则_对齐_父_开始) == 布局_规则_真;
+	}
+
+	@Override
+	public void 对齐父开始(boolean enable) {
+		if (enable) {
+			添加规则(布局_规则_对齐_父_开始, 布局_规则_真);
+		} else {
+			删除规则(布局_规则_对齐_父_开始);
+		}
+	}
+
+	@Override
+	public boolean 对齐父结束() {
+		return 取瞄点(布局_规则_对齐_父_结束) == 布局_规则_真;
+	}
+
+	@Override
+	public void 对齐父结束(boolean enable) {
+		if (enable) {
+			添加规则(布局_规则_对齐_父_结束, 布局_规则_真);
+		} else {
+			删除规则(布局_规则_对齐_父_结束);
+		}
+	}
+
+	/* 左边和顶边，仅当自身位于这些布局时生效：绝对布局 */
+
+	@Override
+	public Variant 左边() {
+		return IntegerVariant.getIntegerVariant(left);
+	}
+
+  	@Override
+  	public void 左边(Variant left) {
+    	this.left = 像素转换.解析像素(left);
+
+		布局 layout = getComponentContainer().getLayout();
+		if (layout instanceof 绝对布局Impl) {
+        	((绝对布局Impl) layout).placeComponent(this);
+		}
+    }
+
+	@Override
+	public Variant 顶边() {
+    	return IntegerVariant.getIntegerVariant(top);
+  	}
+
+	@Override
+	public void 顶边(Variant top) {
+    	this.top = 像素转换.解析像素(top);
+
+		布局 layout = getComponentContainer().getLayout();
+		if (layout instanceof 绝对布局Impl) {
+			((绝对布局Impl) layout).placeComponent(this);
+		}
+	}
+
+	/* 组件方法 */
+
+	@Override
+	public void 置边距(Variant leftMargin, Variant topMargin, Variant rightMargin, Variant bottomMargin) {
+		ViewUtil.setMargin(
+			getView(),
+			像素转换.解析像素(leftMargin),
+			像素转换.解析像素(topMargin),
+			像素转换.解析像素(rightMargin),
+			像素转换.解析像素(bottomMargin)
+		);
+	}
+
+	@Override
+	public void 置填充(Variant leftPadding, Variant topPadding, Variant rightPadding, Variant bottomPadding) {
+		ViewUtil.setPadding(
+			getView(),
+			像素转换.解析像素(leftPadding),
+			像素转换.解析像素(topPadding),
+			像素转换.解析像素(rightPadding),
+			像素转换.解析像素(bottomPadding)
+		);
+	}
+
 	/* 规则，仅当自身位于这些布局时生效：相对布局 */
 
 	@Override
@@ -451,294 +725,6 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 	}
 
 	@Override
-	public int 位于左边() {
-		return 取瞄点(布局_规则_左);
-	}
-	
-	@Override
-	public void 位于左边(int id) {
-		添加规则(布局_规则_左, id);
-	}
-
-	@Override
-	public int 位于顶边() {
-		return 取瞄点(布局_规则_顶);
-	}
-	
-	@Override
-	public void 位于顶边(int id) {
-		添加规则(布局_规则_顶, id);
-	}
-
-	@Override
-	public int 位于右边() {
-		return 取瞄点(布局_规则_右);
-	}
-	
-	@Override
-	public void 位于右边(int id) {
-		添加规则(布局_规则_右, id);
-	}
-
-	@Override
-	public int 位于底边() {
-		return 取瞄点(布局_规则_底);
-	}
-	
-	@Override
-	public void 位于底边(int id) {
-		添加规则(布局_规则_底, id);
-	}
-
-	@Override
-	public int 对齐基线() {
-		return 取瞄点(布局_规则_对齐_基线);
-	}
-	
-	@Override
-	public void 对齐基线(int id) {
-		添加规则(布局_规则_对齐_基线, id);
-	}
-
-	@Override
-	public int 对齐左边() {
-		return 取瞄点(布局_规则_对齐_左);
-	}
-
-	@Override
-	public void 对齐左边(int id) {
-		添加规则(布局_规则_对齐_左, id);
-	}
-
-	@Override
-	public int 对齐顶边() {
-		return 取瞄点(布局_规则_对齐_顶);
-	}
-
-	@Override
-	public void 对齐顶边(int id) {
-		添加规则(布局_规则_对齐_顶, id);
-	}
-
-	@Override
-	public int 对齐右边() {
-		return 取瞄点(布局_规则_对齐_右);
-	}
-
-	@Override
-	public void 对齐右边(int id) {
-		添加规则(布局_规则_对齐_右, id);
-	}
-	
-	@Override
-	public int 对齐底边() {
-		return 取瞄点(布局_规则_对齐_底);
-	}
-
-	@Override
-	public void 对齐底边(int id) {
-		添加规则(布局_规则_对齐_底, id);
-	}
-	
-	@Override
-	public boolean 对齐父左边() {
-		return 取瞄点(布局_规则_对齐_父_左) == 布局_规则_真;
-	}
-
-	@Override
-	public void 对齐父左边(boolean enable) {
-		if (enable) {
-			添加规则(布局_规则_对齐_父_左, 布局_规则_真);
-		} else {
-			删除规则(布局_规则_对齐_父_左);
-		}
-	}
-
-	@Override
-	public boolean 对齐父顶边() {
-		return 取瞄点(布局_规则_对齐_父_顶) == 布局_规则_真;
-	}
-	
-	@Override
-	public void 对齐父顶边(boolean enable) {
-		if (enable) {
-			添加规则(布局_规则_对齐_父_顶, 布局_规则_真);
-		} else {
-			删除规则(布局_规则_对齐_父_顶);
-		}
-	}
-
-	@Override
-	public boolean 对齐父右边() {
-		return 取瞄点(布局_规则_对齐_父_右) == 布局_规则_真;
-	}
-	
-	@Override
-	public void 对齐父右边(boolean enable) {
-		if (enable) {
-			添加规则(布局_规则_对齐_父_右, 布局_规则_真);
-		} else {
-			删除规则(布局_规则_对齐_父_右);
-		}
-	}
-
-	@Override
-	public boolean 对齐父底边() {
-		return 取瞄点(布局_规则_对齐_父_底) == 布局_规则_真;
-	}
-	
-	@Override
-	public void 对齐父底边(boolean enable) {
-		if (enable) {
-			添加规则(布局_规则_对齐_父_底, 布局_规则_真);
-		} else {
-			删除规则(布局_规则_对齐_父_底);
-		}
-	}
-
-	@Override
-	public boolean 居中于父() {
-		return 取瞄点(布局_规则_居中_于_父) == 布局_规则_真;
-	}
-	
-	@Override
-	public void 居中于父(boolean enable) {
-		if (enable) {
-			添加规则(布局_规则_居中_于_父, 布局_规则_真);
-		} else {
-			删除规则(布局_规则_居中_于_父);
-		}
-	}
-
-	@Override
-	public boolean 居中水平() {
-		return 取瞄点(布局_规则_居中_水平) == 布局_规则_真;
-	}
-
-	@Override
-	public void 居中水平(boolean enable) {
-		if (enable) {
-			添加规则(布局_规则_居中_水平, 布局_规则_真);
-		} else {
-			删除规则(布局_规则_居中_水平);
-		}
-	}
-
-	@Override
-	public boolean 居中垂直() {
-		return 取瞄点(布局_规则_居中_垂直) == 布局_规则_真;
-	}
-	
-	@Override
-	public void 居中垂直(boolean enable) {
-		if (enable) {
-			添加规则(布局_规则_居中_垂直, 布局_规则_真);
-		} else {
-			删除规则(布局_规则_居中_垂直);
-		}
-	}
-
-	@Override
-	public int 位于开始() {
-		return 取瞄点(布局_规则_开始);
-	}
-	
-	@Override
-	public void 位于开始(int id) {
-		添加规则(布局_规则_开始, id);
-	}
-
-	@Override
-	public int 位于结束() {
-		return 取瞄点(布局_规则_结束);
-	}
-	
-	@Override
-	public void 位于结束(int id) {
-		添加规则(布局_规则_结束, id);
-	}
-
-	@Override
-	public int 对齐开始() {
-		return 取瞄点(布局_规则_对齐_开始);
-	}
-	
-	@Override
-	public void 对齐开始(int id) {
-		添加规则(布局_规则_对齐_开始, id);
-	}
-	
-	@Override
-	public int 对齐结束() {
-		return 取瞄点(布局_规则_对齐_结束);
-	}
-	
-	@Override
-	public void 对齐结束(int id) {
-		添加规则(布局_规则_对齐_结束, id);
-	}
-	
-	@Override
-	public boolean 对齐父开始() {
-		return 取瞄点(布局_规则_对齐_父_开始) == 布局_规则_真;
-	}
-	
-	@Override
-	public void 对齐父开始(boolean enable) {
-		if (enable) {
-			添加规则(布局_规则_对齐_父_开始, 布局_规则_真);
-		} else {
-			删除规则(布局_规则_对齐_父_开始);
-		}
-	}
-
-	@Override
-	public boolean 对齐父结束() {
-		return 取瞄点(布局_规则_对齐_父_结束) == 布局_规则_真;
-	}
-	
-	@Override
-	public void 对齐父结束(boolean enable) {
-		if (enable) {
-			添加规则(布局_规则_对齐_父_结束, 布局_规则_真);
-		} else {
-			删除规则(布局_规则_对齐_父_结束);
-		}
-	}
-
-	/* 左边和顶边，仅当自身位于这些布局时生效：绝对布局 */
-
-	@Override
-	public Variant 左边() {
-		return IntegerVariant.getIntegerVariant(left);
-	}
-
-  	@Override
-  	public void 左边(Variant left) {
-    	this.left = 像素转换.解析像素(left);
-
-		布局 layout = getComponentContainer().getLayout();
-		if (layout instanceof 绝对布局Impl) {
-        	((绝对布局Impl) layout).placeComponent(this);
-		}
-    }
-
-	@Override
-	public Variant 顶边() {
-    	return IntegerVariant.getIntegerVariant(top);
-  	}
-
-	@Override
-	public void 顶边(Variant top) {
-    	this.top = 像素转换.解析像素(top);
-		
-		布局 layout = getComponentContainer().getLayout();
-		if (layout instanceof 绝对布局Impl) {
-			((绝对布局Impl) layout).placeComponent(this);
-		}
-	}
-
-	@Override
 	public void 移动(Variant left, Variant top, Variant width, Variant height) {
 		this.left = 像素转换.解析像素(left);
 		this.top = 像素转换.解析像素(top);
@@ -749,5 +735,25 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 		if (layout instanceof 绝对布局Impl) {
 			((绝对布局Impl) layout).placeComponent(this);
 		}
+	}
+
+	@Override
+	public void 销毁() {
+		// 调用下父类的销毁方法
+		super.销毁();
+
+		// 将视图从父级中移除
+		ViewUtil.removeView(getView());
+	}
+
+	/* 内部接口与平台回调 */
+
+	/**
+	 * 返回用户界面中显示的{@link View}。
+	 *
+	 * @return 视图
+	 */
+	public View getView() {
+		return view;
 	}
 }

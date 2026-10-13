@@ -30,17 +30,22 @@ import simple.runtime.annotations.UsesPermissions;
 @SimpleObject
 @SimpleComponent
 @UsesPermissions(permissionNames =
-								 "android.permission.ACCESS_FINE_LOCATION," +
-								 "android.permission.ACCESS_COARSE_LOCATION," +
-								 "android.permission.ACCESS_MOCK_LOCATION," +
-								 "android.permission.ACCESS_LOCATION_EXTRA_COMMANDS")
+	"android.permission.ACCESS_FINE_LOCATION," +
+	"android.permission.ACCESS_COARSE_LOCATION," +
+	"android.permission.ACCESS_MOCK_LOCATION," +
+	"android.permission.ACCESS_LOCATION_EXTRA_COMMANDS"
+)
 public interface 位置传感器  extends 传感器组件 {
+
+	/* 组件事件 */
 
 	/**
 	 * 指示已检测到新位置。
 	 */
 	@SimpleEvent
 	void 位置改变(double latitude, double longitude, double altitude);
+
+	/* 组件属性 */
 
 	/**
 	 * 指示设备是否具有位置传感器。

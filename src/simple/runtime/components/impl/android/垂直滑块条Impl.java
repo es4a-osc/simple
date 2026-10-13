@@ -49,7 +49,7 @@ public class 垂直滑块条Impl extends 进度视图组件 implements 垂直滑
 		return view;
 	}
 
-	// 垂直滑块条 实现
+	/* 组件事件 */
 
 	@Override
 	public void 开始拖动() {

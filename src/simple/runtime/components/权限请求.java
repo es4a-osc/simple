@@ -14,6 +14,8 @@ import simple.runtime.annotations.SimpleObject;
 @SimpleObject
 public interface 权限请求 extends 组件 {
 
+	/* 组件事件 */
+
 	/**
 	 * 请求权限结果通知。
 	 *
@@ -23,6 +25,8 @@ public interface 权限请求 extends 组件 {
 	 */
 	@SimpleEvent
 	void 请求结果(String[] permissions, int[] grantResults, String requestMark);
+
+	/* 组件方法 */
 
 	/**
 	 * 取当前应用所有权限列表。

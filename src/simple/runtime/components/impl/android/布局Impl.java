@@ -33,8 +33,8 @@ public abstract class 布局Impl implements 布局 {
 	/**
 	 * 创建一个新的布局。
 	 *
-	 * @param layoutManager  安卓布局管理器
-	 * @param container  视图容器
+	 * @param layoutManager 安卓布局管理器
+	 * @param container 视图容器
 	 */
 	布局Impl(ViewGroup layoutManager, 视图组件容器 container) {
 		this.layoutManager = layoutManager;
@@ -44,7 +44,7 @@ public abstract class 布局Impl implements 布局 {
 	/**
 	 * 返回与布局关联的视图组（它是一个包含布局管理器的容器）。
 	 *
-	 * @return  视图组
+	 * @return 视图组
 	 */
 	protected final ViewGroup getLayoutManager() {
 		return layoutManager;
@@ -53,7 +53,7 @@ public abstract class 布局Impl implements 布局 {
 	/**
 	 * 返回与此布局关联的容器。
 	 *
-	 * @return  组件容器
+	 * @return 组件容器
 	 */
 	protected final 视图组件容器 getContainer() {
 		return container;
@@ -62,7 +62,7 @@ public abstract class 布局Impl implements 布局 {
 	/**
 	 * 将指定的组件添加到此布局。
 	 *
-	 * @param component  要添加的组件
+	 * @param component 要添加的组件
 	 */
 	public abstract void addComponent(视图组件 component);
 }

@@ -35,8 +35,7 @@ import java.util.Queue;
  *
  * @author Herbert Czymontek
  */
-public final class 加速度传感器Impl extends 组件Impl
-		implements 加速度传感器, SensorEventListener {
+public final class 加速度传感器Impl extends 组件Impl implements 加速度传感器, SensorEventListener {
 
 	// Skake threshold - derived by trial
 	private final static double SHAKE_THRESHOLD = 8.0;
@@ -61,7 +60,7 @@ public final class 加速度传感器Impl extends 组件Impl
 	/**
 	 * Creates a new OrientationSensor component.
 	 *
-	 * @param container  container which will hold the component (must not be
+	 * @param container container which will hold the component (must not be
 	 *                   {@code null}, for non-visible component, like this one
 	 *                   must be the form)
 	 */
@@ -72,13 +71,14 @@ public final class 加速度传感器Impl extends 组件Impl
 		Y_CACHE = new LinkedList<Float>();
 		Z_CACHE = new LinkedList<Float>();
 
-		SensorManager sensors =
-				(SensorManager) MainActivity.getContext().getSystemService(Context.SENSOR_SERVICE);
+		SensorManager sensors = (SensorManager) MainActivity.getContext().getSystemService(Context.SENSOR_SERVICE);
 		sensor = sensors.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 		if (sensor != null) {
 			sensors.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME);
 		}
 	}
+
+	/* 组件事件 */
 
 	// AccelerometerSensor implementation
 
@@ -102,9 +102,7 @@ public final class 加速度传感器Impl extends 组件Impl
 		addToSensorCache(Y_CACHE, yAccelNew);
 		addToSensorCache(Z_CACHE, zAccelNew);
 
-		if (isShaking(X_CACHE, xAccelNew) ||
-				isShaking(Y_CACHE, yAccelNew) ||
-				isShaking(Z_CACHE, zAccelNew)) {
+		if (isShaking(X_CACHE, xAccelNew) || isShaking(Y_CACHE, yAccelNew) || isShaking(Z_CACHE, zAccelNew)) {
 			摇晃();
 		}
 
@@ -116,11 +114,13 @@ public final class 加速度传感器Impl extends 组件Impl
 		EventDispatcher.dispatchEvent(this, "摇晃");
 	}
 
+	/* 组件属性 */
+
 	@Override
 	public boolean 可用() {
 		return sensor != null;
-//    List<Sensor> sensorList = sensors.getSensorList(Sensor.TYPE_ACCELEROMETER);
-//    return sensorList != null && !sensorList.isEmpty();
+		// List<Sensor> sensorList = sensors.getSensorList(Sensor.TYPE_ACCELEROMETER);
+		// return sensorList != null && !sensorList.isEmpty();
 	}
 
 	@Override
@@ -148,6 +148,26 @@ public final class 加速度传感器Impl extends 组件Impl
 		return zAccel;
 	}
 
+	/* 内部接口与平台回调 */
+
+	// SensorEventListener implementation
+
+	@Override
+	public void onSensorChanged(SensorEvent event) {
+		if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER && enabled) {
+			xAccel = event.values[0];
+			yAccel = event.values[1];
+			zAccel = event.values[2];
+			加速度改变(xAccel, yAccel, zAccel);
+		}
+	}
+
+	@Override
+	public void onAccuracyChanged(Sensor s, int accuracy) {
+	}
+
+	/* 内部辅助方法 */
+
 	/*
 	 * Updating sensor cache, replacing oldest values.
 	 */
@@ -172,21 +192,5 @@ public final class 加速度传感器Impl extends 组件Impl
 		average /= cache.size();
 
 		return Math.abs(average - currentValue) > SHAKE_THRESHOLD;
-	}
-
-	// SensorEventListener implementation
-
-	@Override
-	public void onSensorChanged(SensorEvent event) {
-		if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER && enabled) {
-			xAccel = event.values[0];
-			yAccel = event.values[1];
-			zAccel = event.values[2];
-			加速度改变(xAccel, yAccel, zAccel);
-		}
-	}
-
-	@Override
-	public void onAccuracyChanged(Sensor s, int accuracy) {
 	}
 }

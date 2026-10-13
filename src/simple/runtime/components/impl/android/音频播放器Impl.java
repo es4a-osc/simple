@@ -40,8 +40,8 @@ public final class 音频播放器Impl extends 组件Impl implements 音频播�
 			/**
 			 * 调用以指示错误。
 			 *
-			 * @param mp    错误所属的媒体播放器
-			 * @param what  信息或警告的类型。
+			 * @param mp 错误所属的媒体播放器
+			 * @param what 信息或警告的类型。
 			 * @param extra 一个额外的代码，特定于信息。通常依赖于实现。
 			 * @return 如果方法处理错误，则返回true;否则返回false。返回false或根本没有OnErrorListener将导致调用OnCompletionListener。
 			 */
@@ -57,8 +57,8 @@ public final class 音频播放器Impl extends 组件Impl implements 音频播�
 			/**
 			 * 如果方法处理信息，则为True，否则为false。返回false或根本没有OnInfoListener将导致信息被丢弃。
 			 *
-			 * @param mp    MediaPlayer的信息属于。
-			 * @param what  信息或警告的类型。
+			 * @param mp MediaPlayer的信息属于。
+			 * @param what 信息或警告的类型。
 			 * @param extra 一个额外的代码，特定于信息。通常依赖于实现。
 			 * @return 如果方法处理信息，则为True，否则为false。返回false或根本没有OnInfoListener将导致信息被丢弃。
 			 */
@@ -75,7 +75,7 @@ public final class 音频播放器Impl extends 组件Impl implements 音频播�
 			 * 被调用以更新缓冲通过渐进式HTTP下载接收的媒体流的状态。 接收的缓冲百分比表示已缓冲或播放了多少内容。
 			 * 例如，当已播放一半内容时，缓冲更新为80％表示要播放的下一个30％的内容已被缓冲。
 			 *
-			 * @param mp      更新所属的MediaPlayer
+			 * @param mp 更新所属的MediaPlayer
 			 * @param percent 到目前为止已缓冲或播放的内容的百分比（0-100）
 			 */
 			@Override
@@ -124,7 +124,7 @@ public final class 音频播放器Impl extends 组件Impl implements 音频播�
 		});
 	}
 
-	/* 音频播放器 实现 */
+	/* 组件事件 */
 
 	@Override
 	public void 错误通知(int what, int extra) {
@@ -155,6 +155,8 @@ public final class 音频播放器Impl extends 组件Impl implements 音频播�
 	public void 播放结束() {
 		EventDispatcher.dispatchEvent(this, "播放结束");
 	}
+
+	/* 组件属性 */
 
 	@Override
 	public int 时长() {
@@ -195,7 +197,7 @@ public final class 音频播放器Impl extends 组件Impl implements 音频播�
 		mp.setLooping(looping); // 将播放器设置为循环或非循环。
 	}
 
-	/* 音频播放器 方法实现 */
+	/* 组件方法 */
 
 	@Override
 	public boolean 打开(String mFile) {

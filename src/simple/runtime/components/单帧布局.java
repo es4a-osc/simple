@@ -28,6 +28,8 @@ import simple.runtime.annotations.SimpleObject;
 @SimpleObject
 public interface 单帧布局 extends 布局 {
 
+	/* 组件方法 */
+
 	/**
 	 * 将指点窗口添加到布局。
 	 *

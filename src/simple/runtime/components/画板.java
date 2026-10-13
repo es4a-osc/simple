@@ -32,6 +32,8 @@ import simple.runtime.annotations.SimpleProperty;
 @SimpleObject
 public interface 画板 extends 可视组件 {
 
+	/* 组件事件 */
+
 	/**
 	 * 默认按下事件处理方法。
 	 *
@@ -69,10 +71,12 @@ public interface 画板 extends 可视组件 {
 	@SimpleEvent
 	void 触摸手势(int direction);
 
+	/* 组件属性 */
+
 	/**
 	 * 画笔颜色属性获取器方法。
 	 *
-	 * @return  画笔Alpha绘制RGB颜色。
+	 * @return 画笔Alpha绘制RGB颜色。
 	 */
 	@SimpleProperty
 	int 画笔颜色();
@@ -80,7 +84,7 @@ public interface 画板 extends 可视组件 {
 	/**
 	 * 画笔颜色属性设置器方法。
 	 *
-	 * @param argb  画笔Alpha绘制RGB颜色。
+	 * @param argb 画笔Alpha绘制RGB颜色。
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_COLOR,
@@ -107,6 +111,8 @@ public interface 画板 extends 可视组件 {
 	)
 	void 画笔粗细(float size);
 
+	/* 组件方法 */
+
 	/**
 	 * 清除画板（用背景颜色填充）。
 	 */
@@ -116,8 +122,8 @@ public interface 画板 extends 可视组件 {
 	/**
 	 * 在画板上的给定坐标处绘制点。
 	 *
-	 * @param x  x坐标
-	 * @param y  y坐标
+	 * @param x x坐标
+	 * @param y y坐标
 	 */
 	@SimpleFunction
 	void 画点(int x, int y);
@@ -125,9 +131,9 @@ public interface 画板 extends 可视组件 {
 	/**
 	 * 在画板上给定的坐标，用给定的半径画一个圆。
 	 *
-	 * @param x  x坐标
-	 * @param y  y坐标
-	 * @param r  半径
+	 * @param x x坐标
+	 * @param y y坐标
+	 * @param r 半径
 	 */
 	@SimpleFunction
 	void 画圆(int x, int y, float r);
@@ -135,15 +141,15 @@ public interface 画板 extends 可视组件 {
 	/**
 	 * 在画板上给定的坐标之间绘制一条直线。
 	 *
-	 * @param x1  第一点的x坐标
-	 * @param y1  第一点的y坐标
-	 * @param x2  第二点的x坐标
-	 * @param y2  第二点的y坐标
+	 * @param x1 第一点的x坐标
+	 * @param y1 第一点的y坐标
+	 * @param x2 第二点的x坐标
+	 * @param y2 第二点的y坐标
 	 */
 	@SimpleFunction
 	void 画直线(int x1, int y1, int x2, int y2);
 
-	// 属性默认值重写
+	/* 覆盖属性默认值 */
 
 	@Override
 	@SimpleProperty(

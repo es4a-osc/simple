@@ -50,10 +50,14 @@ public final class 计时器Impl extends 组件Impl implements 计时器, Runnab
 		handler = new Handler();
 	}
 
+	/* 组件事件 */
+
 	@Override
 	public void 计时() {
 		EventDispatcher.dispatchEvent(this, "计时");
 	}
+
+	/* 组件属性 */
 
 	@Override
 	public int 间隔() {
@@ -88,13 +92,13 @@ public final class 计时器Impl extends 组件Impl implements 计时器, Runnab
 		}
 	}
 
-	/* Runnable 实现 */
+	/* 内部接口与平台回调 */
 
 	public void run() {
 		if (enabled) {
 			// 触发事件
 			计时();
-			
+
 			handler.postDelayed(this, interval);
 		}
 	}

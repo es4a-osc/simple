@@ -30,10 +30,11 @@ import android.widget.RadioGroup;
  * @author 树先生 xhwsd@qq.com
  */
 public final class 线性布局Impl extends 布局Impl implements 线性布局 {
+
 	/*
 	RadioGroup
 	https://developer.android.google.cn/reference/android/widget/RadioGroup
-	
+
 	RadioGroup.LayoutParams
 	https://developer.android.google.cn/reference/android/widget/RadioGroup.LayoutParams
 	*/
@@ -44,7 +45,7 @@ public final class 线性布局Impl extends 布局Impl implements 线性布局 {
 	/**
 	 * 创建一个新的线性布局。
 	 *
-	 * @param container  视图容器
+	 * @param container 视图容器
 	 */
 	线性布局Impl(视图组件容器 container) {
 		// 单选组布局（android.widget.RadioGroup），该布局是继承至线性布局（android.widget.LinearLayout）
@@ -54,15 +55,7 @@ public final class 线性布局Impl extends 布局Impl implements 线性布局 {
 		justification = 组件.对齐_上;
 	}
 
-	@Override
-	public void addComponent(视图组件 component) {
-		getLayoutManager().addView(component.getView(), new RadioGroup.LayoutParams(
-			RadioGroup.LayoutParams.WRAP_CONTENT,
-			RadioGroup.LayoutParams.WRAP_CONTENT
-		));
-	}
-
-	/* 线性布局 实现 */
+	/* 组件属性 */
 
 	@Override
 	public int 方向() {
@@ -86,7 +79,7 @@ public final class 线性布局Impl extends 布局Impl implements 线性布局 {
 	public void 内容对齐(int justification) {
 		// 注意这里是设置其内容（子视图）相对自身的对齐方式
 		this.justification = justification;
-		
+
 		((RadioGroup) getLayoutManager()).setGravity(ViewUtil.simpleToAndroidGravity(justification));
 	}
 
@@ -108,5 +101,15 @@ public final class 线性布局Impl extends 布局Impl implements 线性布局 {
 	@Override
 	public void 权重总和(float weight) {
 		((RadioGroup) getLayoutManager()).setWeightSum(weight);
+	}
+
+	/* 内部接口与平台回调 */
+
+	@Override
+	public void addComponent(视图组件 component) {
+		getLayoutManager().addView(component.getView(), new RadioGroup.LayoutParams(
+			RadioGroup.LayoutParams.WRAP_CONTENT,
+			RadioGroup.LayoutParams.WRAP_CONTENT
+		));
 	}
 }

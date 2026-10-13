@@ -27,7 +27,7 @@ public class 水平进度条Impl extends 进度视图组件 implements 水平进
 		return view;
 	}
 
-	// 水平进度条 实现
+	/* 组件属性 */
 
 	@Override
 	public boolean 循环模式() {

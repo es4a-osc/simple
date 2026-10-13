@@ -13,6 +13,8 @@ import simple.runtime.annotations.SimpleProperty;
 @SimpleObject
 public interface 水平进度条 extends 进度组件 {
 
+	/* 组件属性 */
+
 	/**
 	 * 循环模式属性获取方法。
 	 *

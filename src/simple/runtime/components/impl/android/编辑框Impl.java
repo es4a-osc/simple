@@ -37,6 +37,7 @@ import android.widget.TextView;
  * @author Herbert Czymontek
  */
 public final class 编辑框Impl extends 文本视图组件 implements 编辑框 {
+
 	// 提示文本颜色
 	private int hintColor;
 	// 输入模式
@@ -45,7 +46,7 @@ public final class 编辑框Impl extends 文本视图组件 implements 编辑框
 	/**
 	 * 创建一个新的文本框组件。
 	 *
-	 * @param container  将容纳组件的容器（不得为{@code null}）
+	 * @param container 将容纳组件的容器（不得为{@code null}）
 	 */
 	public 编辑框Impl(组件容器 container) {
 		super(container);
@@ -99,7 +100,7 @@ public final class 编辑框Impl extends 文本视图组件 implements 编辑框
 		return view;
 	}
 
-	// 编辑框 实现
+	/* 组件事件 */
 
 	@Override
 	public void 获得焦点() {
@@ -115,6 +116,8 @@ public final class 编辑框Impl extends 文本视图组件 implements 编辑框
 	public void 文本改变(String sourceText, BooleanReferenceParameter accept) {
 		EventDispatcher.dispatchEvent(this, "文本改变", sourceText, accept);
 	}
+
+	/* 组件属性 */
 
 	@Override
 	public boolean 启用() {
@@ -182,6 +185,8 @@ public final class 编辑框Impl extends 文本视图组件 implements 编辑框
 		EditTextUtil.setInputModel((EditText) getView(), model);
 	}
 
+	/* 组件方法 */
+
 	@Override
 	public boolean 获取焦点() {
 		return ViewUtil.requestFocus(getView());
@@ -190,16 +195,6 @@ public final class 编辑框Impl extends 文本视图组件 implements 编辑框
 	@Override
 	public void 清除焦点() {
 		ViewUtil.clearFocus(getView());
-	}
-
-	@Override
-	public void 显示输入法() {
-		EditTextUtil.showSoftInput((EditText) getView(), false);
-	}
-
-	@Override
-	public void 隐藏输入法() {
-		EditTextUtil.hideSoftInput((EditText) getView(), false);
 	}
 
 	@Override
@@ -225,5 +220,15 @@ public final class 编辑框Impl extends 文本视图组件 implements 编辑框
 	@Override
 	public void 全选文本() {
 		EditTextUtil.selectAll((EditText) getView());
+	}
+
+	@Override
+	public void 显示输入法() {
+		EditTextUtil.showSoftInput((EditText) getView(), false);
+	}
+
+	@Override
+	public void 隐藏输入法() {
+		EditTextUtil.hideSoftInput((EditText) getView(), false);
 	}
 }

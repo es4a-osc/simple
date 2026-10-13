@@ -28,12 +28,37 @@ public class 视频播放器Impl extends 视图组件 implements 视频播放器
 		super(container);
 	}
 
-	// 视频播放器 实现
+	// 视图组件 相关方法
+	@Override
+	protected View createView() {
+		videoView = new CustomVideoView(MainActivity.getContext());
+		videoView.setFocusable(true);
+		videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+			@Override
+			public void onCompletion(MediaPlayer mp) {
+				播放完毕();
+			}
+		});
+
+		LinearLayout layout = new LinearLayout(MainActivity.getContext());
+		layout.setOrientation(LinearLayout.VERTICAL);
+		layout.setHorizontalGravity(1);
+		layout.setBackgroundColor(颜色_黑);
+		LinearLayout.LayoutParams param = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+				LinearLayout.LayoutParams.MATCH_PARENT);
+		layout.addView(videoView, param);
+		layout.setFocusable(true);
+		return layout;
+	}
+
+	/* 组件事件 */
 
 	@Override
 	public void 播放完毕() {
 		EventDispatcher.dispatchEvent(this, "播放完毕");
 	}
+
+	/* 组件方法 */
 
 	@Override
 	public void 播放视频(String path) {
@@ -93,29 +118,6 @@ public class 视频播放器Impl extends 视图组件 implements 视频播放器
 		} else if (mediaController != null) {
 			mediaController.setVisibility(4);
 		}
-	}
-
-	// 视图组件 相关方法
-	@Override
-	protected View createView() {
-		videoView = new CustomVideoView(MainActivity.getContext());
-		videoView.setFocusable(true);
-		videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-			@Override
-			public void onCompletion(MediaPlayer mp) {
-				播放完毕();
-			}
-		});
-
-		LinearLayout layout = new LinearLayout(MainActivity.getContext());
-		layout.setOrientation(LinearLayout.VERTICAL);
-		layout.setHorizontalGravity(1);
-		layout.setBackgroundColor(颜色_黑);
-		LinearLayout.LayoutParams param = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
-				LinearLayout.LayoutParams.MATCH_PARENT);
-		layout.addView(videoView, param);
-		layout.setFocusable(true);
-		return layout;
 	}
 
 	/**

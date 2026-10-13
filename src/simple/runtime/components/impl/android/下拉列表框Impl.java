@@ -50,12 +50,14 @@ public class 下拉列表框Impl extends 列表视图组件 implements 下拉列
 		return view;
 	}
 
-	// 下拉列表框 实现
+	/* 组件事件 */
 
 	@Override
 	public void 项目被选择(int index) {
 		EventDispatcher.dispatchEvent(this, "项目被选择", index);
 	}
+
+	/* 组件属性 */
 
 	@Override
 	public int 现行选中项() {
@@ -70,9 +72,27 @@ public class 下拉列表框Impl extends 列表视图组件 implements 下拉列
 		selection = index;
 	}
 
+	/* 组件方法 */
+
 	@Override
 	public int 取项目数() {
 		return list.size();
+	}
+
+	@Override
+	public void 删除项目(int index) {
+		try {
+			list.remove(index);
+			adapter.notifyDataSetChanged();
+		} catch (IndexOutOfBoundsException e) {
+			throw new 索引超出界限错误();
+		}
+	}
+
+	@Override
+	public void 清空项目() {
+		list.clear();
+		adapter.notifyDataSetChanged();
 	}
 
 	@Override
@@ -90,22 +110,6 @@ public class 下拉列表框Impl extends 列表视图组件 implements 下拉列
 		} catch (IndexOutOfBoundsException e) {
 			throw new 索引超出界限错误();
 		}
-	}
-
-	@Override
-	public void 删除项目(int index) {
-		try {
-			list.remove(index);
-			adapter.notifyDataSetChanged();
-		} catch (IndexOutOfBoundsException e) {
-			throw new 索引超出界限错误();
-		}
-	}
-
-	@Override
-	public void 清空项目() {
-		list.clear();
-		adapter.notifyDataSetChanged();
 	}
 
 	@Override

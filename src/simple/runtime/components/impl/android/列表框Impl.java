@@ -32,92 +32,7 @@ public class 列表框Impl extends 列表视图组件 implements 列表框 {
 		super(container);
 	}
 
-	/* 列表框 实现 */
-
-	@Override
-	public void 项目被滚动(int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-		EventDispatcher.dispatchEvent(this, "项目被滚动", firstVisibleItem, visibleItemCount, totalItemCount);
-	}
-
-	@Override
-	public void 项目被单击(int index) {
-		EventDispatcher.dispatchEvent(this, "项目被单击", index);
-	}
-
-	@Override
-	public void 项目被长按(int index) {
-		EventDispatcher.dispatchEvent(this, "项目被长按", index);
-	}
-
-	@Override
-	public boolean 获取焦点() {
-		return ViewUtil.requestFocus(getView());
-	}
-
-	@Override
-	public void 清除焦点() {
-		ViewUtil.clearFocus(getView());
-	}
-
-	@Override
-	public void 垂直滚动(int x) {
-		ListView view = (ListView) getView();
-		view.scrollBy(0, view.getBottom() * x / 100);
-	}
-
-	@Override
-	public int 取项目数() {
-		return list.size();
-	}
-
-	@Override
-	public void 选择项目(int index) {
-		((ListView) getView()).setSelection(index);
-	}
-
-	@Override
-	public void 删除项目(int index) {
-		try {
-			list.remove(index);
-			adapter.notifyDataSetChanged();
-		} catch (IndexOutOfBoundsException e) {
-			throw new 索引超出界限错误();
-		}
-	}
-
-	@Override
-	public void 清空项目() {
-		list.clear();
-		adapter.notifyDataSetChanged();
-	}
-
-	@Override
-	public int 添加项目(String text) {
-		list.add(text);
-		adapter.notifyDataSetChanged();
-		return list.size() - 1;
-	}
-
-	@Override
-	public String 取项目文本(int index) {
-		try {
-			return list.get(index);
-		} catch (IndexOutOfBoundsException e) {
-			throw new 索引超出界限错误();
-		}
-	}
-
-	@Override
-	public void 置项目文本(int index, String text) {
-		try {
-			list.set(index, text);
-			adapter.notifyDataSetChanged();
-		} catch (IndexOutOfBoundsException e) {
-			throw new 索引超出界限错误();
-		}
-	}
-
-	/* 视图组件 相关方法 */ 
+	/* 视图组件 相关方法 */
 
 	@Override
 	protected View createView() {
@@ -126,7 +41,7 @@ public class 列表框Impl extends 列表视图组件 implements 列表框 {
 		ArrayAdapter
 		https://developer.android.google.cn/reference/android/widget/ArrayAdapter
 		*/
-		
+
 		// 一行文本列表布局
 		adapter = new ArrayAdapter<String>(MainActivity.getContext(), android.R.layout.simple_list_item_1, list) {
 			// 重写该方法，实现对文本视图的属性自定义
@@ -194,5 +109,92 @@ public class 列表框Impl extends 列表视图组件 implements 列表框 {
 		});
 
 		return view;
+	}
+
+	/* 组件事件 */
+
+	@Override
+	public void 项目被单击(int index) {
+		EventDispatcher.dispatchEvent(this, "项目被单击", index);
+	}
+
+	@Override
+	public void 项目被长按(int index) {
+		EventDispatcher.dispatchEvent(this, "项目被长按", index);
+	}
+
+	@Override
+	public void 项目被滚动(int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+		EventDispatcher.dispatchEvent(this, "项目被滚动", firstVisibleItem, visibleItemCount, totalItemCount);
+	}
+
+	/* 组件方法 */
+
+	@Override
+	public boolean 获取焦点() {
+		return ViewUtil.requestFocus(getView());
+	}
+
+	@Override
+	public void 清除焦点() {
+		ViewUtil.clearFocus(getView());
+	}
+
+	@Override
+	public void 垂直滚动(int x) {
+		ListView view = (ListView) getView();
+		view.scrollBy(0, view.getBottom() * x / 100);
+	}
+
+	@Override
+	public int 取项目数() {
+		return list.size();
+	}
+
+	@Override
+	public void 选择项目(int index) {
+		((ListView) getView()).setSelection(index);
+	}
+
+	@Override
+	public void 删除项目(int index) {
+		try {
+			list.remove(index);
+			adapter.notifyDataSetChanged();
+		} catch (IndexOutOfBoundsException e) {
+			throw new 索引超出界限错误();
+		}
+	}
+
+	@Override
+	public void 清空项目() {
+		list.clear();
+		adapter.notifyDataSetChanged();
+	}
+
+	@Override
+	public int 添加项目(String text) {
+		list.add(text);
+		adapter.notifyDataSetChanged();
+		return list.size() - 1;
+	}
+
+	@Override
+	public String 取项目文本(int index) {
+		try {
+			return list.get(index);
+		} catch (IndexOutOfBoundsException e) {
+			throw new 索引超出界限错误();
+		}
+	}
+
+	@Override
+	public void 置项目文本(int index, String text) {
+		try {
+			list.set(index, text);
+			adapter.notifyDataSetChanged();
+		} catch (IndexOutOfBoundsException e) {
+			throw new 索引超出界限错误();
+		}
 	}
 }

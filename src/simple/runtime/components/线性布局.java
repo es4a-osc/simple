@@ -28,6 +28,8 @@ import simple.runtime.annotations.SimpleProperty;
 @SimpleObject
 public interface 线性布局 extends 布局 {
 
+	/* 组件属性 */
+
 	/**
 	 * 方向属性获取方法。
 	 *
@@ -40,7 +42,7 @@ public interface 线性布局 extends 布局 {
 	/**
 	 * 方向属性设置器方法。
 	 *
-	 * @param orientation  {@link 组件#布局_方向_水平} 或
+	 * @param orientation {@link 组件#布局_方向_水平} 或
 	 * 						{@link 组件#布局_方向_垂直}
 	 */
 	@SimpleProperty(
@@ -61,7 +63,7 @@ public interface 线性布局 extends 布局 {
 	/**
 	 * 内容对齐获设置器方法：其内容相对于自身的对齐方式。
 	 *
-	 * @param justification  可选值为{@link 组件#对齐_水平居中} 或
+	 * @param justification 可选值为{@link 组件#对齐_水平居中} 或
 	 * 		{@link 组件#布局_方向_垂直}
 	 */
 	@SimpleProperty
