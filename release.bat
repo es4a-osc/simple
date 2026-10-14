@@ -39,7 +39,7 @@ FOR %%F IN (SimpleCompiler.jar SimpleAndroidRuntime.jar) DO (
 		GOTO 失败退出
 	)
 )
-ECHO - 发布编译器和运行库成功: "%RELEASE_DIR%"
+ECHO - 复制编译器和运行库成功！
 
 REM --------------------------------------------------
 

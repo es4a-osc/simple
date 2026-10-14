@@ -22,7 +22,7 @@ import simple.runtime.annotations.UsesPermissions;
 	"<uses-feature" +
 		" android:name=\"android.hardware.consumerir\"" +
 		" android:required=\"false\"" +
-	"/>"
+	" />"
 )
 public interface 红外发射器 extends 组件 {
 
