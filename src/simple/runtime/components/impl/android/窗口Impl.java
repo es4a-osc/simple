@@ -282,8 +282,6 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 		投递消息(mark, null);
 	}
 
-	/* 内部接口与平台回调 */
-
 	/* 面板 */
 
 	@Override

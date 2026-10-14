@@ -6,4 +6,4 @@
 ::   SIMPLE_HOME     root directory of Simple distribution (same as directory of this script)
 :: ------------------------------------------------------------------------------------------
 
-java -classpath %SIMPLE_HOME%\SimpleCompiler.jar simple.tools.ProjectCreator %*
+java -classpath "%SIMPLE_HOME%\SimpleCompiler.jar" simple.tools.ProjectCreator %*

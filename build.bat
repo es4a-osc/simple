@@ -1,8 +1,9 @@
 @ECHO OFF
-REM 构建Simple的编译器和运行库 xhwsd@qq.com 2026-10-10
+REM 构建Simple的编译器和运行库 xhwsd@qq.com 2026-10-14
 
+REM --------------------------------------------------
 
-REM ---定义变量---
+:定义变量
 REM JavaSDK根目录
 FOR %%I IN ("%~dp0..\sdk\tools\jdk1.8.0_503") DO SET "JAVA_HOME=%%~fI"
 REM AndroidSDK根目录（编译Simple运行库需要）
@@ -14,25 +15,36 @@ FOR %%I IN ("%~dp0dist\windows") DO SET "SIMPLE_HOME=%%~fI"
 REM Ant编译脚本文件
 FOR %%I IN ("%~dp0build.xml") DO SET "BUILD_FILE=%%~fI"
 
+REM --------------------------------------------------
 
-REM ---初始化---
-REM 取build.xml所在目录
-FOR /f %%a IN ("%BUILD_FILE%") DO (
-	SET FOLDER=%%~dpa
+:设置环境变量
+REM 设置path环境变量
+SET path=%JAVA_HOME%\bin;%path%
+REM 设置classpath环境变量
+SET classpath=.;%JAVA_HOME%\lib\tools.jar;%JAVA_HOME%\lib\dt.jar
+
+REM --------------------------------------------------
+
+:执行ANT
+REM 切换到Simple目录，路径可能包含空格
+CD /D "%~dp0"
+REM 调用ANT批处理，路径可能包含空格
+CALL "%ANT_HOME%\bin\ant.bat" -buildfile "%BUILD_FILE%" clean all
+IF ERRORLEVEL 1 (
+	ECHO - ANT处理失败！
+	GOTO 失败退出
 )
-REM 切换到build.xml所在目录
-CD /D %FOLDER%
-REM 设置path变量
-SET path=%JAVA_HOME%\bin;%ANT_HOME%\bin;%path%
-REM 设置classpath变量
-SET classpath=.;%JAVA_HOME%\lib\tools.jar;%JAVA_HOME%\lib\dt.jar;%classpath%
 
+REM --------------------------------------------------
 
-REM ---执行ANT---
-REM 调用ANT批处理
-CALL ant.bat -buildfile %BUILD_FILE% clean all
-
-
-:结束脚本
+:成功退出
 ECHO.
-PAUSE
+IF /I NOT "%~1" == "--no-pause" PAUSE
+EXIT /B 0
+
+REM --------------------------------------------------
+
+:失败退出
+ECHO.
+IF /I NOT "%~1" == "--no-pause" PAUSE
+EXIT /B 1

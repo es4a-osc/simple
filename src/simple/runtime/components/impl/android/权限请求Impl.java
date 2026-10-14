@@ -7,9 +7,12 @@ import simple.runtime.components.组件容器;
 import simple.runtime.components.impl.组件Impl;
 
 import android.annotation.TargetApi;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.net.Uri;
 import android.os.Build;
+import android.provider.Settings;
 
 import java.util.ArrayList;
 
@@ -56,11 +59,16 @@ public final class 权限请求Impl extends 组件Impl implements 权限请求 {
 	/* 组件方法 */
 
 	@Override
+    public boolean 需要请求() {
+		//安卓6.0的版本号是23，只有当安卓版本号为23以上时才需要动态申请权限
+		return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
+	}
+
+	@Override
 	public String[] 取所有权限() {
 		try {
 			MainActivity context = MainActivity.getContext();
-			return context.getPackageManager()
-				.getPackageInfo(
+			return context.getPackageManager().getPackageInfo(
 					context.getPackageName(),
 					PackageManager.GET_PERMISSIONS
 				).requestedPermissions;
@@ -72,8 +80,7 @@ public final class 权限请求Impl extends 组件Impl implements 权限请求 {
 	@Override
 	@TargetApi(Build.VERSION_CODES.M) // 使用API23检查
 	public String[] 取所需权限() {
-		// 低于API23(Android 6.0)不需要请求权限。
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+		if (需要请求()) {
 			// 取应用使用权限
 			String[] permissions = 取所有权限();
 			if (permissions == null) {
@@ -95,31 +102,56 @@ public final class 权限请求Impl extends 组件Impl implements 权限请求 {
 	@Override
 	@TargetApi(Build.VERSION_CODES.M) // 使用API23检查
 	public boolean 是否授权(String permission) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+		if (需要请求()) {
 			// 添加于API23：ContextWrapper.checkSelfPermission(String)
-			return MainActivity.getContext().checkSelfPermission(permission) ==
-					PackageManager.PERMISSION_GRANTED;
+			return MainActivity.getContext().checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED;
 		}
 		return true;
 	}
 
 	@Override
 	@TargetApi(Build.VERSION_CODES.M) // 使用API23检查
-	public void 请求权限(String[] permissions, String requestMark) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+	public boolean 请求权限(String requestMark) {
+		if (需要请求()) {
+			String[] permissions = 取所需权限();
+			if (permissions != null && permissions.length > 0) {
+				requestMarks.add(requestMark);
+				// 添加于API23：Activity.requestPermissions(String[], int)
+				MainActivity.getContext().requestPermissions(permissions, hashCode());
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	@TargetApi(Build.VERSION_CODES.M) // 使用API23检查
+	public boolean 请求权限(String[] permissions, String requestMark) {
+		if (需要请求()) {
 			requestMarks.add(requestMark);
 			// 添加于API23：Activity.requestPermissions(String[], int)
 			MainActivity.getContext().requestPermissions(permissions, hashCode());
+			return true;
 		}
+		return false;
 	}
 
 	@Override
 	@TargetApi(Build.VERSION_CODES.M) // 使用API23检查
 	public boolean 需要理由(String permission) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+		if (需要请求()) {
 			// 添加于API23：Activity.shouldShowRequestPermissionRationale(String)
 			return MainActivity.getContext().shouldShowRequestPermissionRationale(permission);
 		}
 		return false;
 	}
+
+	@Override
+	public void 打开设置() {
+    	Intent intent = new Intent();
+    	intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+    	Uri uri = Uri.fromParts("package", MainActivity.getContext().getPackageName(), null);
+    	intent.setData(uri);
+    	MainActivity.getContext().startActivityForResult(intent, 123456789);
+	}	
 }
