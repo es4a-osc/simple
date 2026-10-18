@@ -24,7 +24,7 @@ public interface 进度组件 extends 可视组件 {
 	/**
 	 * 最大位置属性设置方法。
 	 *
-	 * @param 最大位置
+	 * @param max 最大值
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_INTEGER,
@@ -56,8 +56,6 @@ public interface 进度组件 extends 可视组件 {
 	 *
 	 * @param image 图片路径。
 	 */
-	@SimpleProperty(
-		type = SimpleProperty.PROPERTY_TYPE_ASSET
-	)
+	@SimpleProperty(type = SimpleProperty.PROPERTY_TYPE_ASSET)
 	void 进度图片(String image);
 }

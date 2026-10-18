@@ -65,6 +65,12 @@ public class EmailAddressAdapter extends ResourceCursorAdapter {
 		return new Rfc822Token(name, address, null).toString();
 	}
 
+	/**
+	 * 组合邮件联系人的显示文本。
+	 *
+	 * @param cursor 当前查询结果游标
+	 * @return 供用户查看的邮箱候选项文本
+	 */
 	private final String makeDisplayString(Cursor cursor) {
 		String name = cursor.getString(NAME_INDEX);
 		String address = cursor.getString(DATA_INDEX);

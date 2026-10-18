@@ -18,29 +18,53 @@ import simple.runtime.parameters.StringReferenceParameter;
  */
 @SimpleComponent
 @SimpleObject
-@UsesPermissions(permissionNames =
-	// 允许应用程序打开网络套接字。
-	"android.permission.INTERNET," +
-	// 允许应用程序访问精确的位置。
-	"android.permission.ACCESS_FINE_LOCATION," +
-	// 允许应用程序访问大致的位置。
-	"android.permission.ACCESS_COARSE_LOCATION"
+@UsesPermissions(
+	permissionNames =
+		// 允许应用程序打开网络套接字。
+		"android.permission.INTERNET," +
+		// 允许应用程序访问精确的位置。
+		"android.permission.ACCESS_FINE_LOCATION," +
+		// 允许应用程序访问大致的位置。
+		"android.permission.ACCESS_COARSE_LOCATION"
 )
 public interface 网页浏览框 extends 可视组件 {
 
+	/**
+	 * 按平台默认策略使用网页缓存。
+	 */
 	@SimpleDataElement
 	public static final int 缓存模式_默认 = -1; // LOAD_DEFAULT
+	/**
+	 * 优先使用已有网页缓存。
+	 */
 	@SimpleDataElement
 	public static final int 缓存模式_优先缓存 = 1; // LOAD_CACHE_ELSE_NETWORK
+	/**
+	 * 仅从网络加载网页内容。
+	 */
 	@SimpleDataElement
 	public static final int 缓存模式_仅网络 = 2; // LOAD_NO_CACHE
+	/**
+	 * 仅从网页缓存加载内容。
+	 */
 	@SimpleDataElement
 	public static final int 缓存模式_仅缓存 = 3; // LOAD_CACHE_ONLY
 
+	/**
+	 * 保持组件默认处理方式。
+	 */
 	@SimpleDataElement
 	public static final int 处理方式_忽略 = 0;
+
+	/**
+	 * 取消本次网页脚本对话框请求。
+	 */
 	@SimpleDataElement
 	public static final int 处理方式_取消 = 1;
+
+	/**
+	 * 确认本次网页脚本对话框请求。
+	 */
 	@SimpleDataElement
 	public static final int 处理方式_确认 = 2;
 
@@ -83,7 +107,7 @@ public interface 网页浏览框 extends 可视组件 {
 	 * 载入失败事件处理方法。
 	 *
 	 * @param errorCode 失败的代码
-	 * @param url 失败的网址。
+	 * @param failingUrl 失败的网址。
 	 */
 	@SimpleEvent
 	void 载入失败(int errorCode, String failingUrl);
@@ -238,7 +262,7 @@ public interface 网页浏览框 extends 可视组件 {
 	/**
 	 * 缓存模式属性获取方法。
 	 *
-	 * @return 返回当前网页浏览器的缓存模式，可选值请参考{@link 网页浏览框#载入方式_默认}等常量。
+	 * @return 返回当前网页浏览器的缓存模式，可选值请参考{@link 网页浏览框#缓存模式_默认}等常量。
 	 */
 	@SimpleProperty
 	int 缓存模式();
@@ -247,7 +271,7 @@ public interface 网页浏览框 extends 可视组件 {
 	 * 缓存模式属性设置方法。
 	 *
 	 * @param mode 设置当前网页浏览器的缓存模式，
-	 * 			可选值请参考{@link 网页浏览框#载入方式_默认}等常量。
+	 * 可选值请参考{@link 网页浏览框#缓存模式_默认}等常量。
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_INTEGER,
@@ -346,7 +370,7 @@ public interface 网页浏览框 extends 可视组件 {
 	 * 向浏览器中注册JS接口，会开启JS。
 	 *
 	 * <p>JS中调用格式为{@code 接口对象名.call(param)}，
-	 * 将触发{@link 网页浏览框#调用接口(name, param)}事件。
+	 * 将触发{@link 网页浏览框#接口调用(String, String)}事件。
 	 *
 	 * @param name 接口对象名
 	 */
@@ -366,7 +390,7 @@ public interface 网页浏览框 extends 可视组件 {
 	 * 调用JS中的函数，会开启JS。
 	 *
 	 * <p>注意仅API19及以上版本才可有返回值，
-	 * 成功将触发{@link 网页浏览框#接口返回(script, result)}事件。
+	 * 成功将触发{@link 网页浏览框#接口返回(String, String)}事件。
 	 *
 	 * @param script 要执行的JavaScript。
 	 * @param isReturn 是否有返回值。

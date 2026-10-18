@@ -73,6 +73,7 @@ public final class 通讯录Impl extends 组件Impl implements 通讯录 {
 		activity = MainActivity.getContext();
 		resolver = activity.getContentResolver();
 		destroyListener = new MainActivity.OnDestroyListener() {
+
 			@Override
 			public void onDestroy() {
 				// Activity 正在遍历监听器列表，此处不能修改该列表。
@@ -84,9 +85,6 @@ public final class 通讯录Impl extends 组件Impl implements 通讯录 {
 
 	/* 组件事件 */
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public void 取联系人完毕(集合 contacts, String requestMark, String error) {
 		EventDispatcher.dispatchEvent(this, "取联系人完毕", contacts, requestMark, error);
@@ -94,17 +92,11 @@ public final class 通讯录Impl extends 组件Impl implements 通讯录 {
 
 	/* 组件属性 */
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public String 最近错误() {
 		return lastError;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean 读取中() {
 		synchronized (lifecycle) {
@@ -114,12 +106,10 @@ public final class 通讯录Impl extends 组件Impl implements 通讯录 {
 
 	/* 组件方法 */
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public 集合 取联系人() {
 		return perform(new Operation<集合>() {
+
 			@Override
 			public 集合 run() {
 				return readContacts(null, null);
@@ -138,9 +128,12 @@ public final class 通讯录Impl extends 组件Impl implements 通讯录 {
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * 提交后台联系人查询，完成事件在主线程派发。
 	 *
 	 * <p>后台串行查询，结果在主线程派发；销毁后丢弃未派发的结果。
+	 *
+	 * @param requestMark 随完成事件返回的请求标记。
+	 * @return 接受请求时为真；已有读取任务或组件已销毁时为假，不表示读取成功。
 	 */
 	@Override
 	public boolean 异步取联系人(final String requestMark) {
@@ -156,6 +149,7 @@ public final class 通讯录Impl extends 组件Impl implements 通讯录 {
 			final QueryCancellation signal = Build.VERSION.SDK_INT >= 16 ? new CancellableQuery() : null;
 			pendingQuery = signal;
 			reader.execute(new Runnable() {
+
 				@Override
 				public void run() {
 					集合 result = new 集合();
@@ -177,6 +171,7 @@ public final class 通讯录Impl extends 组件Impl implements 通讯录 {
 						}
 
 						handler.post(new Runnable() {
+
 							@Override
 							public void run() {
 								synchronized (lifecycle) {
@@ -199,12 +194,10 @@ public final class 通讯录Impl extends 组件Impl implements 通讯录 {
 		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public String 添加联系人(final String name, final String phone) {
 		return perform(new Operation<String>() {
+
 			@Override
 			public String run() throws Exception {
 				requireText(name, "联系人姓名");
@@ -235,12 +228,10 @@ public final class 通讯录Impl extends 组件Impl implements 通讯录 {
 		}, "");
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean 删除联系人(final String rawContactId) {
 		return perform(new Operation<Boolean>() {
+
 			@Override
 			public Boolean run() {
 				long id = positiveId(rawContactId);
@@ -250,12 +241,10 @@ public final class 通讯录Impl extends 组件Impl implements 通讯录 {
 		}, false);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public 集合 取联系人分组() {
 		return perform(new Operation<集合>() {
+
 			@Override
 			public 集合 run() {
 				集合 result = new 集合();
@@ -296,12 +285,10 @@ public final class 通讯录Impl extends 组件Impl implements 通讯录 {
 		}, new 集合());
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public 集合 取分组联系人(final String groupId) {
 		return perform(new Operation<集合>() {
+
 			@Override
 			public 集合 run() {
 				long id = positiveId(groupId);
@@ -311,12 +298,10 @@ public final class 通讯录Impl extends 组件Impl implements 通讯录 {
 		}, new 集合());
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public String 新建联系人分组(final String name, final String accountName, final String accountType) {
 		return perform(new Operation<String>() {
+
 			@Override
 			public String run() {
 				requireText(name, "分组名称");
@@ -342,12 +327,10 @@ public final class 通讯录Impl extends 组件Impl implements 通讯录 {
 		}, "");
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean 添加分组联系人(final String groupId, final String rawContactId) {
 		return perform(new Operation<Boolean>() {
+
 			@Override
 			public Boolean run() throws Exception {
 				long group = positiveId(groupId);
@@ -396,12 +379,10 @@ public final class 通讯录Impl extends 组件Impl implements 通讯录 {
 		}, false);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean 移除分组联系人(final String groupId, final String rawContactId) {
 		return perform(new Operation<Boolean>() {
+
 			@Override
 			public Boolean run() {
 				long group = positiveId(groupId);
@@ -414,12 +395,10 @@ public final class 通讯录Impl extends 组件Impl implements 通讯录 {
 		}, false);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean 删除联系人分组(final String groupId) {
 		return perform(new Operation<Boolean>() {
+
 			@Override
 			public Boolean run() {
 				long id = positiveId(groupId);
@@ -431,9 +410,6 @@ public final class 通讯录Impl extends 组件Impl implements 通讯录 {
 
 	/* 生命周期 */
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public void 销毁() {
 		release(true);
@@ -647,6 +623,7 @@ public final class 通讯录Impl extends 组件Impl implements 通讯录 {
 		ContentProviderOperation.Builder assertion = ContentProviderOperation.newAssertQuery(ContentUris.withAppendedId(uri, id))
 			.withSelection(RawContacts.DELETED + "=0", null)
 			.withExpectedCount(1);
+
 		for (int i = 0; i < columns.length; i++) {
 			assertion.withValue(columns[i], nullIfEmpty(owner[i]));
 		}
@@ -672,6 +649,7 @@ public final class 通讯录Impl extends 组件Impl implements 通讯录 {
 			new String[] {Long.toString(id)},
 			null,
 			null);
+
 		try {
 			if (cursor.moveToFirst()) {
 				throw new IllegalStateException("联系人包含只读数据");
@@ -733,6 +711,7 @@ public final class 通讯录Impl extends 组件Impl implements 通讯录 {
 	 * 隔离平台查询取消能力，使低版本系统不直接加载取消信号实现。
 	 */
 	private interface QueryCancellation {
+
 		/**
 		 * 执行可取消的系统查询。
 		 *
@@ -765,25 +744,16 @@ public final class 通讯录Impl extends 组件Impl implements 通讯录 {
 	private static final class CancellableQuery implements QueryCancellation {
 		private final CancellationSignal signal = new CancellationSignal();
 
-		/**
-		 * {@inheritDoc}
-		 */
 		@Override
 		public Cursor query(ContentResolver resolver, Uri uri, String[] columns, String selection, String[] args, String order) {
 			return resolver.query(uri, columns, selection, args, order, signal);
 		}
 
-		/**
-		 * {@inheritDoc}
-		 */
 		@Override
 		public void cancel() {
 			signal.cancel();
 		}
 
-		/**
-		 * {@inheritDoc}
-		 */
 		@Override
 		public void throwIfCanceled() {
 			signal.throwIfCanceled();
@@ -796,6 +766,7 @@ public final class 通讯录Impl extends 组件Impl implements 通讯录 {
 	 * @param <T> 操作结果类型。
 	 */
 	private interface Operation<T> {
+
 		/**
 		 * 执行本次同步操作。
 		 *

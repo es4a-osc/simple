@@ -70,6 +70,10 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * <p>用于将 Activity onRestart() 方法分发给感兴趣的组件。
 	 */
 	public interface OnRestartListener {
+
+		/**
+		 * 响应活动重新启动通知。
+		 */
 		public void onRestart();
 	}
 
@@ -79,6 +83,10 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * <p>用于将 Activity OnResume() 方法分发给感兴趣的组件。
 	 */
 	public interface OnResumeListener {
+
+		/**
+		 * 响应活动恢复到前台的通知。
+		 */
 		public void onResume();
 	}
 
@@ -88,6 +96,10 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * <p>用于将 Activity onPause() 方法分配给感兴趣的组件。
 	 */
 	public interface OnPauseListener {
+
+		/**
+		 * 响应活动暂停通知。
+		 */
 		void onPause();
 	}
 
@@ -97,6 +109,10 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * <p>用于将 Activity onStop() 方法分配给感兴趣的组件。
 	 */
 	public interface OnStopListener {
+
+		/**
+		 * 响应活动停止通知。
+		 */
 		public void onStop();
 	}
 
@@ -106,6 +122,10 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * <p>用于将 Activity onDestroy() 方法分发给感兴趣的组件。
 	 */
 	public interface OnDestroyListener {
+
+		/**
+		 * 响应宿主销毁通知，处理本对象的资源清理。
+		 */
 		public void onDestroy();
 	}
 
@@ -115,6 +135,12 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * <p>用于将 Activity onSaveInstanceState() 方法分发给感兴趣的组件。
 	 */
 	public interface OnSaveInstanceStateListener {
+
+		/**
+		 * 保存活动重建需要恢复的状态。
+		 *
+		 * @param paramBundle 需要保存的活动状态
+		 */
 		public void onSaveInstanceState(Bundle paramBundle);
 	}
 
@@ -124,6 +150,12 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * <p>用于将 Activity onRestoreInstanceState() 方法分发给感兴趣的组件。
 	 */
 	public interface OnRestoreInstanceStateListener {
+
+		/**
+		 * 恢复活动先前保存的状态。
+		 *
+		 * @param savedInstanceState 此前保存的活动状态
+		 */
 		public void onRestoreInstanceState(Bundle savedInstanceState);
 	}
 
@@ -133,6 +165,12 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * <p>用于将 Activity onConfigurationChanged() 方法分发给感兴趣的组件。
 	 */
 	public interface OnConfigurationChangedListener {
+
+		/**
+		 * 处理屏幕方向等配置变化。
+		 *
+		 * @param newConfig 变化后的系统配置
+		 */
 		public void onConfigurationChanged(Configuration newConfig);
 	}
 
@@ -142,6 +180,12 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * <p>用于将 Activity onNewIntent() 方法分发给感兴趣的组件。
 	 */
 	public interface OnNewIntentListener {
+
+		/**
+		 * 处理宿主收到的新启动意图。
+		 *
+		 * @param intent 系统意图
+		 */
 		public void onNewIntent(Intent intent);
 	}
 
@@ -151,6 +195,14 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * <p>用于将 Activity onActivityResult() 方法分发给感兴趣的组件。
 	 */
 	public interface OnActivityResultListener {
+
+		/**
+		 * 处理由本组件发起的活动返回结果。
+		 *
+		 * @param requestCode 发起操作时使用的请求编号
+		 * @param resultCode 系统返回的结果编号
+		 * @param data 本次传入的数据
+		 */
 		public void onActivityResult(int requestCode, int resultCode, Intent data);
 	}
 
@@ -160,6 +212,14 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * <p>用于将 Activity onRequestPermissionsResult() 方法分发给感兴趣的组件。
 	 */
 	public interface OnRequestPermissionsResultListener {
+
+		/**
+		 * 处理系统返回的权限请求结果。
+		 *
+		 * @param requestCode 发起操作时使用的请求编号
+		 * @param permissions 本次请求的权限名称
+		 * @param grantResults 与权限名称逐项对应的授权结果
+		 */
 		public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults);
 	}
 
@@ -206,7 +266,7 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 
 	// 当前是否在前
 	private boolean inForeground;
-	
+
 	/**
 	 * 返回当前主活动的上下文实例。
 	 *
@@ -245,6 +305,7 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 		super.onCreate(icicle);
 
 		gestureDetector = new GestureDetector(this, new SimpleOnGestureListener() {
+
 			@Override
 			public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
 				int direction;
@@ -456,6 +517,8 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * 另外，当跳转到其他Activity或者按Home键回到主屏时该方法也会被调用，
 	 * 系统是为了保存当前View组件的状态。
 	 * 在onPause之前被调用。
+	 *
+	 * @param outState 需要写入的状态
 	 */
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
@@ -478,6 +541,8 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * 屏幕方向改变时，Activity被销毁再重建；
 	 * 当前Activity处于后台，系统资源紧张将其杀死，用户又启动该Activity。
 	 * 这两种情况下onRestoreInstanceState都会被调用，在onStart之后。
+	 *
+	 * @param savedInstanceState 此前保存的活动状态
 	 */
 	@Override
 	protected void onRestoreInstanceState(Bundle savedInstanceState) {
@@ -498,7 +563,7 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 *
 	 * <p>如屏幕方向方式改变等
 	 *
-	 * @param newConfig
+	 * @param newConfig 变化后的系统配置
 	 */
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
@@ -538,9 +603,9 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * 为您提供您启动它的请求代码、
 	 * 返回的结果代码以及来自它的任何其他数据。
 	 *
-	 * @param requestCode
-	 * @param resultCode
-	 * @param data
+	 * @param requestCode 发起操作时使用的请求编号
+	 * @param resultCode 系统返回的结果编号
+	 * @param data 本次传入的数据
 	 */
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -561,9 +626,9 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 *
 	 * 对于{@code requestPermissions(String[], int)}每个调用都会调用此方法。
 	 *
-	 * @param requestCode
-	 * @param permissions
-	 * @param grantResults
+	 * @param requestCode 发起操作时使用的请求编号
+	 * @param permissions 本次请求的权限名称
+	 * @param grantResults 与权限名称逐项对应的授权结果
 	 */
 	@Override
 	@TargetApi(Build.VERSION_CODES.M) // 使用API23检查
@@ -876,7 +941,7 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 		onRequestPermissionsResultListeners.remove(listener);
 	}
 
-	/* ApplicationFunctions 实现 */ 
+	/* ApplicationFunctions 实现 */
 
 	@Override
 	public void addMenuItem(String caption) {
@@ -968,48 +1033,48 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 		sendBroadcast(intent.getIntent());
 	}
 
-  	@Override
+	@Override
 	public int getScreenWidth()  {
-		DisplayMetrics displaymetrics = new DisplayMetrics(); 
+		DisplayMetrics displaymetrics = new DisplayMetrics();
 		getContext().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-		return displaymetrics.widthPixels; 
-	}
-	
-	@Override
-	public int getScreenHeight() {   
-		DisplayMetrics displaymetrics = new DisplayMetrics(); 
-		getContext().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-		return displaymetrics.heightPixels; 
-	}
-
- 	@Override
-  	public double getScreenDensity() {
-		DisplayMetrics displaymetrics = new DisplayMetrics(); 
-		getContext().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-		return displaymetrics.density;  
+		return displaymetrics.widthPixels;
 	}
 
 	@Override
-	public int getStatusBarHeight() {   
+	public int getScreenHeight() {
+		DisplayMetrics displaymetrics = new DisplayMetrics();
+		getContext().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+		return displaymetrics.heightPixels;
+	}
+
+	@Override
+	public double getScreenDensity() {
+		DisplayMetrics displaymetrics = new DisplayMetrics();
+		getContext().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+		return displaymetrics.density;
+	}
+
+	@Override
+	public int getStatusBarHeight() {
 		try {
 			Class<?> c = Class.forName("com.android.internal.R$dimen");
 			Object obj = c.newInstance();
 			Field field = c.getField("status_bar_height");
 			int id = Integer.parseInt(field.get(obj).toString());
 			return getContext().getResources().getDimensionPixelSize(id);
-		} catch (Exception e) { 
+		} catch (Exception e) {
 			e.printStackTrace();
-		} 
+		}
 		return 0;
 	}
 
- 	@Override
-	public int getContentWidth() {   
+	@Override
+	public int getContentWidth() {
 		return getContext().getWindow().findViewById(Window.ID_ANDROID_CONTENT).getWidth();
 	}
 
- 	@Override
-	public int getContentHeight() {   
+	@Override
+	public int getContentHeight() {
 		return getContext().getWindow().findViewById(Window.ID_ANDROID_CONTENT).getHeight();
 	}
 
@@ -1024,7 +1089,7 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	}
 
 	@Override
-	public void returnDesktop() {  
+	public void returnDesktop() {
 		Intent intent = new Intent(Intent.ACTION_MAIN);
 		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		intent.addCategory(Intent.CATEGORY_HOME);

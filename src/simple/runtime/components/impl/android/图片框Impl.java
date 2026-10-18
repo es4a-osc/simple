@@ -50,6 +50,7 @@ public final class 图片框Impl extends 图片视图组件 implements 图片框
 	protected View createView() {
 		// ImageView https://developer.android.google.cn/reference/android/widget/ImageView
 		View view = new ImageView(MainActivity.getContext()) {
+
 			@Override
 			public boolean verifyDrawable(Drawable dr) {
 				super.verifyDrawable(dr);
@@ -139,6 +140,7 @@ public final class 图片框Impl extends 图片视图组件 implements 图片框
 
 		// 单击监听器
 		view.setOnClickListener(new View.OnClickListener() {
+
 			@Override
 			public void onClick(View view) {
 				被单击();
@@ -147,6 +149,7 @@ public final class 图片框Impl extends 图片视图组件 implements 图片框
 
 		// 长按监听器
 		view.setOnLongClickListener(new View.OnLongClickListener(){
+
 			@Override
 			public boolean onLongClick(View view) {
 				被长按();

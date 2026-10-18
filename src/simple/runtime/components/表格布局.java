@@ -53,8 +53,8 @@ public interface 表格布局 extends 布局 {
 	 * 内容对齐属性获取器方法。
 	 *
 	 * @return 其中之一{@link 组件#对齐_左}、
-	 *          {@link 组件#对齐_水平居中}或
-	 *          {@link 组件#对齐_右}
+	 * {@link 组件#对齐_水平居中}或
+	 * {@link 组件#对齐_右}
 	 */
 	@SimpleProperty
 	int 内容对齐();
@@ -63,14 +63,16 @@ public interface 表格布局 extends 布局 {
 	 * 内容对齐属性设置器方法。
 	 *
 	 * @param justification 其中之一{@link 组件#对齐_左}、
-	 *                       {@link 组件#对齐_水平居中}或
-	 *                       {@link 组件#对齐_右}
+	 * {@link 组件#对齐_水平居中}或
+	 * {@link 组件#对齐_右}
 	 */
 	@SimpleProperty()
 	void 内容对齐(int justification);
 
 	/**
 	 * 所有列可收缩获取器方法。
+	 *
+	 * @return 当前“所有列可收缩”状态
 	 */
 	@SimpleProperty
 	boolean 所有列可收缩();
@@ -85,6 +87,8 @@ public interface 表格布局 extends 布局 {
 
 	/**
 	 * 所有列可拉伸获取器方法。
+	 *
+	 * @return 当前“所有列可拉伸”状态
 	 */
 	@SimpleProperty
 	boolean 所有列可拉伸();
@@ -148,7 +152,7 @@ public interface 表格布局 extends 布局 {
 	 * 设置列是否可拉伸
 	 *
 	 * @param columnIndex 列索引，从0开始。
-	 * @param isShrinkable 是否可拉伸
+	 * @param isStretchable 是否可拉伸
 	 */
 	@SimpleFunction
 	void 置列可拉伸(int columnIndex, boolean isStretchable);

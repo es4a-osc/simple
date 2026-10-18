@@ -31,10 +31,21 @@ public final class 像素转换 {
 	https://developer.android.google.cn/reference/android/util/TypedValue
 	*/
 
+	/**
+	 * 绝对像素单位 px。
+	 */
 	@SimpleDataElement
 	public static final int 像素_绝对 = TypedValue.COMPLEX_UNIT_PX;
+
+	/**
+	 * 随屏幕密度缩放的尺寸单位 dp。
+	 */
 	@SimpleDataElement
 	public static final int 像素_相对 = TypedValue.COMPLEX_UNIT_DIP;
+
+	/**
+	 * 随屏幕密度与字体缩放的尺寸单位 sp。
+	 */
 	@SimpleDataElement
 	public static final int 像素_缩放 = TypedValue.COMPLEX_UNIT_SP;
 
@@ -45,8 +56,8 @@ public final class 像素转换 {
 	 * 将指定类型的像素值转换为绝对像素（px）值。
 	 *
 	 * @param value 像素值
-	 * @param unit 类型，可选值钱请参考{@link 像素转换#像素_像素_绝对}等
-	 * @return  绝对像素（dp）值
+	 * @param unit 类型，可选值请参考{@link 像素转换#像素_绝对}等
+	 * @return  绝对像素（px）值
 	 */
 	@SimpleFunction
 	public static int 转绝对像素(float value, int unit) {
@@ -58,7 +69,7 @@ public final class 像素转换 {
 	 * 将相对像素（dip）值转换为绝对像素（px）值
 	 *
 	 * @param dipValue  相对像素（dp）
-	 * @return  绝对像素（dp）值
+	 * @return  绝对像素（px）值
 	 */
 	@SimpleFunction
 	public static int 到绝对像素(float dipValue) {
@@ -103,7 +114,7 @@ public final class 像素转换 {
 	 * 密度换算，{@code sp}按屏幕缩放密度换算。单位不区分大小写。
 	 *
 	 * @param value 整数，或形如{@code "10"}、{@code "10px"}、
-	 *              {@code "10dp"}、{@code "10dip"}、{@code "10sp"}的文本
+	 * {@code "10dp"}、{@code "10dip"}、{@code "10sp"}的文本
 	 * @return 换算后的绝对像素（px）
 	 * @throws 转换错误 值不是整数或文本，或者文本中的数值、单位无效
 	 */
@@ -118,6 +129,7 @@ public final class 像素转换 {
 			if (integer < Integer.MIN_VALUE || integer > Integer.MAX_VALUE) {
 				throw new 转换错误();
 			}
+
 			return (int) integer;
 		}
 
@@ -166,6 +178,7 @@ public final class 像素转换 {
 					absolutePixels > Integer.MAX_VALUE || absolutePixels < Integer.MIN_VALUE) {
 				throw new 转换错误();
 			}
+
 			return (int) absolutePixels;
 		} catch (NumberFormatException e) {
 			throw new 转换错误();

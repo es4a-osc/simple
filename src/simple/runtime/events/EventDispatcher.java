@@ -35,9 +35,10 @@ import java.util.Iterator;
  */
 public class EventDispatcher {
 
-	/*
-	 * Simple事件处理程序将数据成员与定义数据成员的类中的事件处理程序相关联。
-	 * 我们使用反射的原因是, 我们不必跟踪对数据成员的分配。
+	/**
+	 * 保存事件拥有者与反射处理方法的调用闭包。
+	 *
+	 * <p>通过反射关联当前数据成员与事件处理程序，避免额外跟踪数据成员赋值。
 	 */
 	private final static class EventHandlerClosure {
 		// 事件组件归属单元对象；定义数据成员的对象实例

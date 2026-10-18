@@ -27,6 +27,7 @@ public final class 消息传递器Impl extends 组件Impl implements 消息传�
 		super(container);
 
 		handler = new Handler() {
+
 			@Override
 			public void handleMessage(Message msg) {
 				收到消息(msg.what, (Variant) msg.obj);

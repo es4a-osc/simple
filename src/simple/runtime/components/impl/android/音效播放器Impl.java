@@ -45,6 +45,7 @@ public final class 音效播放器Impl extends 组件Impl implements 音效播�
 		super(container);
 		activity = MainActivity.getContext();
 		destroyListener = new MainActivity.OnDestroyListener() {
+
 			@Override
 			public void onDestroy() {
 				// Activity 正在遍历监听器，此时不能修改监听器集合。
@@ -98,10 +99,12 @@ public final class 音效播放器Impl extends 组件Impl implements 音效播�
 			releasePool();
 			pool = createPool(maxStreams);
 			pool.setOnLoadCompleteListener(new SoundPool.OnLoadCompleteListener() {
+
 				@Override
 				public void onLoadComplete(final SoundPool source, final int soundId, final int status) {
 					// 统一回到主线程；池身份和音效表共同拒绝释放、重建或卸载后的旧回调。
 					handler.post(new Runnable() {
+
 						@Override
 						public void run() {
 							dispatchLoad(source, soundId, status);
@@ -127,6 +130,7 @@ public final class 音效播放器Impl extends 组件Impl implements 音效播�
 			}
 
 			int soundId = 0;
+
 			try {
 				if (source.startsWith("/")) {
 					soundId = current.load(source, 1);
@@ -325,6 +329,7 @@ public final class 音效播放器Impl extends 组件Impl implements 音效播�
 			if (destroyed) {
 				return;
 			}
+
 			destroyed = true;
 			releasePool();
 		}

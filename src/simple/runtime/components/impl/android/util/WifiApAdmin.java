@@ -20,6 +20,12 @@ public final class WifiApAdmin {
 		manager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 	}
 
+	/**
+	 * 按指定名称和密码配置并启动热点。
+	 *
+	 * @param ssid 无线网络名称
+	 * @param password 认证密码
+	 */
 	public void startWifiAp(String ssid, String password) {
 		if (manager == null) {
 			return;
@@ -60,6 +66,11 @@ public final class WifiApAdmin {
 		}
 	}
 
+	/**
+	 * 关闭当前热点。
+	 *
+	 * @param context Android 上下文
+	 */
 	public static void closeWifiAp(Context context) {
 		WifiManager manager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 		if (manager == null) {

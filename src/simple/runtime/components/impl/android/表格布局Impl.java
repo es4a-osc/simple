@@ -150,12 +150,14 @@ public class 表格布局Impl extends 布局Impl implements 表格布局 {
 	/* 内部接口与平台回调 */
 
 	/**
-	 * {@inheritDoc}
+	 * 登记子组件；实际加入表格布局前必须先设置行和列。
 	 *
 	 * Note that table layout uses {@link #placeComponent(视图组件)} to
 	 * actually add the component. This is necessary because you need to set both
 	 * the {@link 可视组件#列()} and {@link 可视组件#行()}
 	 * properties before the component can be put into the layout.
+	 *
+	 * @param component 要添加的组件
 	 */
 	@Override
 	public void addComponent(视图组件 component) {

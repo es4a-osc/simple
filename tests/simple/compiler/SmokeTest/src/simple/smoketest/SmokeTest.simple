@@ -16,6 +16,18 @@
 ' a Java class.
 
 静态 过程 RunSmokeTests()
+	' 验证 GUID 的全局与限定名调用，运行时细节由 Java 测试覆盖。
+	断言真(取字符数(生成GUID()) = 36)
+	断言真(取字符数(simple.runtime.程序操作.生成GUID()) = 36)
+
+	' 验证运行库导出的线程状态常量可被 Simple 解析并取得约定值。
+	断言真(simple.runtime.collections.线程.状态_新建 = 0)
+	断言真(simple.runtime.collections.线程.状态_可运行 = 1)
+	断言真(simple.runtime.collections.线程.状态_阻塞 = 2)
+	断言真(simple.runtime.collections.线程.状态_无限等待 = 3)
+	断言真(simple.runtime.collections.线程.状态_限时等待 = 4)
+	断言真(simple.runtime.collections.线程.状态_结束 = 5)
+
 	变量 tests 为 集合
 	tests = 创建 集合
 

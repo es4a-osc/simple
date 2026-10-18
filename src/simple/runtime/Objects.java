@@ -39,23 +39,49 @@ public class Objects {
 	private Objects() {
 	}
 
+	/**
+	 * 保存属性初始化所需的注解、方法与初始化器。
+	 */
 	private static class PropertyDescriptor {
 		private final PropertyInitializer pi;
 		private final Method m;
 		private final String initializer;
 
+		/**
+		 * 记录属性注解、设置方法及对应的默认值初始化器。
+		 *
+		 * @param pi 属性初始化器类型
+		 * @param m 需要反射调用的方法
+		 * @param initializer 属性初始化器
+		 */
 		PropertyDescriptor(PropertyInitializer pi, Method m, String initializer) {
 			this.pi = pi;
 			this.m = m;
 			this.initializer = initializer;
 		}
 
+		/**
+		 * 对目标对象执行当前属性的初始化器。
+		 *
+		 * @param object 目标对象
+		 */
 		void runInitializer(Object object) {
 			pi.run(object, m, initializer);
 		}
 	}
 
+	/**
+	 * 负责将属性默认值转换并写入组件对象。
+	 */
 	private static abstract class PropertyInitializer {
+
+		/**
+		 * 调用属性初始化器并报告反射调用失败。
+		 *
+		 * @param object 目标对象
+		 * @param m 需要反射调用的方法
+		 * @param value 从属性注解读取的默认值文本。
+		 */
 		void run(Object object, Method m, String value) {
 			try {
 				initializer(object, m, value);
@@ -68,9 +94,25 @@ public class Objects {
 			}
 		}
 
+		/**
+		 * 把清单默认值转换为属性所需类型并调用初始化方法。
+		 *
+		 * @param object 目标对象
+		 * @param m 需要反射调用的方法
+		 * @param value 转换前的属性默认值文本。
+		 * @throws IllegalArgumentException 传入参数不符合本方法要求时
+		 * @throws IllegalAccessException 底层 IllegalAccessException 异常无法在本层处理时
+		 * @throws InvocationTargetException 底层 InvocationTargetException 异常无法在本层处理时
+		 */
 		abstract void initializer(Object object, Method m, String value)
 				throws IllegalArgumentException, IllegalAccessException, InvocationTargetException;
 
+		/**
+		 * 报告反射调用属性初始化方法时的失败。
+		 *
+		 * @param m 需要反射调用的方法
+		 * @param e 需要报告的异常
+		 */
 		private static void reportInitializePropertiesError(Method m, Exception e) {
 			日志输出.输出错误(日志输出.MODULE_NAME_RTL, "运行时异常设置属性默认值：" +
 					m.getName());
@@ -83,6 +125,7 @@ public class Objects {
 			new HashMap<String, PropertyInitializer>();
 	static {
 		PROPERTY_INITIALIZERS.put(SimpleProperty.PROPERTY_TYPE_ASSET, new PropertyInitializer() {
+
 			@Override
 			void initializer(Object object, Method m, String value)
 					throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
@@ -91,6 +134,7 @@ public class Objects {
 		});
 
 		PROPERTY_INITIALIZERS.put(SimpleProperty.PROPERTY_TYPE_BOOLEAN, new PropertyInitializer() {
+
 			@Override
 			void initializer(Object object, Method m, String value)
 					throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
@@ -99,6 +143,7 @@ public class Objects {
 		});
 
 		PROPERTY_INITIALIZERS.put(SimpleProperty.PROPERTY_TYPE_COLOR, new PropertyInitializer() {
+
 			@Override
 			void initializer(Object object, Method m, String value)
 					throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
@@ -107,6 +152,7 @@ public class Objects {
 		});
 
 		PROPERTY_INITIALIZERS.put(SimpleProperty.PROPERTY_TYPE_DOUBLE, new PropertyInitializer() {
+
 			@Override
 			void initializer(Object object, Method m, String value)
 					throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
@@ -116,6 +162,7 @@ public class Objects {
 
 		PROPERTY_INITIALIZERS.put(SimpleProperty.PROPERTY_TYPE_HORIZONTAL_ALIGNMENT,
 				new PropertyInitializer() {
+
 			@Override
 			void initializer(Object object, Method m, String value)
 					throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
@@ -124,6 +171,7 @@ public class Objects {
 		});
 
 		PROPERTY_INITIALIZERS.put(SimpleProperty.PROPERTY_TYPE_INTEGER, new PropertyInitializer() {
+
 			@Override
 			void initializer(Object object, Method m, String value)
 					throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
@@ -132,6 +180,7 @@ public class Objects {
 		});
 
 		PROPERTY_INITIALIZERS.put(SimpleProperty.PROPERTY_TYPE_LAYOUT, new PropertyInitializer() {
+
 			@Override
 			void initializer(Object object, Method m, String value)
 					throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
@@ -140,6 +189,7 @@ public class Objects {
 		});
 
 		PROPERTY_INITIALIZERS.put(SimpleProperty.PROPERTY_TYPE_LONG, new PropertyInitializer() {
+
 			@Override
 			void initializer(Object object, Method m, String value)
 					throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
@@ -148,6 +198,7 @@ public class Objects {
 		});
 
 		PROPERTY_INITIALIZERS.put(SimpleProperty.PROPERTY_TYPE_SINGLE, new PropertyInitializer() {
+
 			@Override
 			void initializer(Object object, Method m, String value)
 					throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
@@ -156,6 +207,7 @@ public class Objects {
 		});
 
 		PROPERTY_INITIALIZERS.put(SimpleProperty.PROPERTY_TYPE_STRING, new PropertyInitializer() {
+
 			@Override
 			void initializer(Object object, Method m, String value)
 					throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
@@ -164,6 +216,7 @@ public class Objects {
 		});
 
 		PROPERTY_INITIALIZERS.put(SimpleProperty.PROPERTY_TYPE_TEXT, new PropertyInitializer() {
+
 			@Override
 			void initializer(Object object, Method m, String value)
 					throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
@@ -173,6 +226,7 @@ public class Objects {
 
 		PROPERTY_INITIALIZERS.put(SimpleProperty.PROPERTY_TYPE_TEXTJUSTIFICATION,
 				new PropertyInitializer() {
+
 			@Override
 			void initializer(Object object, Method m, String value)
 					throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
@@ -181,6 +235,7 @@ public class Objects {
 		});
 
 		PROPERTY_INITIALIZERS.put(SimpleProperty.PROPERTY_TYPE_TYPEFACE, new PropertyInitializer() {
+
 			@Override
 			void initializer(Object object, Method m, String value)
 					throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
@@ -190,6 +245,7 @@ public class Objects {
 
 		PROPERTY_INITIALIZERS.put(SimpleProperty.PROPERTY_TYPE_VERTICAL_ALIGNMENT,
 				new PropertyInitializer() {
+
 			@Override
 			void initializer(Object object, Method m, String value)
 					throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
@@ -223,9 +279,14 @@ public class Objects {
 		}
 	}
 
-	/*
-	 * 第一次属性初始值设定项将收集所有属性初始值设定项，
-	 * 以便在后续运行中不需要对组件进行内省。
+	/**
+	 * 按类层级收集并初始化组件属性。
+	 *
+	 * <p>首次初始化时收集属性描述符，供后续同类型对象复用，避免重复反射扫描。
+	 *
+	 * @param object 目标对象
+	 * @param cls 需要反射处理的类
+	 * @param pdl 待初始化的属性描述符列表
 	 */
 	private static void initializeProperties(Object object, Class<?> cls,
 			List<PropertyDescriptor> pdl) {
@@ -265,6 +326,12 @@ public class Objects {
 		}
 	}
 
+	/**
+	 * 去除文本外围的引用符号。
+	 *
+	 * @param s 本次使用的对象
+	 * @return 移除外围引用符号后的文本
+	 */
 	private static String unquote(String s) {
 		// 假设在给定字符串的开头和结尾处引用引号
 		return s.substring(1, s.length() - 1);

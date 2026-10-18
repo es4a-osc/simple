@@ -15,41 +15,78 @@ import simple.runtime.annotations.UsesPermissions;
  */
 @SimpleComponent
 @SimpleObject
-@UsesPermissions(permissionNames =
-	// 允许程序访问网络连接，可能产生GPRS流量
-	"android.permission.INTERNET," +
-	// 允许程序挂载、反挂载外部文件系统
-	"android.permission.WRITE_EXTERNAL_STORAGE," +
-	// 允许程序写入外部存储,如SD卡上写文件
-	"android.permission.MOUNT_UNMOUNT_FILESYSTEMS"
+@UsesPermissions(
+	permissionNames =
+		// 允许程序访问网络连接，可能产生GPRS流量
+		"android.permission.INTERNET," +
+		// 允许程序挂载、反挂载外部文件系统
+		"android.permission.WRITE_EXTERNAL_STORAGE," +
+		// 允许程序写入外部存储,如SD卡上写文件
+		"android.permission.MOUNT_UNMOUNT_FILESYSTEMS"
 )
 public interface 音频播放器 extends 组件 {
 
 	// 错误类型
+	/**
+	 * 媒体播放器错误代码：未知。
+	 */
 	@SimpleDataElement
 	static final int 错误_未知 = 1; // MediaPlayer.MEDIA_ERROR_UNKNOWN
+	/**
+	 * 媒体播放器错误代码：服务器。
+	 */
 	@SimpleDataElement
 	static final int 错误_服务器 = 100; // MediaPlayer.MEDIA_ERROR_SERVER_DIED
+	/**
+	 * 媒体播放器错误代码：读写。
+	 */
 	@SimpleDataElement
 	static final int 错误_读写 = -1004; // MediaPlayer.MEDIA_ERROR_IO API17
+	/**
+	 * 媒体播放器错误代码：流无效。
+	 */
 	@SimpleDataElement
 	static final int 错误_流无效 = -1007; // MediaPlayer.MEDIA_ERROR_MALFORMED
+	/**
+	 * 媒体播放器错误代码：不支持。
+	 */
 	@SimpleDataElement
 	static final int 错误_不支持 = -1010; // MediaPlayer.MEDIA_ERROR_UNSUPPORTED API17
+	/**
+	 * 媒体播放器错误代码：超时。
+	 */
 	@SimpleDataElement
 	static final int 错误_超时 = -110; // MediaPlayer.MEDIA_ERROR_TIMED_OUT API17
 
 	// 信息或警告类型
+	/**
+	 * 媒体播放器状态信息代码：未知。
+	 */
 	@SimpleDataElement
 	static final int 信息_未知 = 1; // MediaPlayer.MEDIA_INFO_UNKNOWN
+	/**
+	 * 媒体播放器状态信息代码：缓冲开始。
+	 */
 	@SimpleDataElement
 	static final int 信息_缓冲开始 = 701; // MediaPlayer.MEDIA_INFO_BUFFERING_START
+	/**
+	 * 媒体播放器状态信息代码：缓冲结束。
+	 */
 	@SimpleDataElement
 	static final int 信息_缓冲结束 = 702; // MediaPlayer.MEDIA_INFO_BUFFERING_END
+	/**
+	 * 媒体播放器状态信息代码：错误交叉。
+	 */
 	@SimpleDataElement
 	static final int 信息_错误交叉 = 800; // MediaPlayer.MEDIA_INFO_BAD_INTERLEAVING
+	/**
+	 * 媒体播放器状态信息代码：无法跳转。
+	 */
 	@SimpleDataElement
 	static final int 信息_无法跳转 = 801; // MediaPlayer.MEDIA_INFO_NOT_SEEKABLE
+	/**
+	 * 媒体播放器状态信息代码：元数据更新。
+	 */
 	@SimpleDataElement
 	static final int 信息_元数据更新 = 802; // MediaPlayer.MEDIA_INFO_METADATA_UPDATE
 
@@ -59,7 +96,7 @@ public interface 音频播放器 extends 组件 {
 	 * 当播放器触发错误时，触发该事件。
 	 *
 	 * @param what 可选值请参考{@link 音频播放器#错误_未知}等
-	 * @param extra
+	 * @param extra 附加数据
 	 */
 	@SimpleEvent
 	void 错误通知(int what, int extra);
@@ -68,7 +105,7 @@ public interface 音频播放器 extends 组件 {
 	 * 当播放器触发信息或警告时，触发该事件。
 	 *
 	 * @param what 可选值请参考{@link 音频播放器#信息_未知}等
-	 * @param extra
+	 * @param extra 附加数据
 	 */
 	@SimpleEvent
 	void 信息通知(int what, int extra);

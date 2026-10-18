@@ -61,8 +61,8 @@ public final class 加速度传感器Impl extends 组件Impl implements 加速�
 	 * Creates a new OrientationSensor component.
 	 *
 	 * @param container container which will hold the component (must not be
-	 *                   {@code null}, for non-visible component, like this one
-	 *                   must be the form)
+	 * {@code null}, for non-visible component, like this one
+	 * must be the form)
 	 */
 	public 加速度传感器Impl(组件容器 container) {
 		super(container);
@@ -83,7 +83,7 @@ public final class 加速度传感器Impl extends 组件Impl implements 加速�
 	// AccelerometerSensor implementation
 
 	/**
-	 * {@inheritDoc}
+	 * 分发各轴加速度变化事件，数值单位为米每二次方秒。
 	 *
 	 * <p>From the Android documentation:
 	 * <p>"All values are in SI units (m/s^2) and measure the acceleration applied
@@ -91,6 +91,10 @@ public final class 加速度传感器Impl extends 组件Impl implements 加速�
 	 * <br>values[0]: Acceleration minus Gx on the x-axis
 	 * <br>values[1]: Acceleration minus Gy on the y-axis
 	 * <br>values[2]: Acceleration minus Gz on the z-axis "
+	 *
+	 * @param xAccelNew x轴上的加速度减去Gx
+	 * @param yAccelNew y轴上的加速度减去Gy
+	 * @param zAccelNew z轴上的加速度减去Gz
 	 */
 	@Override
 	public void 加速度改变(float xAccelNew, float yAccelNew, float zAccelNew) {
@@ -168,8 +172,11 @@ public final class 加速度传感器Impl extends 组件Impl implements 加速�
 
 	/* 内部辅助方法 */
 
-	/*
-	 * Updating sensor cache, replacing oldest values.
+	/**
+	 * 记录本次加速度采样；窗口已满时先移除最旧值。
+	 *
+	 * @param cache 对应坐标轴的历史采样窗口。
+	 * @param value 当前坐标轴的加速度采样值。
 	 */
 	private void addToSensorCache(Queue<Float> cache, float value) {
 		if (cache.size() >= SENSOR_CACHE_SIZE) {
@@ -178,13 +185,17 @@ public final class 加速度传感器Impl extends 组件Impl implements 加速�
 		cache.add(value);
 	}
 
-	/*
-	 * Indicates whether there was a sudden, unusual movement.
+	/**
+	 * 比较当前采样与历史窗口，判断是否发生摇晃。
+	 *
+	 * @param cache 历史采样窗口
+	 * @param currentValue 当前采样值
+	 * @return 当前采样与历史平均值的偏差超过摇晃阈值时为真。
+	 * @see <a href="http://www.utdallas.edu/~rxb023100/pubs/Accelerometer_WBSN.pdf">摇晃识别改进参考资料</a>
 	 */
-	// TODO: maybe this can be improved
-	//       see http://www.utdallas.edu/~rxb023100/pubs/Accelerometer_WBSN.pdf
 	private boolean isShaking(Queue<Float> cache, float currentValue) {
 		float average = 0;
+
 		for (float value : cache) {
 			average += value;
 		}

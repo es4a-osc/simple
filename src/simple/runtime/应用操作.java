@@ -109,6 +109,8 @@ public abstract class 应用操作 {
 
 	/**
 	 * 获取应用程序名称
+	 *
+	 * @return 应用程序名称
 	 */
 	@SimpleFunction
 	public static String 取应用名() {
@@ -195,7 +197,7 @@ public abstract class 应用操作 {
 	 * @return 密度
 	 */
 	@SimpleFunction
-  	public static double 取屏幕密度() {
+	public static double 取屏幕密度() {
 		return applicationFunctions.getScreenDensity();
 	}
 

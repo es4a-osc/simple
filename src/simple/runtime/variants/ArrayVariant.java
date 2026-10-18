@@ -38,8 +38,10 @@ public final class ArrayVariant extends Variant {
 		return new ArrayVariant(value);
 	}
 
-	/*
-	 * Creates a new array variant.
+	/**
+	 * 将数组包装为对应的 Simple 变体。
+	 *
+	 * @param value 要包装的数组。
 	 */
 	private ArrayVariant(Object value) {
 		super(VARIANT_ARRAY);
@@ -61,15 +63,20 @@ public final class ArrayVariant extends Variant {
 		return value == rightOp.getArray();
 	}
 
-	/*
-	 * Returns the array object for the last dimension.
+	/**
+	 * 沿多维索引取得最后一维所在数组。
+	 *
+	 * @param indices 各维度的数组索引
+	 * @return 最后一维所在的数组对象
 	 */
 	private Object getArrayOfLastDimension(Variant[] indices) {
 		int lastDimension = indices.length - 1;
 		Object array = value;
+
 		for (int i = 0; i < lastDimension; i++) {
 			array = Array.get(array, indices[i].getInteger());
 		}
+
 		return array;
 	}
 

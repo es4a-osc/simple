@@ -16,7 +16,6 @@ import java.net.InetAddress;
  */
 public class UDP数据报Impl extends 组件Impl implements UDP数据报 {
 
-
 	/* 消息标识 */
 
 	private static final int RECEIVE_MSG = 1;

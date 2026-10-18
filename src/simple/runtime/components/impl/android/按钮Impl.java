@@ -58,6 +58,7 @@ public final class 按钮Impl extends 文本视图组件 implements 按钮 {
 
 		// 焦点改变监听器
 		view.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+
 			@Override
 			public void onFocusChange(View previouslyFocused, boolean gainFocus) {
 				if (gainFocus) {
@@ -148,6 +149,7 @@ public final class 按钮Impl extends 文本视图组件 implements 按钮 {
 
 		// 单击监听器
 		view.setOnClickListener(new View.OnClickListener() {
+
 			@Override
 			public void onClick(View view) {
 				被单击();
@@ -156,6 +158,7 @@ public final class 按钮Impl extends 文本视图组件 implements 按钮 {
 
 		// 长按监听器
 		view.setOnLongClickListener(new View.OnLongClickListener(){
+
 			@Override
 			public boolean onLongClick(View view) {
 				被长按();

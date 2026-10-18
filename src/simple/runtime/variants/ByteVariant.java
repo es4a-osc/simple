@@ -39,8 +39,10 @@ public final class ByteVariant extends Variant {
 		return new ByteVariant(value);
 	}
 
-	/*
-	 * Creates a new Byte variant.
+	/**
+	 * 将字节值包装为对应的 Simple 变体。
+	 *
+	 * @param value 要包装的字节值。
 	 */
 	private ByteVariant(byte value) {
 		super(VARIANT_BYTE);

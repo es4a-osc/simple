@@ -11,9 +11,10 @@ import simple.runtime.annotations.UsesPermissions;
  */
 @SimpleComponent
 @SimpleObject
-@UsesPermissions(permissionNames =
-	// 允许建立网络连接和绑定本地监听端口。
-	"android.permission.INTERNET"
+@UsesPermissions(
+	permissionNames =
+		// 允许建立网络连接和绑定本地监听端口。
+		"android.permission.INTERNET"
 )
 public interface TCP服务端 extends 组件 {
 

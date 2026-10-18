@@ -8,6 +8,9 @@ import simple.runtime.android.MainActivity;
 import android.view.View;
 import android.widget.ProgressBar;
 
+/**
+ * 不确定进度指示器的 Android 实现。
+ */
 public class 进度圈Impl extends 视图组件 implements 进度圈 {
 
 	public 进度圈Impl(组件容器 container) {

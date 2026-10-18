@@ -131,6 +131,7 @@ public final class 标签Impl extends 文本视图组件 implements 标签 {
 
 		// 单击监听器
 		view.setOnClickListener(new View.OnClickListener() {
+
 			@Override
 			public void onClick(View view) {
 				被单击();
@@ -139,6 +140,7 @@ public final class 标签Impl extends 文本视图组件 implements 标签 {
 
 		// 长按监听器
 		view.setOnLongClickListener(new View.OnLongClickListener(){
+
 			@Override
 			public boolean onLongClick(View view) {
 				被长按();
@@ -182,10 +184,20 @@ public final class 标签Impl extends 文本视图组件 implements 标签 {
 
 	/* 内部接口与平台回调 */
 
+	/**
+	 * 读取滚动。
+	 *
+	 * @return 已为标签设置文字滚动处理器时为真。
+	 */
 	public boolean 滚动() {
 		return ((TextView) getView()).getMovementMethod() != null;
 	}
 
+	/**
+	 * 设置滚动。
+	 *
+	 * @param enabled 是否启用
+	 */
 	public void 滚动(boolean enabled) {
 		TextView view = (TextView) getView();
 		if (enabled) {

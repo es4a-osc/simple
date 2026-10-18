@@ -20,23 +20,33 @@ public interface 定时任务 extends 组件 {
 
 	/* 时间常量，单位为毫秒 */
 
-	/** 十五分钟。 */
+	/**
+	 * 十五分钟。
+	 */
 	@SimpleDataElement
 	long 十五分钟 = 900000L;
 
-	/** 半个小时。 */
+	/**
+	 * 半个小时。
+	 */
 	@SimpleDataElement
 	long 半个小时 = 1800000L;
 
-	/** 一个小时。 */
+	/**
+	 * 一个小时。
+	 */
 	@SimpleDataElement
 	long 一个小时 = 3600000L;
 
-	/** 半天。 */
+	/**
+	 * 半天。
+	 */
 	@SimpleDataElement
 	long 半天 = 43200000L;
 
-	/** 一天。 */
+	/**
+	 * 一天。
+	 */
 	@SimpleDataElement
 	long 一天 = 86400000L;
 

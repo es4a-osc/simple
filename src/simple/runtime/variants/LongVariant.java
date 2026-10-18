@@ -39,8 +39,10 @@ public final class LongVariant extends Variant {
 		return new LongVariant(value);
 	}
 
-	/*
-	 * Creates a new Long variant.
+	/**
+	 * 将长整数包装为对应的 Simple 变体。
+	 *
+	 * @param value 要包装的长整数。
 	 */
 	private LongVariant(long value) {
 		super(VARIANT_LONG);

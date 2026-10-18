@@ -18,6 +18,9 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+/**
+ * 单选列表框的 Android 数据绑定与选择事件实现。
+ */
 public class 单选列表框Impl extends 列表视图组件 implements 单选列表框 {
 
 	private ArrayAdapter<String> adapter;
@@ -84,6 +87,7 @@ public class 单选列表框Impl extends 列表视图组件 implements 单选列
 
 		// 项目点击监听器
 		view.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 				项目被单击(position);
@@ -92,6 +96,7 @@ public class 单选列表框Impl extends 列表视图组件 implements 单选列
 
 		// 项目长按监听器
 		view.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+
 			@Override
 			public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
 				项目被长按(position);

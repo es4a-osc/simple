@@ -211,6 +211,12 @@ public final class NFC读写器Impl extends 组件Impl implements NFC读写器,
 
 	/* 内部辅助方法 */
 
+	/**
+	 * 读取 NFC 意图中首条 NDEF 消息的首个记录并解码文本。
+	 *
+	 * @param intent 系统意图
+	 * @return 解码后的文本；没有可读取记录或载荷不完整时为空文本。
+	 */
 	private String processIntent(Intent intent) {
 		Parcelable[] messages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
 		if (messages == null || messages.length == 0 || !(messages[0] instanceof NdefMessage)) {
@@ -245,6 +251,12 @@ public final class NFC读写器Impl extends 组件Impl implements NFC读写器,
 		return new String(payload, UTF_8);
 	}
 
+	/**
+	 * 将 NDEF 消息写入指定标签。
+	 *
+	 * @param message 消息文本
+	 * @param tag 附加标记或 NFC 标签
+	 */
 	private void writeTag(NdefMessage message, Tag tag) {
 		// 已格式化标签先校验写权限和容量；所有退出路径都关闭标签连接。
 		Ndef ndef = Ndef.get(tag);

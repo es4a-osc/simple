@@ -18,6 +18,8 @@ public interface 距离传感器 extends 传感器组件 {
 
 	/**
 	 * 首次取得有效读数或距离变化时触发。
+	 *
+	 * @param distance 距离，单位为厘米。
 	 */
 	@SimpleEvent
 	void 距离改变(float distance);
@@ -38,18 +40,24 @@ public interface 距离传感器 extends 传感器组件 {
 
 	/**
 	 * 最近一次有效距离，单位为厘米；尚未取得读数时为零。
+	 *
+	 * @return 最近一次有效距离，单位为厘米；尚未取得读数时为零
 	 */
 	@SimpleProperty
 	float 距离();
 
 	/**
 	 * 是否正在监听距离。保留原有可读写名称“可用”，关闭监听或设备不支持时为假。
+	 *
+	 * @return 当前“可用”状态
 	 */
 	@SimpleProperty
 	boolean 可用();
 
 	/**
 	 * 启停距离监听；设备不支持或监听注册失败时不能启用。
+	 *
+	 * @param enable 是否启用
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_BOOLEAN,
@@ -59,12 +67,16 @@ public interface 距离传感器 extends 传感器组件 {
 
 	/**
 	 * 靠近与离开的判断阈值，单位为厘米。
+	 *
+	 * @return 靠近与离开的判断阈值，单位为厘米
 	 */
 	@SimpleProperty
 	int 最小距离();
 
 	/**
 	 * 设置非负距离阈值，默认一厘米。
+	 *
+	 * @param distance 距离
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_INTEGER,
@@ -74,12 +86,16 @@ public interface 距离传感器 extends 传感器组件 {
 
 	/**
 	 * Android 采样参数：0～3 为系统采样档位，其它正整数为微秒周期，不保证实际采样频率。
+	 *
+	 * @return Android 采样参数：0～3 为系统采样档位，其它正整数为微秒周期，不保证实际采样频率
 	 */
 	@SimpleProperty
 	int 检测间隔();
 
 	/**
 	 * 设置非负采样参数，默认 3（正常档位）；关闭监听时只保存参数。
+	 *
+	 * @param interval 触发间隔
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_INTEGER,

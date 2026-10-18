@@ -1,5 +1,7 @@
 package simple.runtime;
 
+import java.util.UUID;
+
 import simple.runtime.annotations.SimpleFunction;
 import simple.runtime.annotations.SimpleObject;
 import simple.runtime.variants.ObjectVariant;
@@ -25,6 +27,23 @@ public final class 程序操作 {
 	 */
 	private static final int CURRENT_INDEX = 3;
 
+	/* 标识生成 */
+
+	/**
+	 * 生成随机的第 4 版 UUID（GUID）。
+	 *
+	 * <p>可用作记录或任务标识，重复概率极低，但不保证绝对唯一。
+	 * 每次调用独立生成，不代表设备身份，也不是递增编号。</p>
+	 *
+	 * @return 36 个字符的小写十六进制文本，包含连字符，格式为 8-4-4-4-12。
+	 */
+	@SimpleFunction
+	public static String 生成GUID() {
+		return UUID.randomUUID().toString();
+	}
+
+	/* 单元与对象信息 */
+
 	/**
 	 * 返回当前单元名。
 	 *
@@ -39,6 +58,7 @@ public final class 程序操作 {
 			String className = ste[CURRENT_INDEX].getClassName();
 			return className.substring(className.lastIndexOf(".") + 1);
 		}
+
 		return "";
 	}
 
@@ -55,6 +75,7 @@ public final class 程序操作 {
 			// 取全类名
 			return ste[CURRENT_INDEX].getClassName();
 		}
+
 		return "";
 	}
 

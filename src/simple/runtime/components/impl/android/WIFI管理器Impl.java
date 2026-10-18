@@ -50,6 +50,7 @@ public final class WIFI管理器Impl extends 组件Impl implements WIFI管理器
 		context = MainActivity.getContext().getApplicationContext();
 		manager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
 		receiver = new BroadcastReceiver() {
+
 			@Override
 			public void onReceive(Context context, Intent intent) {
 				if (destroyed) {
@@ -415,6 +416,12 @@ public final class WIFI管理器Impl extends 组件Impl implements WIFI管理器
 
 	/* 内部辅助方法 */
 
+	/**
+	 * 将 Android 网络状态转换为组件约定的状态值。
+	 *
+	 * @param state 当前状态
+	 * @return 组件约定的网络状态值
+	 */
 	private static int networkState(NetworkInfo.State state) {
 		switch (state) {
 			case CONNECTED: return 1;
@@ -426,11 +433,22 @@ public final class WIFI管理器Impl extends 组件Impl implements WIFI管理器
 		}
 	}
 
+	/**
+	 * 取得系统保存的无线网络配置。
+	 *
+	 * @return 系统保存的无线网络配置列表
+	 */
 	private List<WifiConfiguration> savedNetworks() {
 		List<WifiConfiguration> networks = manager == null ? null : manager.getConfiguredNetworks();
 		return networks == null ? new ArrayList<WifiConfiguration>() : networks;
 	}
 
+	/**
+	 * 查找与指定名称匹配的无线网络配置。
+	 *
+	 * @param name 要操作的名称
+	 * @return 匹配的网络配置；未找到时为 {@code null}
+	 */
 	private WifiConfiguration findNetwork(String name) {
 		String quoted = quote(name);
 
@@ -443,10 +461,22 @@ public final class WIFI管理器Impl extends 组件Impl implements WIFI管理器
 		return null;
 	}
 
+	/**
+	 * 为协议或配置值添加所需引用或转义。
+	 *
+	 * @param text 待处理文本
+	 * @return 已引用或转义的文本
+	 */
 	private static String quote(String text) {
 		return "\"" + text.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
 	}
 
+	/**
+	 * 去除文本外围的引用符号。
+	 *
+	 * @param text 待处理文本
+	 * @return 移除外围引用符号后的文本
+	 */
 	private static String unquote(String text) {
 		if (text == null) {
 			return "";
@@ -456,10 +486,23 @@ public final class WIFI管理器Impl extends 组件Impl implements WIFI管理器
 				? text.substring(1, text.length() - 1) : text;
 	}
 
+	/**
+	 * 读取当前无线网络连接信息。
+	 *
+	 * @return 当前网络的连接信息
+	 */
 	private WifiInfo connectionInfo() {
 		return manager == null ? null : manager.getConnectionInfo();
 	}
 
+	/**
+	 * 替换指定字段对应的网络链路地址。
+	 *
+	 * @param links 需要更新的链路配置
+	 * @param fieldName 待更新的字段名
+	 * @param value 写入指定链路字段的新值。
+	 * @throws ReflectiveOperationException 底层 ReflectiveOperationException 异常无法在本层处理时
+	 */
 	private static void replaceLink(Object links, String fieldName, Object value) throws ReflectiveOperationException {
 		Field field = links.getClass().getDeclaredField(fieldName);
 		field.setAccessible(true);

@@ -17,31 +17,42 @@ import simple.runtime.annotations.UsesPermissions;
  */
 @SimpleObject
 @SimpleComponent
-@UsesPermissions(permissionNames =
-	// 允许应用修改系统音频设置；普通权限，无需运行时请求。
-	"android.permission.MODIFY_AUDIO_SETTINGS"
+@UsesPermissions(
+	permissionNames =
+		// 允许应用修改系统音频设置；普通权限，无需运行时请求。
+		"android.permission.MODIFY_AUDIO_SETTINGS"
 )
 public interface 音量管理器 extends 组件 {
 
 	/* 音量类型常量 */
 
-	/** 系统提示音，类型值为 1。 */
+	/**
+	 * 系统提示音，类型值为 1。
+	 */
 	@SimpleDataElement
 	int 音量_系统 = 1;
 
-	/** 通话音量，类型值为 2。 */
+	/**
+	 * 通话音量，类型值为 2。
+	 */
 	@SimpleDataElement
 	int 音量_通话 = 2;
 
-	/** 来电铃声音量，类型值为 3。 */
+	/**
+	 * 来电铃声音量，类型值为 3。
+	 */
 	@SimpleDataElement
 	int 音量_铃声 = 3;
 
-	/** 音乐、视频等媒体音量，类型值为 4。 */
+	/**
+	 * 音乐、视频等媒体音量，类型值为 4。
+	 */
 	@SimpleDataElement
 	int 音量_媒体 = 4;
 
-	/** 闹钟音量，类型值为 5。 */
+	/**
+	 * 闹钟音量，类型值为 5。
+	 */
 	@SimpleDataElement
 	int 音量_闹钟 = 5;
 

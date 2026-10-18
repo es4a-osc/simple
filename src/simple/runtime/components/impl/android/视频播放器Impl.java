@@ -34,6 +34,7 @@ public class 视频播放器Impl extends 视图组件 implements 视频播放器
 		videoView = new CustomVideoView(MainActivity.getContext());
 		videoView.setFocusable(true);
 		videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+
 			@Override
 			public void onCompletion(MediaPlayer mp) {
 				播放完毕();

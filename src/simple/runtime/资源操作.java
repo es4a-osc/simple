@@ -26,7 +26,7 @@ public final class 资源操作 {
 	}
 
 	/**
-	 *  取指定资源名称及类型的资源标识。
+	 * 取指定资源名称及类型的资源标识。
 	 *
 	 * <p>R.layout.main其对应关系：layout是资源类型，main是资源名称。
 	 *

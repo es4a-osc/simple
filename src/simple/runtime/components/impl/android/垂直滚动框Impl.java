@@ -32,6 +32,7 @@ public class 垂直滚动框Impl extends 视图组件 implements 垂直滚动框
 	protected View createView() {
 		// ScrollView https://developer.android.google.cn/reference/android/widget/ScrollView
 		ScrollView view = new ScrollView(MainActivity.getContext()) {
+
 			@Override
 			protected void onOverScrolled(int scrollX, int scrollY, boolean clampedX, boolean clampedY) {
 				super.onOverScrolled(scrollX, scrollY, clampedX, clampedY);
@@ -81,6 +82,7 @@ public class 垂直滚动框Impl extends 视图组件 implements 垂直滚动框
 		ScrollView view = (ScrollView) getView();
 		Handler handler = new Handler();
 		handler.post(new Runnable() {
+
 			public void run() {
 				view.fullScroll(33);
 			}
@@ -92,6 +94,7 @@ public class 垂直滚动框Impl extends 视图组件 implements 垂直滚动框
 		ScrollView view = (ScrollView) getView();
 		Handler handler = new Handler();
 		handler.post(new Runnable() {
+
 			public void run() {
 				view.fullScroll(130);
 			}

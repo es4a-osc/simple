@@ -39,7 +39,7 @@ public class ResourcesUtil {
 	 *
 	 * @param path 资源路径，格式为{@code @drawable/可绘资源名}。
 	 * @return 可绘制对象。
-	 * @throws NotFoundException
+	 * @throws NotFoundException 底层 NotFoundException 异常无法在本层处理时
 	 */
 	public static Drawable getResourcesDrawable(String path) throws NotFoundException {
 		MainActivity context = MainActivity.getContext();
@@ -48,6 +48,7 @@ public class ResourcesUtil {
 		if (resid > 0) {
 			return getResourcesDrawable(resources, resid);
 		}
+
 		throw new NotFoundException(path);
 	}
 
@@ -56,7 +57,7 @@ public class ResourcesUtil {
 	 *
 	 * @param resid 资源标识。
 	 * @return 可绘制对象。
-	 * @throws NotFoundException
+	 * @throws NotFoundException 底层 NotFoundException 异常无法在本层处理时
 	 */
 	public static Drawable getResourcesDrawable(int resid) throws NotFoundException {
 		return getResourcesDrawable(MainActivity.getContext().getResources(), resid);
@@ -68,7 +69,7 @@ public class ResourcesUtil {
 	 * @param resources 资源对象。
 	 * @param resid 资源标识。
 	 * @return 返回可绘制对象。
-	 * @throws NotFoundException
+	 * @throws NotFoundException 底层 NotFoundException 异常无法在本层处理时
 	 */
 	@SuppressWarnings("deprecation") // 忽略该方法调用已弃用的API
 	public static Drawable getResourcesDrawable(Resources resources, int resid) throws NotFoundException {
@@ -120,6 +121,7 @@ public class ResourcesUtil {
 		if (matcher.find()) {
 			return getResourcesId(resources, matcher.group(2), matcher.group(1), packageName);
 		}
+
 		return 0;
 	}
 
@@ -143,7 +145,7 @@ public class ResourcesUtil {
 	 *
 	 * @param resid 资源标识。
 	 * @return 成功返回资源名称。
-	 * @throws NotFoundException
+	 * @throws NotFoundException 底层 NotFoundException 异常无法在本层处理时
 	 */
 	public static String getResourceName(int resid) throws NotFoundException {
 		return (MainActivity.getContext().getResources()).getResourceEntryName(resid);
@@ -154,7 +156,7 @@ public class ResourcesUtil {
 	 *
 	 * @param resid 资源标识。
 	 * @return 成功返回资源类型名称。
-	 * @throws NotFoundException
+	 * @throws NotFoundException 底层 NotFoundException 异常无法在本层处理时
 	 */
 	public static String getResourceTypeName(int resid) throws NotFoundException {
 		return MainActivity.getContext().getResources().getResourceTypeName(resid);
@@ -165,6 +167,7 @@ public class ResourcesUtil {
 	 *
 	 * @param resid 资源标识。
 	 * @return 成功返回取资源文本，否则返回{@code null}
+	 * @throws NotFoundException 底层 NotFoundException 异常无法在本层处理时
 	 */
 	public static String getResourcesText(int resid) throws NotFoundException {
 		return MainActivity.getContext().getResources().getText(resid).toString();

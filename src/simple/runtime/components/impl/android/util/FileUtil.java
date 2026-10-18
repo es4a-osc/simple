@@ -27,7 +27,7 @@ public class FileUtil {
 	 *
 	 * @param fileName 外部文件名，格式为{@code /文件名}。
 	 * @return 可绘制对象。
-	 * @throws IOException
+	 * @throws IOException 访问文件、流或网络资源失败时
 	 */
 	public static Drawable getFileDrawable(String fileName) throws IOException {
 		File file = new File(fileName);

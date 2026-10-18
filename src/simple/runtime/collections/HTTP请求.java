@@ -31,9 +31,11 @@ import java.util.Map;
  * @author 树先生 xhwsd@qq.com
  */
 @SimpleObject
-@UsesPermissions(permissionNames =
+@UsesPermissions(
+	permissionNames =
 		// 允许程序打开网络套接字
-		"android.permission.INTERNET")
+		"android.permission.INTERNET"
+)
 public final class HTTP请求 {
 	/*
 	java.net：
@@ -58,6 +60,12 @@ public final class HTTP请求 {
 		private String user;
 		private String password;
 
+		/**
+		 * 保存 HTTP 认证所需的用户名与密码。
+		 *
+		 * @param user 认证用户名
+		 * @param password 认证密码
+		 */
 		public MyAuth(String user, String password) {
 			this.user = user;
 			this.password = password;
@@ -271,9 +279,9 @@ public final class HTTP请求 {
 	/**
 	 * 设置请求协议头，在{@link HTTP请求#发送()}前设置生效。
 	 *
-	 * @param key
-	 * @param value
-	 * @return
+	 * @param key 主机公钥或记录键
+	 * @param value 请求头的内容。
+	 * @return 操作成功时为 {@code true}，失败时为 {@code false}
 	 */
 	@SimpleFunction
 	public boolean 置请求头(String key, String value) {
@@ -363,6 +371,12 @@ public final class HTTP请求 {
 		return 置提交文本(sb.toString());
 	}
 
+	/**
+	 * 按当前默认字符集将文本编码为提交字节。
+	 *
+	 * @param data 本次传入的数据
+	 * @return 操作成功时为 {@code true}，失败时为 {@code false}
+	 */
 	@SimpleFunction
 	public boolean 置提交文本(String data) {
 		return 置提交数据(data.getBytes());

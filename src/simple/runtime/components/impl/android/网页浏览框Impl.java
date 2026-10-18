@@ -213,6 +213,7 @@ public class 网页浏览框Impl extends 视图组件 implements 网页浏览框
 					result.cancel();
 					return true;
 				}
+
 				return super.onJsAlert(view, url, message, result);
 			}
 
@@ -504,6 +505,7 @@ public class 网页浏览框Impl extends 视图组件 implements 网页浏览框
 			ValueCallback<String> callback = null;
 			if (isReturn) {
 				callback = new ValueCallback<String>() {
+
 					@Override
 					public void onReceiveValue(String result) {
 						接口返回(script, result);
@@ -517,24 +519,36 @@ public class 网页浏览框Impl extends 视图组件 implements 网页浏览框
 			view.loadUrl(script);
 			return true;
 		}
+
 		return false;
 	}
 
-	/*
-	 * Web应用接口
+	/**
+	 * 供网页脚本向 Simple 组件传递调用的桥接对象。
 	 */
 	private class WebAppInterface {
 
 		// 当前注册的接口名称
 		String name;
 
+		/**
+		 * 保存供网页回调使用的接口名称。
+		 *
+		 * @param name 要操作的名称
+		 */
 		public WebAppInterface(String name) {
 			this.name = name;
 		}
 
+		/**
+		 * 将网页脚本调用转发为组件事件。
+		 *
+		 * @param param 网页调用传入的参数
+		 */
 		@JavascriptInterface
 		public void call(String param) {
 			MainActivity.getContext().runOnUiThread(new Runnable() {
+
 				public void run() {
 					接口调用(name, param);
 				}

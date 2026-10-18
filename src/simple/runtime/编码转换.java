@@ -278,7 +278,6 @@ public final class 编码转换 {
 		return new String(data, getCharset(encoding));
 	}
 
-
 	/* 十六进制字节编码 */
 
 	/**
@@ -433,6 +432,7 @@ public final class 编码转换 {
 				if (third == '=') {
 					return result.toByteArray();
 				}
+
 				third = legacyBase64Value(third);
 			} while (position < data.length && third == -1);
 			if (third == -1) {
@@ -446,6 +446,7 @@ public final class 编码转换 {
 				if (fourth == '=') {
 					return result.toByteArray();
 				}
+
 				fourth = legacyBase64Value(fourth);
 			} while (position < data.length && fourth == -1);
 			if (fourth == -1) {

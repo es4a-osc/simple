@@ -75,7 +75,7 @@ public final class 数据转换 {
 		return Long.toHexString(v.getLong()).toUpperCase(Locale.ENGLISH);
 	}
 
-	/** 扩展 **/
+	/* 扩展 */
 
 	/**
 	 * 将值转为逻辑值。

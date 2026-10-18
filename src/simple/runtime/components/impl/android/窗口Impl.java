@@ -60,6 +60,7 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 		// 恢复监听器
 		MainActivity context = MainActivity.getContext();
 		context.addOnResumeListener(new MainActivity.OnResumeListener() {
+
 			@Override
 			public void onResume() {
 				程序被恢复();
@@ -68,6 +69,7 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 
 		// 停止监听器
 		context.addOnStopListener(new MainActivity.OnStopListener() {
+
 			@Override
 			public void onStop() {
 				程序被停止();
@@ -76,6 +78,7 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 
 		// 销毁监听器
 		context.addOnDestroyListener(new MainActivity.OnDestroyListener() {
+
 			@Override
 			public void onDestroy() {
 				程序被销毁();
@@ -84,6 +87,7 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 
 		// 配置更改监听器
 		context.addOnConfigurationChangedListener(new MainActivity.OnConfigurationChangedListener() {
+
 			@Override
 			public void onConfigurationChanged(Configuration newConfig) {
 				if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT ||
@@ -95,6 +99,7 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 
 		// 新意图监听器
 		context.addOnNewIntentListener(new MainActivity.OnNewIntentListener() {
+
 			@Override
 			public void onNewIntent(Intent intent) {
 				程序被启动(new 意图(intent));
@@ -270,6 +275,7 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 		// Activity.runOnUiThread
 		// https://developer.android.google.cn/reference/android/app/Activity.html#runOnUiThread(java.lang.Runnable)}
 		MainActivity.getContext().runOnUiThread(new Runnable() {
+
 			@Override
 			public void run() {
 				反馈消息(mark, param);

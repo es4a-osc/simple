@@ -73,6 +73,7 @@ public final class 电话Impl extends 组件Impl implements 电话 {
 		telephony = (TelephonyManager) activity.getSystemService(Context.TELEPHONY_SERVICE);
 		vibrator = (Vibrator) activity.getSystemService(Context.VIBRATOR_SERVICE);
 		destroyListener = new MainActivity.OnDestroyListener() {
+
 			@Override
 			public void onDestroy() {
 				// Activity 正在遍历监听器列表，此处不能修改该列表。
@@ -84,9 +85,6 @@ public final class 电话Impl extends 组件Impl implements 电话 {
 
 	/* 组件事件 */
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public void 通话状态改变(int state, String phoneNumber) {
 		EventDispatcher.dispatchEvent(this, "通话状态改变", state, phoneNumber);
@@ -94,18 +92,12 @@ public final class 电话Impl extends 组件Impl implements 电话 {
 
 	/* 组件属性 */
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean 可用() {
 		return telephony != null
 			&& activity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean 监听中() {
 		synchronized (lifecycle) {
@@ -113,9 +105,6 @@ public final class 电话Impl extends 组件Impl implements 电话 {
 		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public int 通话状态() {
 		requireAlive();
@@ -134,9 +123,6 @@ public final class 电话Impl extends 组件Impl implements 电话 {
 
 	/* 组件方法 */
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public void 呼叫(String phoneNumber) {
 		requirePhone();
@@ -148,18 +134,12 @@ public final class 电话Impl extends 组件Impl implements 电话 {
 		launchPhoneIntent(Intent.ACTION_CALL, phoneNumber.trim());
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public void 启动拨号界面(String phoneNumber) {
 		requireAlive();
 		launchPhoneIntent(Intent.ACTION_DIAL, phoneNumber == null ? "" : phoneNumber.trim());
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	@SuppressWarnings("deprecation")
 	public void 振动(int duration) {
@@ -194,9 +174,6 @@ public final class 电话Impl extends 组件Impl implements 电话 {
 		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public void 开始监听() {
 		requirePhone();
@@ -218,6 +195,7 @@ public final class 电话Impl extends 组件Impl implements 电话 {
 
 			final long generation = ++listenerGeneration;
 			PhoneStateListener listener = new PhoneStateListener() {
+
 				@Override
 				public void onCallStateChanged(int state, String phoneNumber) {
 					synchronized (lifecycle) {
@@ -245,9 +223,6 @@ public final class 电话Impl extends 组件Impl implements 电话 {
 		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public void 停止监听() {
 		synchronized (lifecycle) {
@@ -265,9 +240,6 @@ public final class 电话Impl extends 组件Impl implements 电话 {
 		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public int 取SIM卡状态() {
 		requirePhone();
@@ -279,9 +251,6 @@ public final class 电话Impl extends 组件Impl implements 电话 {
 		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public int 取SIM卡状态(int slotIndex) {
 		requirePhone();
@@ -300,9 +269,6 @@ public final class 电话Impl extends 组件Impl implements 电话 {
 		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public String 取本机号码() {
 		requirePhone();
@@ -324,9 +290,6 @@ public final class 电话Impl extends 组件Impl implements 电话 {
 		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public 集合 取通话记录() {
 		requireCallLog("android.permission.READ_CALL_LOG");
@@ -371,9 +334,6 @@ public final class 电话Impl extends 组件Impl implements 电话 {
 		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean 删除通话记录(String recordId) {
 		requireCallLog("android.permission.WRITE_CALL_LOG");

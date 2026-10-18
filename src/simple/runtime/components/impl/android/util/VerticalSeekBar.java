@@ -6,6 +6,9 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.widget.SeekBar;
 
+/**
+ * 以垂直方向测量、绘制和处理触摸的滑块。
+ */
 public class VerticalSeekBar extends SeekBar {
 
 	private SeekBar.OnSeekBarChangeListener mOnSeekBarChangeListener;
@@ -73,24 +76,36 @@ public class VerticalSeekBar extends SeekBar {
 		mOnSeekBarChangeListener = l;
 	}
 
+	/**
+	 * 将当前滑块位置通知监听器。
+	 */
 	public void onProgressRefresh() {
 		if (mOnSeekBarChangeListener != null) {
 			mOnSeekBarChangeListener.onProgressChanged(this, getProgress(), true);
 		}
 	}
 
+	/**
+	 * 通知监听器开始拖动滑块。
+	 */
 	public void onStartTrackingTouch() {
 		if (mOnSeekBarChangeListener != null) {
 			mOnSeekBarChangeListener.onStartTrackingTouch(this);
 		}
 	}
 
+	/**
+	 * 通知监听器结束拖动滑块。
+	 */
 	public void onStopTrackingTouch() {
 		if (mOnSeekBarChangeListener != null) {
 			mOnSeekBarChangeListener.onStopTrackingTouch(this);
 		}
 	}
 
+	/**
+	 * 在滑块拖动期间请求父容器保留触摸事件。
+	 */
 	private void attemptClaimDrag() {
 		if (getParent() != null) {
 			getParent().requestDisallowInterceptTouchEvent(true);

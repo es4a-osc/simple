@@ -68,6 +68,7 @@ public final class XML生成器 {
 			if (encoding == null || encoding.length() == 0) {
 				throw new IllegalArgumentException("编码不得为空");
 			}
+
 			charset = Charset.forName(encoding);
 			ByteArrayOutputStream bytes = new ByteArrayOutputStream();
 			XmlSerializer current = XmlPullParserFactory.newInstance().newSerializer();
@@ -93,6 +94,7 @@ public final class XML生成器 {
 		if (prefix == null || (prefix.length() > 0 && !isName(prefix))) {
 			throw failure("命名空间前缀无效", null);
 		}
+
 		checkText(prefix, "命名空间前缀");
 		checkText(namespace, "命名空间");
 		if ("xmlns".equals(prefix) || XMLNS_NAMESPACE.equals(namespace)
@@ -100,6 +102,7 @@ public final class XML生成器 {
 			|| (prefix.length() > 0 && namespace.length() == 0)) {
 			throw failure("命名空间绑定无效", null);
 		}
+
 		try {
 			current.setPrefix(prefix, namespace);
 			acceptingAttributes = false;
@@ -137,6 +140,7 @@ public final class XML生成器 {
 		if (rootStarted && current.getDepth() == 0) {
 			throw failure("XML 文档只能包含一个根节点", null);
 		}
+
 		try {
 			current.startTag(namespace, name);
 			rootStarted = true;
@@ -173,16 +177,19 @@ public final class XML生成器 {
 		if (!acceptingAttributes) {
 			throw failure("属性必须紧跟在开始节点之后设置", null);
 		}
+
 		checkName(name);
 		checkText(namespace, "命名空间");
 		checkText(value, "属性内容");
 		if (XMLNS_NAMESPACE.equals(namespace) || (namespace.length() == 0 && "xmlns".equals(name))) {
 			throw failure("请使用设置命名空间声明前缀", null);
 		}
+
 		String key = namespace + '\0' + name;
 		if (attributes.contains(key)) {
 			throw failure("当前节点已存在该属性：" + name, null);
 		}
+
 		try {
 			current.attribute(namespace, name, value);
 			attributes.add(key);
@@ -203,6 +210,7 @@ public final class XML生成器 {
 		if (current.getDepth() == 0) {
 			throw failure("文本必须写入根节点内部", null);
 		}
+
 		checkText(text, "节点内容");
 		try {
 			current.text(text);
@@ -237,6 +245,7 @@ public final class XML生成器 {
 			|| !name.equals(current.getName()) || !namespace.equals(current.getNamespace())) {
 			throw failure("结束节点必须与当前节点的命名空间及名称一致", null);
 		}
+
 		try {
 			current.endTag(namespace, name);
 			acceptingAttributes = false;
@@ -256,6 +265,7 @@ public final class XML生成器 {
 		if (!rootStarted || current.getDepth() != 0) {
 			throw failure("结束文档前必须创建并闭合唯一根节点", null);
 		}
+
 		try {
 			current.endDocument();
 			finished = true;
@@ -358,6 +368,7 @@ public final class XML生成器 {
 		if (name == null || name.length() == 0 || !isNameStart(name.codePointAt(0))) {
 			return false;
 		}
+
 		for (int offset = Character.charCount(name.codePointAt(0)); offset < name.length();) {
 			int value = name.codePointAt(offset);
 			if (!isNameStart(value) && value != '-' && value != '.' && value != 0xB7
@@ -365,8 +376,10 @@ public final class XML生成器 {
 				&& !(value >= 0x203F && value <= 0x2040)) {
 				return false;
 			}
+
 			offset += Character.charCount(value);
 		}
+
 		return true;
 	}
 
@@ -396,14 +409,17 @@ public final class XML生成器 {
 		if (value == null) {
 			throw failure(label + "不得为空引用", null);
 		}
+
 		for (int offset = 0; offset < value.length();) {
 			int point = value.codePointAt(offset);
 			if (point != 9 && point != 10 && point != 13 && !(point >= 0x20 && point <= 0xD7FF)
 				&& !(point >= 0xE000 && point <= 0xFFFD) && !(point >= 0x10000 && point <= 0x10FFFF)) {
 				throw failure(label + "含有非法 XML 字符", null);
 			}
+
 			offset += Character.charCount(point);
 		}
+
 		if (!charset.newEncoder().canEncode(value)) {
 			throw failure(label + "不能使用 " + charset.name() + " 编码", null);
 		}

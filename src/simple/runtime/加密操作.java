@@ -274,11 +274,13 @@ public final class 加密操作 {
 
 		// 密钥调度只操作本地状态表，不修改调用方的数据或密钥。
 		int[] state = new int[256];
+
 		for (int index = 0; index < state.length; index++) {
 			state[index] = index;
 		}
 
 		int second = 0;
+
 		for (int index = 0; index < state.length; index++) {
 			second = (second + state[index] + (key[index % key.length] & 255)) & 255;
 			int previous = state[index];
@@ -327,6 +329,7 @@ public final class 加密操作 {
 	 */
 	private static String hex(byte[] data) {
 		char[] result = new char[data.length * 2];
+
 		for (int index = 0; index < data.length; index++) {
 			int value = data[index] & 255;
 			result[index * 2] = HEX[value >>> 4];
@@ -377,6 +380,7 @@ public final class 加密操作 {
 	private static String authcodePrefix() {
 		Random random = new Random();
 		StringBuilder result = new StringBuilder(4);
+
 		for (int index = 0; index < 4; index++) {
 			result.append(AUTHCODE_PREFIX_CHARS.charAt(random.nextInt(AUTHCODE_PREFIX_CHARS.length())));
 		}

@@ -42,8 +42,8 @@ public class TextViewUtil {
 	 *
 	 * @param textview   文本视图实例
 	 * @param justification  其中之一{@link 组件#对齐_左}、
-	 *                       {@link 组件#对齐_水平居中}或
-	 *                       {@link 组件#对齐_右}等
+	 * {@link 组件#对齐_水平居中}或
+	 * {@link 组件#对齐_右}等
 	 */
 	public static void setJustification(TextView textview, int justification) {
 		textview.setGravity(ViewUtil.simpleToAndroidGravity(justification));
@@ -142,9 +142,9 @@ public class TextViewUtil {
 	 *
 	 * @param textview   文本视图实例
 	 * @param typeface  其中之一@link 组件#字体类型_默认}、
-	 *                  {@link 组件#字体类型_衬线}、
-	 *                  {@link 组件#字体类型_无衬线}或
-	 *                  {@link 组件#字体类型_等宽}
+	 * {@link 组件#字体类型_衬线}、
+	 * {@link 组件#字体类型_无衬线}或
+	 * {@link 组件#字体类型_等宽}
 	 */
 	public static void setFontTypeface(TextView textview, int typeface) {
 		Typeface tf;
@@ -177,7 +177,7 @@ public class TextViewUtil {
 	 *
 	 * @param textview 文本视图
 	 * @param path 字体路径，可以为{@code null}或空文本。
-	 * @throws IOException
+	 * @throws IOException 访问文件、流或网络资源失败时
 	 */
 	public static void setCustomFont(TextView textview, String path) throws IOException {
 		// 载入新字体集
@@ -322,7 +322,7 @@ public class TextViewUtil {
 	/**
 	 * 设置文本是否单行模式。
 	 *
-	 * @param editText 文本视图对象。
+	 * @param textView 文本视图对象。
 	 * @param singleLine 是否单行模式。
 	 */
 	public static void setSingleLine(TextView textView, boolean singleLine) {

@@ -9,7 +9,7 @@ import android.widget.RelativeLayout;
 
 /**
  * 用于相对同级或父级组件放置组件的相对布局。
- * 
+ *
  * @author 树先生 xhwsd@qq.com
  */
 public class 相对布局Impl extends 布局Impl implements 相对布局 {
@@ -75,10 +75,10 @@ public class 相对布局Impl extends 布局Impl implements 相对布局 {
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1) {
 			((RelativeLayout.LayoutParams) component.getView().getLayoutParams()).addRule(compatibleRule(verb), 0);
 		} else {
-			// 添加于API17：LayoutParams.removeRule(int) 
+			// 添加于API17：LayoutParams.removeRule(int)
 			((RelativeLayout.LayoutParams) component.getView().getLayoutParams()).removeRule(verb);
 		}
-		
+
 		// 更新布局
 		component.getView().requestLayout();
 	}
@@ -87,6 +87,7 @@ public class 相对布局Impl extends 布局Impl implements 相对布局 {
 	 * 取子组件的布局规则瞄点
 	 *
 	 * @param component 子组件
+	 * @param verb 相对布局规则编号
 	 * @return 成功返回规则瞄点，失败返回0
 	 */
 	public int getComponentAnchor(视图组件 component, int verb) {
@@ -95,12 +96,19 @@ public class 相对布局Impl extends 布局Impl implements 相对布局 {
 			int[] rules = ((RelativeLayout.LayoutParams) component.getView().getLayoutParams()).getRules();
 			return (verb >= 0 && verb < rules.length) ? rules[verb] : 0;
 		} else {
-			// 添加于API23：LayoutParams.getRule(int) 
+			// 添加于API23：LayoutParams.getRule(int)
 			return ((RelativeLayout.LayoutParams) component.getView().getLayoutParams()).getRule(verb);
 		}
 	}
 
-	// API 16 及以下没有“开始/结束”规则，按从左到右的布局转换。
+	/**
+	 * 将 Simple 相对布局规则转换为 Android 规则。
+	 *
+	 * <p>API 16 及以下没有“开始/结束”规则，按从左到右的布局转换。
+	 *
+	 * @param verb 相对布局规则编号
+	 * @return Android 相对布局规则编号
+	 */
 	private static int compatibleRule(int verb) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
 			return verb;

@@ -88,7 +88,7 @@ public final class 集合 {
 	 *
 	 * @param index 欲插入项目的位置
 	 * @param item 项目添加
-	 * @throws 索引超出界限错误
+	 * @throws 索引超出界限错误 发生索引超出界限错误时
 	 */
 	@SimpleFunction
 	public void 插入(int index, Variant item) {
@@ -104,7 +104,7 @@ public final class 集合 {
 	 *
 	 * @param index  项目位置
 	 * @return  项目
-	 * @throws 索引超出界限错误
+	 * @throws 索引超出界限错误 发生索引超出界限错误时
 	 */
 	@SimpleFunction
 	public Variant 项目(int index) {
@@ -124,8 +124,8 @@ public final class 集合 {
 	 * 重新设置指点位置的项目值。
 	 *
 	 * @param index  项目位置
-	 * @param Variant  新项目值
-	 * @throws 索引超出界限错误
+	 * @param item 新项目值
+	 * @throws 索引超出界限错误 发生索引超出界限错误时
 	 */
 	@SimpleFunction
 	public void 替换(int index, Variant item) {
@@ -155,7 +155,7 @@ public final class 集合 {
 	 * 从集合中移除指点位置的项。
 	 *
 	 * @param index  项目位置
-	 * @throws 索引超出界限错误
+	 * @throws 索引超出界限错误 发生索引超出界限错误时
 	 */
 	@SimpleFunction
 	public void 删除(int index) {

@@ -47,9 +47,7 @@ public interface 水平进度条 extends 进度组件 {
 	 *
 	 * @param maxHeight 最大高度。
 	 */
-	@SimpleProperty(
-		type = SimpleProperty.PROPERTY_TYPE_INTEGER
-	)
+	@SimpleProperty(type = SimpleProperty.PROPERTY_TYPE_INTEGER)
 	void 最大高度(int maxHeight);
 
 	/**
@@ -65,8 +63,6 @@ public interface 水平进度条 extends 进度组件 {
 	 *
 	 * @param minHeight 最小高度。
 	 */
-	@SimpleProperty(
-		type = SimpleProperty.PROPERTY_TYPE_INTEGER
-	)
+	@SimpleProperty(type = SimpleProperty.PROPERTY_TYPE_INTEGER)
 	void 最小高度(int minHeight);
 }

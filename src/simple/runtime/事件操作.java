@@ -70,7 +70,7 @@ public final class 事件操作 {
 	 *
 	 * @param component 欲执行的已实例化组件
 	 * @param name 事件名称
-	 * @param param 事件参数
+	 * @param params 事件参数
 	 * @throws 非法参数错误 组件为空
 	 */
 	@SimpleFunction
@@ -82,6 +82,7 @@ public final class 事件操作 {
 
 		// 转换参数
 		ArrayList<Object> args = new ArrayList<Object>();
+
 		for (Variant value : params) {
 			args.add(value.getObject());
 		}

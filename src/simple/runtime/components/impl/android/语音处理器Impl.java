@@ -92,10 +92,12 @@ public final class 语音处理器Impl extends 组件Impl implements 语音处�
 
 		final int generation = ++speechGeneration;
 		speech = new TextToSpeech(activity, new TextToSpeech.OnInitListener() {
+
 			@Override
 			public void onInit(final int status) {
 				// 排队处理，确保字段已赋值；释放后到达的旧初始化回调不得影响新引擎。
 				handler.post(new Runnable() {
+
 					@Override
 					public void run() {
 						if (destroyed || generation != speechGeneration || speech == null) {

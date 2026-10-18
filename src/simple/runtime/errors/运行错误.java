@@ -26,13 +26,10 @@ import simple.runtime.annotations.SimpleObject;
 @SuppressWarnings("serial")
 @SimpleObject
 public abstract class 运行错误 extends RuntimeException {
-	/**
-	关联代码：
-	{@link simple.compiler.Compiler RUNTIME_ERROR_INTERNAL_NAME}
-	*/
 
 	/**
 	 * 创建运行时错误。
+	 * <p>编译器关联参考：{@code simple.compiler.Compiler RUNTIME_ERROR_INTERNAL_NAME}。
 	 */
 	protected 运行错误() {
 	}

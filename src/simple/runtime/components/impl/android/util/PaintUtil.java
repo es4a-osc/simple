@@ -26,14 +26,16 @@ import android.graphics.PorterDuffXfermode;
  * @author Ellen Spertus
  */
 public class PaintUtil {
-	private PaintUtil() {}
+
+	private PaintUtil() {
+	}
 
 	/**
 	 * Extracts an ARGB (alpha-red-green-blue) value from a Paint.
 	 *
 	 * @param paint the source of the ARGB values
 	 * @return a 32-bit integer which eight bits for alpha, red, green, and blue,
-	 *         respectively
+	 * respectively
 	 */
 	public static int extractARGB(Paint paint) {
 		return paint.getColor() | (paint.getAlpha() << 24);
@@ -44,8 +46,8 @@ public class PaintUtil {
 	 *
 	 * @param paint  the object to mutate with the new color
 	 * @param argb  a 32-bit integer with eight bits for alpha, red, green, and
-	 *              blue, respectively; the value 0 has the special meaning of
-	 *              erasing points
+	 * blue, respectively; the value 0 has the special meaning of
+	 * erasing points
 	 */
 	public static void changePaint(Paint paint, int argb) {
 		if ((argb & 0xFF000000) == 0) {

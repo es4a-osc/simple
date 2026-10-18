@@ -59,6 +59,11 @@ public final class ConnectedThread extends Thread {
 		}
 	}
 
+	/**
+	 * 写出当前数据。
+	 *
+	 * @param data 本次传入的数据
+	 */
 	public synchronized void write(byte[] data) {
 		if (cancelled || disconnected) {
 			return;
@@ -77,6 +82,12 @@ public final class ConnectedThread extends Thread {
 		}
 	}
 
+	/**
+	 * 发送接收数据及其类型对应的消息。
+	 *
+	 * @param data 本次传入的数据
+	 * @param kind 操作或数据类型
+	 */
 	private void sendData(byte[] data, int kind) {
 		if (cancelled) {
 			return;
@@ -91,6 +102,9 @@ public final class ConnectedThread extends Thread {
 		handler.sendMessage(message);
 	}
 
+	/**
+	 * 通知连接已经断开。
+	 */
 	private synchronized void notifyDisconnected() {
 		if (!cancelled && !disconnected) {
 			disconnected = true;
@@ -98,6 +112,9 @@ public final class ConnectedThread extends Thread {
 		}
 	}
 
+	/**
+	 * 关闭线程持有的蓝牙套接字。
+	 */
 	private void closeSocket() {
 		try {
 			socket.close();
@@ -106,6 +123,9 @@ public final class ConnectedThread extends Thread {
 		}
 	}
 
+	/**
+	 * 取消当前任务并释放相应资源。
+	 */
 	public void cancel() {
 		cancelled = true;
 		closeSocket();

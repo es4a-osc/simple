@@ -111,6 +111,9 @@ public final class 录音器 {
 
 	/**
 	 * 检查输出文件与父目录；文件系统失败直接交给 Simple 错误分支处理。
+	 *
+	 * @param path 文件或目录路径
+	 * @return 新建文件的写入流
 	 */
 	private File createFile(String path) {
 		if (path == null || path.trim().isEmpty()) {
@@ -143,6 +146,8 @@ public final class 录音器 {
 
 	/**
 	 * 释放失败只记录日志，避免覆盖启动或停止时的原始错误。
+	 *
+	 * @param current 当前值或状态
 	 */
 	private void releaseRecorder(MediaRecorder current) {
 		try {

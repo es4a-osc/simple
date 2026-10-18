@@ -39,8 +39,10 @@ public final class DoubleVariant extends Variant {
 		return new DoubleVariant(value);
 	}
 
-	/*
-	 * Creates a new Double variant.
+	/**
+	 * 将双精度小数包装为对应的 Simple 变体。
+	 *
+	 * @param value 要包装的双精度小数。
 	 */
 	private DoubleVariant(double value) {
 		super(VARIANT_DOUBLE);
@@ -133,6 +135,7 @@ public final class DoubleVariant extends Variant {
 		if (value == rightValue) {
 			return 0;
 		}
+
 		return value > rightValue ? 1 : -1;
 	}
 }

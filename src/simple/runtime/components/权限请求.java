@@ -34,7 +34,7 @@ public interface 权限请求 extends 组件 {
 	 * @return 成功返回所有权限列表，否则返回{@code null}。
 	 */
 	@SimpleFunction
-    public boolean 需要请求();
+	public boolean 需要请求();
 
 	/**
 	 * 取当前应用所有权限列表。

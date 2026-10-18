@@ -59,7 +59,7 @@ public interface 垂直滚动框 extends 可视组件, 组件容器 {
 	/**
 	 * 滚动的指点位置。
 	 *
-	 * @param 位置
+	 * @param 位置 目标滚动位置，单位为像素
 	 */
 	@SimpleFunction
 	void 滚动(int 位置);

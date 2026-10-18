@@ -18,7 +18,6 @@ import java.net.Socket;
  */
 public class TCP客户端Impl extends 组件Impl implements TCP客户端 {
 
-
 	/* 消息标识 */
 
 	private static final int CONNECT_FAIL = 1;
@@ -218,6 +217,11 @@ public class TCP客户端Impl extends 组件Impl implements TCP客户端 {
 			}
 		}
 
+		/**
+		 * 向连接输出流写入字节数据。
+		 *
+		 * @param buf 要写出的数据缓冲区
+		 */
 		public void writeByte(byte[] buf) {
 			try {
 				if (this.socket.isConnected() && !this.socket.isClosed()) {
@@ -233,6 +237,12 @@ public class TCP客户端Impl extends 组件Impl implements TCP客户端 {
 			}
 		}
 
+		/**
+		 * 向连接输出流写入整数数据。
+		 *
+		 * @param buf 要写出的数据缓冲区
+		 * @return 操作成功时为 {@code true}，失败时为 {@code false}
+		 */
 		public boolean writeInt(int buf) {
 			try {
 				this.output = this.socket.getOutputStream();
@@ -288,6 +298,11 @@ public class TCP客户端Impl extends 组件Impl implements TCP客户端 {
 			}
 		}
 
+		/**
+		 * 返回连接线程保存的套接字。
+		 *
+		 * @return 当前连接线程保存的套接字
+		 */
 		public Socket getSocket() {
 			return this.socket;
 		}

@@ -33,15 +33,23 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface ManifestNodes {
 
-	/** @return 插入到{@code /manifest}下的XML */
+	/**
+	 * @return 插入到{@code /manifest}下的XML
+	 */
 	String rootXml() default "";
 
-	/** @return 插入到{@code /manifest/application}下的XML */
+	/**
+	 * @return 插入到{@code /manifest/application}下的XML
+	 */
 	String applicationXml() default "";
 
-	/** @return 插入到主{@code activity}下的XML */
+	/**
+	 * @return 插入到主{@code activity}下的XML
+	 */
 	String activityXml() default "";
 
-	/** @return 插入到主{@code activity/intent-filter}下的XML */
+	/**
+	 * @return 插入到主{@code activity/intent-filter}下的XML
+	 */
 	String intentFilterXml() default "";
 }

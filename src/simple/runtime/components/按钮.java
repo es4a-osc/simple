@@ -108,7 +108,7 @@ public interface 按钮 extends 文本组件 {
 	/**
 	 * 启用属性设置器方法。
 	 *
-	 * @param enabled {@code true}已启用，{@ code false}已禁用
+	 * @param enabled {@code true}已启用，{@code false}已禁用
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_BOOLEAN,
@@ -121,7 +121,7 @@ public interface 按钮 extends 文本组件 {
 	/**
 	 * 使其获得焦点。
 	 *
-	 * @return 获得焦点返回{@cdoe true}，否则返回{@code false}。
+	 * @return 获得焦点返回{@code true}，否则返回{@code false}。
 	 */
 	@SimpleFunction
 	boolean 获取焦点();

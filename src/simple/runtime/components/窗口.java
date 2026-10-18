@@ -42,7 +42,6 @@ public interface 窗口 extends 可视组件, 组件容器 {
 	simple.compiler.parser.Parser#parseFormPropertiesSection()
 	*/
 
-
 	/**
 	 * 程序被启动事件默认处理程序：当程序被启动时触发。
 	 *
@@ -158,8 +157,8 @@ public interface 窗口 extends 可视组件, 组件容器 {
 	 * 布局属性设置器：我们为将常量转换为布局对象实例的属性为属性分配一个布局。
 	 *
 	 * @param layoutType 其中之一{@link 组件#布局_线性}，或
-	 *                    {@link 组件#布局_表格}，或
-	 *                    {@link 组件#布局_单帧}
+	 * {@link 组件#布局_表格}，或
+	 * {@link 组件#布局_单帧}
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_LAYOUT,
@@ -229,8 +228,7 @@ public interface 窗口 extends 可视组件, 组件容器 {
 	 * <p>如果调用线程是UI线程，则立即执行该操作。
 	 * 如果调用线程非UI线程，则将发送到UI线程的事件队列等待处理。
 	 *
-	 * @param mark 标记
-	 * @param param 参数
+	 * @param mark 参数
 	 */
 	@SimpleFunction
 	void 投递消息(Variant mark, Variant param);
@@ -241,8 +239,7 @@ public interface 窗口 extends 可视组件, 组件容器 {
 	 * <p>如果调用线程是UI线程，则立即执行该操作。
 	 * 如果调用线程非UI线程，则将发送到UI线程的事件队列等待处理。
 	 *
-	 * @param mark 标记
-	 * @param param 参数
+	 * @param mark 参数
 	 */
 	@SimpleFunction
 	void 投递消息(Variant mark);

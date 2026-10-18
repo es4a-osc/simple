@@ -22,13 +22,11 @@ package simple.runtime.components;
  * @author Herbert Czymontek
  */
 public interface 组件容器 {
-	/**
-	关联代码：
-	{@link simple.compiler.expressions.synthetic.NewComponentExpression#generate(Method)}
-	*/
 
 	/**
 	 * 将组件添加到容器中。
+	 *
+	 * <p>编译器关联参考：{@code simple.compiler.expressions.synthetic.NewComponentExpression#generate(Method)}。
 	 *
 	 * @param component 要添加的组件
 	 */

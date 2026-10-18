@@ -14,7 +14,7 @@ import java.io.IOException;
 public class AssetsUtil {
 	/*
 	AssetManager：
-	{@link https://developer.android.google.cn/reference/android/content/res/AssetManager}
+	<a href="https://developer.android.google.cn/reference/android/content/res/AssetManager">参考说明</a>
 	*/
 
 	/**
@@ -32,7 +32,7 @@ public class AssetsUtil {
 	 *
 	 * @param fileName 资产文件名，格式为{@code 文件名}。
 	 * @return 可绘制对象。
-	 * @throws IOException
+	 * @throws IOException 访问文件、流或网络资源失败时
 	 */
 	public static Drawable getAssetsDrawable(String fileName) throws IOException {
 		return Drawable.createFromStream(MainActivity.getContext().getAssets().open(fileName), fileName);
@@ -43,7 +43,7 @@ public class AssetsUtil {
 	 *
 	 * @param fileName 资产文件名，格式为{@code 文件名}。
 	 * @return 字符串数组。
-	 * @throws IOException
+	 * @throws IOException 访问文件、流或网络资源失败时
 	 */
 	public static String[] getAssetsList(String fileName) throws IOException {
 		return MainActivity.getContext().getAssets().list(fileName);

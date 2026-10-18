@@ -34,7 +34,7 @@ public interface 线性布局 extends 布局 {
 	 * 方向属性获取方法。
 	 *
 	 * @return 可选值为{@link 组件#布局_方向_水平} 或
-	 * 		{@link 组件#布局_方向_垂直}
+	 * {@link 组件#布局_方向_垂直}
 	 */
 	@SimpleProperty
 	int 方向();
@@ -43,7 +43,7 @@ public interface 线性布局 extends 布局 {
 	 * 方向属性设置器方法。
 	 *
 	 * @param orientation {@link 组件#布局_方向_水平} 或
-	 * 						{@link 组件#布局_方向_垂直}
+	 * {@link 组件#布局_方向_垂直}
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_INTEGER,
@@ -55,7 +55,7 @@ public interface 线性布局 extends 布局 {
 	 * 内容对齐获取器方法：其内容相对于自身的对齐方式。
 	 *
 	 * @return 可选值为{@link 组件#对齐_水平居中} 或
-	 * 		{@link 组件#布局_方向_垂直}
+	 * {@link 组件#布局_方向_垂直}
 	 */
 	@SimpleProperty
 	int 内容对齐();
@@ -64,7 +64,7 @@ public interface 线性布局 extends 布局 {
 	 * 内容对齐获设置器方法：其内容相对于自身的对齐方式。
 	 *
 	 * @param justification 可选值为{@link 组件#对齐_水平居中} 或
-	 * 		{@link 组件#布局_方向_垂直}
+	 * {@link 组件#布局_方向_垂直}
 	 */
 	@SimpleProperty
 	void 内容对齐(int justification);

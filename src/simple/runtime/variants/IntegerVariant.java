@@ -39,8 +39,10 @@ public final class IntegerVariant extends Variant {
 		return new IntegerVariant(value);
 	}
 
-	/*
-	 * Creates a new Integer variant.
+	/**
+	 * 将整数包装为对应的 Simple 变体。
+	 *
+	 * @param value 要包装的整数。
 	 */
 	private IntegerVariant(int value) {
 		super(VARIANT_INTEGER);

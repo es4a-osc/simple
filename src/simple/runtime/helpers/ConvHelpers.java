@@ -321,7 +321,7 @@ public final class ConvHelpers {
 		}
 	}
 
-	/** 自定义扩展 **/
+	/* 自定义扩展 */
 
 	/**
 	 * 将数组对象转为对象列表
@@ -332,9 +332,11 @@ public final class ConvHelpers {
 	public static ArrayList<Object> object2list(Object o) {
 		int length = Array.getLength(o);
 		ArrayList<Object> list = new ArrayList<Object>();
+
 		for (int i = 0; i < length; i++) {
 			list.add(Array.get(o, i));
 		}
+
 		return list;
 	}
 
@@ -385,11 +387,13 @@ public final class ConvHelpers {
 	public static Object[] variant2objects(Variant v) {
 		if (v instanceof ArrayVariant) {
 			Object[] objects = object2objects(v.getArray());
+
 			for (int i = 0; i < objects.length; i++) {
 				if (objects[i] instanceof Variant) {
 					objects[i] = variant2object((Variant) objects[i]);
 				}
 			}
+
 			return objects;
 		} else if (v != null) {
 			return new Object[]{variant2object(v)};
@@ -405,9 +409,11 @@ public final class ConvHelpers {
 	 */
 	public static Object[] object2objects(Object o) {
 		Object[] objects = new Object[Array.getLength(o)];
+
 		for (int i = 0; i < objects.length; i++) {
 			objects[i] = Array.get(o, i);
 		}
+
 		return objects;
 	}
 

@@ -32,16 +32,24 @@ import simple.runtime.errors.转换错误;
  */
 public abstract class Variant {
 
-	/*
-	 * Helpers for TypeOf operation
+	/**
+	 * 判断 Variant 是否符合目标类型的检查接口。
 	 */
 	private static interface TypeOfChecker {
+
+		/**
+		 * 判断 Variant 是否满足当前类型检查条件。
+		 *
+		 * @param v 待处理的值
+		 * @return  Variant 满足当前类型检查条件时为 {@code true}，否则为 {@code false}
+		 */
 		boolean check(Variant v);
 	}
 
 	static Map<String, TypeOfChecker> TYPEOF_CHECKER_MAP = new HashMap<String, TypeOfChecker>();
 	static {
 		TYPEOF_CHECKER_MAP.put("java/lang/String", new TypeOfChecker() {
+
 			@Override
 			public boolean check(Variant v) {
 				try {
@@ -54,6 +62,7 @@ public abstract class Variant {
 		});
 
 		TYPEOF_CHECKER_MAP.put("java/util/Calendar", new TypeOfChecker() {
+
 			@Override
 			public boolean check(Variant v) {
 				try {
@@ -66,6 +75,7 @@ public abstract class Variant {
 		});
 
 		TYPEOF_CHECKER_MAP.put("Z", new TypeOfChecker() {
+
 			@Override
 			public boolean check(Variant v) {
 				try {
@@ -78,6 +88,7 @@ public abstract class Variant {
 		});
 
 		TYPEOF_CHECKER_MAP.put("B", new TypeOfChecker() {
+
 			@Override
 			public boolean check(Variant v) {
 				try {
@@ -90,6 +101,7 @@ public abstract class Variant {
 		});
 
 		TYPEOF_CHECKER_MAP.put("S", new TypeOfChecker() {
+
 			@Override
 			public boolean check(Variant v) {
 				try {
@@ -102,6 +114,7 @@ public abstract class Variant {
 		});
 
 		TYPEOF_CHECKER_MAP.put("I", new TypeOfChecker() {
+
 			@Override
 			public boolean check(Variant v) {
 				try {
@@ -114,6 +127,7 @@ public abstract class Variant {
 		});
 
 		TYPEOF_CHECKER_MAP.put("J", new TypeOfChecker() {
+
 			@Override
 			public boolean check(Variant v) {
 				try {
@@ -126,6 +140,7 @@ public abstract class Variant {
 		});
 
 		TYPEOF_CHECKER_MAP.put("F", new TypeOfChecker() {
+
 			@Override
 			public boolean check(Variant v) {
 				try {
@@ -138,6 +153,7 @@ public abstract class Variant {
 		});
 
 		TYPEOF_CHECKER_MAP.put("D", new TypeOfChecker() {
+
 			@Override
 			public boolean check(Variant v) {
 				try {
@@ -415,8 +431,8 @@ public abstract class Variant {
 	 *
 	 * @param rightOp  right operand for comparison
 	 * @return  negative result if rightOp value is greater than this value, 0 if
-	 *          the values are equal, and positive result of this value is
-	 *          greater than rightOp value
+	 * the values are equal, and positive result of this value is
+	 * greater than rightOp value
 	 */
 	public int cmp(Variant rightOp) {
 		throw new 转换错误();
@@ -435,11 +451,10 @@ public abstract class Variant {
 	/**
 	 * Performs a 'Like' operation with the variant values.
 	 *
-	 * @see simple.runtime.helpers.ExprHelpers#like(String, String)
-	 *
 	 * @param rightOp  right operand (regular expression)
 	 * @return  {@code true} if this value is a match of the regular expression,
-	 *          {@code false} otherwise
+	 * {@code false} otherwise
+	 * @see simple.runtime.helpers.ExprHelpers#like(String, String)
 	 */
 	public boolean like(Variant rightOp) {
 		throw new 转换错误();
@@ -448,7 +463,7 @@ public abstract class Variant {
 	/**
 	 * Performs a type check of the variant value.
 	 *
-	 * @param type  internal name of expected type
+	 * @param internalName internal name of expected type
 	 * @return  {@code true} if the types match, {@code false} otherwise
 	 */
 	public boolean typeof(String internalName) {

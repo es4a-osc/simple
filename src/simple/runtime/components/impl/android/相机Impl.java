@@ -269,6 +269,12 @@ public final class 相机Impl extends 组件Impl implements 相机, MainActivity
 
 	/* 内部辅助方法 */
 
+	/**
+	 * 启动指定请求对应的系统活动。
+	 *
+	 * @param intent 系统意图
+	 * @param requestCode 发起操作时使用的请求编号
+	 */
 	private void launch(Intent intent, int requestCode) {
 		if (destroyed) {
 			throw new IllegalStateException("相机组件已销毁");
@@ -290,6 +296,12 @@ public final class 相机Impl extends 组件Impl implements 相机, MainActivity
 		}
 	}
 
+	/**
+	 * 准备照片或视频的输出位置。
+	 *
+	 * @param path 文件或目录路径
+	 * @param video 是否处理视频
+	 */
 	private void prepareOutput(String path, boolean video) {
 		if (destroyed) {
 			throw new IllegalStateException("相机组件已销毁");
@@ -317,6 +329,12 @@ public final class 相机Impl extends 组件Impl implements 相机, MainActivity
 		outputPath = path;
 	}
 
+	/**
+	 * 为拍摄意图附加输出位置和访问授权。
+	 *
+	 * @param intent 系统意图
+	 * @return 带有输出位置和授权的意图
+	 */
 	private Intent withOutput(Intent intent) {
 		intent.putExtra(MediaStore.EXTRA_OUTPUT, pendingOutput);
 		intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
@@ -325,6 +343,12 @@ public final class 相机Impl extends 组件Impl implements 相机, MainActivity
 		return intent;
 	}
 
+	/**
+	 * 打开系统媒体选择界面。
+	 *
+	 * @param video 是否处理视频
+	 * @param crop 是否请求裁剪
+	 */
 	private void selectMedia(boolean video, boolean crop) {
 		if (pendingRequest != 0) {
 			throw new IllegalStateException("上一项相机操作尚未完成");
@@ -336,6 +360,13 @@ public final class 相机Impl extends 组件Impl implements 相机, MainActivity
 				? MediaStore.Video.Media.EXTERNAL_CONTENT_URI : MediaStore.Images.Media.EXTERNAL_CONTENT_URI), checkPictureRequest);
 	}
 
+	/**
+	 * 解析媒体 URI 可使用的本地路径。
+	 *
+	 * @param uri 内容地址
+	 * @return 解析得到的媒体文件路径
+	 * @throws IOException 访问文件、流或网络资源失败时
+	 */
 	private String resolvePath(Uri uri) throws IOException {
 		if ("file".equals(uri.getScheme())) {
 			return uri.getPath();
@@ -362,6 +393,13 @@ public final class 相机Impl extends 组件Impl implements 相机, MainActivity
 		return file.getAbsolutePath();
 	}
 
+	/**
+	 * 将内容 URI 的数据复制到目标文件。
+	 *
+	 * @param uri 内容地址
+	 * @param file 本次操作的文件
+	 * @throws IOException 访问文件、流或网络资源失败时
+	 */
 	private void copyContent(Uri uri, File file) throws IOException {
 		File parent = file.getAbsoluteFile().getParentFile();
 		if (parent != null && !parent.isDirectory() && !parent.mkdirs()) {
@@ -393,6 +431,9 @@ public final class 相机Impl extends 组件Impl implements 相机, MainActivity
 		}
 	}
 
+	/**
+	 * 清除本次拍摄输出状态。
+	 */
 	private void clearOutput() {
 		Uri previous = pendingOutput;
 		pendingOutput = null;

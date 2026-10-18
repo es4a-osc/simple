@@ -38,8 +38,10 @@ public final class DateVariant extends Variant {
 		return new DateVariant(value);
 	}
 
-	/*
-	 * Creates a new date variant.
+	/**
+	 * 将日期时间对象包装为对应的 Simple 变体。
+	 *
+	 * @param value 要包装的日期时间对象。
 	 */
 	private DateVariant(Calendar value) {
 		super(VARIANT_DATE);

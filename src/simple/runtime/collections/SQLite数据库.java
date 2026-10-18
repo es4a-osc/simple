@@ -25,7 +25,8 @@ public final class SQLite数据库 {
 	/**
 	 * 创建尚未打开数据库的独立实例。
 	 */
-	public SQLite数据库() { }
+	public SQLite数据库() {
+	}
 
 	/**
 	 * 创建并初始化新的 SQLite 文件；不改变本对象已打开的连接。
@@ -348,6 +349,7 @@ public final class SQLite数据库 {
 			ArrayList<String> names = new ArrayList<String>();
 
 			while (cursor.moveToNext()) names.add(cursor.getString(0));
+
 			return names.toArray(new String[names.size()]);
 		} catch (RuntimeException error) {
 			throw failure("取所有数据表", error);
@@ -356,22 +358,47 @@ public final class SQLite数据库 {
 		}
 	}
 
+	/**
+	 * 取得当前已打开的数据库连接。
+	 *
+	 * @return 已经打开的数据库连接
+	 */
 	private SQLiteDatabase connection() {
 		if (database == null || !database.isOpen()) throw new 数据库错误("请先打开数据库。");
 
 		return database;
 	}
 
+	/**
+	 * 要求文本非空且包含非空白字符。
+	 *
+	 * @param value 需要验证的非空文本。
+	 * @param name 要操作的名称
+	 * @return 校验或规范化后的文本
+	 */
 	private static String text(String value, String name) {
 		if (value == null || value.trim().length() == 0) throw new 数据库错误(name + "不能为空。");
 
 		return value;
 	}
 
+	/**
+	 * 校验并引用 SQL 标识符。
+	 *
+	 * @param value 原始数据库标识符。
+	 * @return 可用于 SQL 的标识符
+	 */
 	private static String identifier(String value) {
 		return "\"" + text(value, "数据库标识符").replace("\"", "\"\"") + "\"";
 	}
 
+	/**
+	 * 解析数据库文件位置；单独文件名使用应用数据库目录。
+	 *
+	 * @param path 文件或目录路径
+	 * @return 解析后的文件对象
+	 * @throws IOException 访问文件、流或网络资源失败时
+	 */
 	private static File resolve(String path) throws IOException {
 		File file = new File(text(path, "数据库路径"));
 		if (!file.isAbsolute()) {
@@ -386,6 +413,12 @@ public final class SQLite数据库 {
 		return file.getCanonicalFile();
 	}
 
+	/**
+	 * 创建目标文件需要的父目录。
+	 *
+	 * @param file 本次操作的文件
+	 * @throws IOException 访问文件、流或网络资源失败时
+	 */
 	private static void prepareParent(File file) throws IOException {
 		File parent = file.getParentFile();
 		if (parent != null && !parent.isDirectory() && !parent.mkdirs() && !parent.isDirectory()) {
@@ -393,6 +426,13 @@ public final class SQLite数据库 {
 		}
 	}
 
+	/**
+	 * 把底层失败转换为运行库错误。
+	 *
+	 * @param operation 失败的操作名称
+	 * @param cause 底层失败原因
+	 * @return 包装底层原因的运行库错误
+	 */
 	private static 数据库错误 failure(String operation, Exception cause) {
 		if (cause instanceof 数据库错误) return (数据库错误) cause;
 

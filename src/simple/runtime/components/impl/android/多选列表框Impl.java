@@ -19,6 +19,9 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 多选列表框的 Android 数据绑定与勾选事件实现。
+ */
 public class 多选列表框Impl extends 列表视图组件 implements 多选列表框 {
 
 	private List<String> list;
@@ -83,6 +86,7 @@ public class 多选列表框Impl extends 列表视图组件 implements 多选列
 
 		// 项目点击监听器
 		view.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 				项目被单击(position);
@@ -91,6 +95,7 @@ public class 多选列表框Impl extends 列表视图组件 implements 多选列
 
 		// 项目长按监听器
 		view.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+
 			@Override
 			public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
 				项目被长按(position);
@@ -212,6 +217,7 @@ public class 多选列表框Impl extends 列表视图组件 implements 多选列
 	public int[] 取选中项目() {
 		List<Integer> checked = new ArrayList<Integer>();
 		SparseBooleanArray array = ((ListView) getView()).getCheckedItemPositions();
+
 		for (int i = 0; i < array.size(); i++) {
 			if (array.valueAt(i)) {
 				checked.add(array.keyAt(i));
@@ -220,9 +226,11 @@ public class 多选列表框Impl extends 列表视图组件 implements 多选列
 		// List<Integer> 转 int[]，这货是JDK1.8！
 		//return checked.stream().mapToInt(Integer::valueOf).toArray();
 		int[] indexs = new int[checked.size()];
+
 		for (int i = 0; i < indexs.length; i++) {
 			indexs[i] = checked.get(i);
 		}
+
 		return indexs;
 	}
 
@@ -230,11 +238,13 @@ public class 多选列表框Impl extends 列表视图组件 implements 多选列
 	public int 取选中项目数() {
 		int count = 0;
 		SparseBooleanArray array = ((ListView) getView()).getCheckedItemPositions();
+
 		for (int i = 0; i < array.size(); i++) {
 			if (array.valueAt(i)) {
 				count += 1;
 			}
 		}
+
 		return count;
 	}
 }

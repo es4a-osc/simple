@@ -42,7 +42,7 @@ public interface 可视组件 extends 组件 {
 	/**
 	 * 标识属性设置方法。
 	 *
-	 * @param 标识 设置可视组件的标识，注意{@code -1}为无标识
+	 * @param id 设置可视组件的标识，注意{@code -1}为无标识
 	 */
 	@SimpleProperty
 	void 标识(int id);
@@ -136,7 +136,7 @@ public interface 可视组件 extends 组件 {
 	 * 右边距属性获取方法。
 	 *
 	 * @return 右边距
-	*/
+	 */
 	@SimpleProperty
 	Variant 右边距();
 
@@ -245,9 +245,7 @@ public interface 可视组件 extends 组件 {
 	 *
 	 * @param argb 具有Alpha的背景RGB颜色
 	 */
-	@SimpleProperty(
-		type = SimpleProperty.PROPERTY_TYPE_COLOR
-	)
+	@SimpleProperty(type = SimpleProperty.PROPERTY_TYPE_COLOR)
 	void 背景颜色(int argb);
 
 	/**
@@ -262,7 +260,7 @@ public interface 可视组件 extends 组件 {
 	 * 背景图片属性设置器方法。
 	 *
 	 * @param image 图片，支持{@code 资源标识}、{@code @drawable/资源名}、
-	 * 				{@code 资产文件名}、{@code /外部文件名}
+	 * {@code 资产文件名}、{@code /外部文件名}
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_ASSET,
@@ -310,7 +308,7 @@ public interface 可视组件 extends 组件 {
 	 * <p>仅限位于{@code 线性布局}中时可用。
 	 *
 	 * <p>注意该属性值受{@link 线性布局#权重总和(float)}、
-	 * {@link 可视组件#宽度(int)}或{@link 可视组件#高度(int)}影响
+	 * {@link 可视组件#宽度(Variant)}或{@link 可视组件#高度(Variant)}影响
 	 *
 	 * @param weight 权重
 	 */
@@ -975,7 +973,7 @@ public interface 可视组件 extends 组件 {
 	 *
 	 * <p>仅限位于{@code 相对布局}中时可用。
 	 *
-	 * @param anchor 相对规则，可选值请参考常量{@link 组件#布局_规则_左}等
+	 * @param verb 相对规则，可选值请参考常量{@link 组件#布局_规则_左}等
 	 * @return 瞄点值，返回值为{@link 组件#布局_规则_真}或视图标识
 	 */
 	@SimpleFunction

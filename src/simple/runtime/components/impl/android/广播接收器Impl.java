@@ -31,6 +31,7 @@ public class 广播接收器Impl extends 组件Impl implements 广播接收器 {
 
 		// 创建接收器
 		receiver = new BroadcastReceiver() {
+
 			@Override
 			public void onReceive(Context context, Intent intent) {
 				收到广播(intent.getAction(), new 意图(intent));
@@ -115,6 +116,7 @@ public class 广播接收器Impl extends 组件Impl implements 广播接收器 {
 		}
 
 		IntentFilter filter = new IntentFilter();
+
 		for (String action : actions) {
 			filter.addAction(action);
 		}

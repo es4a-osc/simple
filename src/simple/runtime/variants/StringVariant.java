@@ -39,8 +39,10 @@ public final class StringVariant extends Variant {
 		return new StringVariant(value);
 	}
 
-	/*
-	 * Creates a new String variant.
+	/**
+	 * 将文本包装为对应的 Simple 变体。
+	 *
+	 * @param value 要包装的文本。
 	 */
 	private StringVariant(String value) {
 		super(VARIANT_STRING);

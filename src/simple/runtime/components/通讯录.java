@@ -18,11 +18,12 @@ import simple.runtime.collections.集合;
  */
 @SimpleComponent
 @SimpleObject
-@UsesPermissions(permissionNames =
-	// 允许读取系统通讯录中的联系人和分组。
-	"android.permission.READ_CONTACTS," +
-	// 允许新增、修改或删除系统通讯录中的联系人和分组。
-	"android.permission.WRITE_CONTACTS"
+@UsesPermissions(
+	permissionNames =
+		// 允许读取系统通讯录中的联系人和分组。
+		"android.permission.READ_CONTACTS," +
+		// 允许新增、修改或删除系统通讯录中的联系人和分组。
+		"android.permission.WRITE_CONTACTS"
 )
 public interface 通讯录 extends 组件 {
 

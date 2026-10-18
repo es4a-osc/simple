@@ -92,9 +92,9 @@ public interface 文本组件 extends 可视组件 {
 	 * 字体类型属性获取器方法。
 	 *
 	 * @return 其中之一{@link 组件#字体类型_默认}、
-	 *          {@link 组件#字体类型_衬线}、
-	 *          {@link 组件#字体类型_无衬线}或
-	 *          {@link 组件#字体类型_等宽}
+	 * {@link 组件#字体类型_衬线}、
+	 * {@link 组件#字体类型_无衬线}或
+	 * {@link 组件#字体类型_等宽}
 	 */
 	@SimpleProperty
 	int 字体类型();
@@ -103,9 +103,9 @@ public interface 文本组件 extends 可视组件 {
 	 * 字体类型属性设置器方法。
 	 *
 	 * @param typeface 其中之一{@link 组件#字体类型_默认}、
-	 *                  {@link 组件#字体类型_衬线}、
-	 *                  {@link 组件#字体类型_无衬线}或
-	 *                  {@link 组件#字体类型_等宽}
+	 * {@link 组件#字体类型_衬线}、
+	 * {@link 组件#字体类型_无衬线}或
+	 * {@link 组件#字体类型_等宽}
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_TYPEFACE,
@@ -117,8 +117,8 @@ public interface 文本组件 extends 可视组件 {
 	 * 内容对齐属性获取器方法。
 	 *
 	 * @return 其中之一{@link 组件#对齐_左}、
-	 *          {@link 组件#对齐_水平居中}或
-	 *          {@link 组件#对齐_右}
+	 * {@link 组件#对齐_水平居中}或
+	 * {@link 组件#对齐_右}
 	 */
 	@SimpleProperty
 	int 内容对齐();
@@ -127,8 +127,8 @@ public interface 文本组件 extends 可视组件 {
 	 * 内容对齐属性设置器方法。
 	 *
 	 * @param justification 其中之一{@link 组件#对齐_左}、
-	 *                       {@link 组件#对齐_水平居中}或
-	 *                       {@link 组件#对齐_右}
+	 * {@link 组件#对齐_水平居中}或
+	 * {@link 组件#对齐_右}
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_TEXTJUSTIFICATION,
@@ -208,7 +208,7 @@ public interface 文本组件 extends 可视组件 {
 	 * 设置左边图标。
 	 *
 	 * @param image 图片，支持{@code 资源标识}、{@code @drawable/资源名}、
-	 * 				{@code 资产文件名}、{@code /外部文件名}。
+	 * {@code 资产文件名}、{@code /外部文件名}。
 	 * @param width 绘制宽度，单位像素。
 	 * @param height 绘制高度，单位像素。
 	 */
@@ -228,7 +228,7 @@ public interface 文本组件 extends 可视组件 {
 	 * 设置顶边图标。
 	 *
 	 * @param image 图片，支持{@code 资源标识}、{@code @drawable/资源名}、
-	 * 				{@code 资产文件名}、{@code /外部文件名}。
+	 * {@code 资产文件名}、{@code /外部文件名}。
 	 * @param width 绘制宽度，单位像素。
 	 * @param height 绘制高度，单位像素。
 	 */
@@ -248,7 +248,7 @@ public interface 文本组件 extends 可视组件 {
 	 * 设置右边图标。
 	 *
 	 * @param image 图片，支持{@code 资源标识}、{@code @drawable/资源名}、
-	 * 				{@code 资产文件名}、{@code /外部文件名}。
+	 * {@code 资产文件名}、{@code /外部文件名}。
 	 * @param width 绘制宽度，单位像素。
 	 * @param height 绘制高度，单位像素。
 	 */
@@ -268,7 +268,7 @@ public interface 文本组件 extends 可视组件 {
 	 * 设置底边图标。
 	 *
 	 * @param image 图片，支持{@code 资源标识}、{@code @drawable/资源名}、
-	 * 				{@code 资产文件名}、{@code /外部文件名}。
+	 * {@code 资产文件名}、{@code /外部文件名}。
 	 * @param width 绘制宽度，单位像素。
 	 * @param height 绘制高度，单位像素。
 	 */

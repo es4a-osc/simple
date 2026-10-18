@@ -68,13 +68,20 @@ public final class AcceptThread extends Thread {
 		}
 	}
 
-	// 交出已接受的连接；关闭服务器监听不影响已交给组件的数据连接。
+	/**
+	 * 取出并移交线程持有的套接字，后续清理不再关闭已移交连接。
+	 *
+	 * @return 移交给调用方的套接字；没有可移交连接时为 {@code null}
+	 */
 	public synchronized BluetoothSocket takeSocket() {
 		BluetoothSocket result = socket;
 		socket = null;
 		return result;
 	}
 
+	/**
+	 * 关闭监听套接字。
+	 */
 	private synchronized void closeServer() {
 		if (serverSocket != null) {
 			try {
@@ -87,6 +94,9 @@ public final class AcceptThread extends Thread {
 		}
 	}
 
+	/**
+	 * 取消当前任务并释放相应资源。
+	 */
 	public synchronized void cancel() {
 		cancelled = true;
 		closeServer();

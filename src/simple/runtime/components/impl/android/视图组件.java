@@ -116,6 +116,8 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 	 * <p>由于该方法是由组件构造函数间接调用的，
 	 * 所以实现者不应该假设关于实例的状态，
 	 * 并且不应读取任何非静态字段。
+	 *
+	 * @return 组件使用的原生视图
 	 */
 	protected abstract View createView();
 
@@ -153,12 +155,12 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 	@Override
 	public void 宽度(Variant value) {
 		布局 layout = getComponentContainer().getLayout();
-    	if (layout instanceof 绝对布局Impl) {
+		if (layout instanceof 绝对布局Impl) {
 			width = 像素转换.解析像素(value);
-        	((绝对布局Impl) layout).placeComponent(this);
-      	} else {
-            ViewUtil.setWidth(getView(), 像素转换.解析像素(value));
-    	}
+			((绝对布局Impl) layout).placeComponent(this);
+		} else {
+			ViewUtil.setWidth(getView(), 像素转换.解析像素(value));
+		}
 	}
 
 	@Override
@@ -304,6 +306,7 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 		} else {
 			日志输出.warning("(%d) 获取对齐失败，该组件未位于线性、表格、单帧布局中", hashCode());
 		}
+
 		return justification;
 	}
 
@@ -329,6 +332,7 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 		} else {
 			日志输出.warning("(%d) 获取权重失败，该组件未位于线性、表格、单帧布局中", hashCode());
 		}
+
 		return 0;
 	}
 
@@ -653,24 +657,24 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 		return IntegerVariant.getIntegerVariant(left);
 	}
 
-  	@Override
-  	public void 左边(Variant left) {
-    	this.left = 像素转换.解析像素(left);
+	@Override
+	public void 左边(Variant left) {
+		this.left = 像素转换.解析像素(left);
 
 		布局 layout = getComponentContainer().getLayout();
 		if (layout instanceof 绝对布局Impl) {
-        	((绝对布局Impl) layout).placeComponent(this);
+			((绝对布局Impl) layout).placeComponent(this);
 		}
-    }
+	}
 
 	@Override
 	public Variant 顶边() {
-    	return IntegerVariant.getIntegerVariant(top);
-  	}
+		return IntegerVariant.getIntegerVariant(top);
+	}
 
 	@Override
 	public void 顶边(Variant top) {
-    	this.top = 像素转换.解析像素(top);
+		this.top = 像素转换.解析像素(top);
 
 		布局 layout = getComponentContainer().getLayout();
 		if (layout instanceof 绝对布局Impl) {
@@ -763,6 +767,7 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 		} else {
 			日志输出.warning("(%d) 获取规则(%d)瞄点失败，该组件未位于相对布局中", hashCode(), verb);
 		}
+
 		return 0;
 	}
 

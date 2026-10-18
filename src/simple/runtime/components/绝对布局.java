@@ -10,4 +10,4 @@ import simple.runtime.annotations.SimpleObject;
 @SimpleObject
 public interface 绝对布局 extends 布局 {
 
-} 
+}

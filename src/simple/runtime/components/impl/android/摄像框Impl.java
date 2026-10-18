@@ -117,6 +117,7 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
 		cameraView.setOnClickListener(new View.OnClickListener() {
+
 			@Override
 			public void onClick(View view) {
 				被单击();
@@ -196,6 +197,13 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 
 	/* 内部辅助方法 */
 
+	/**
+	 * 解析并准备拍摄输出文件。
+	 *
+	 * @param path 文件或目录路径
+	 * @return 已经校验的输出文件
+	 * @throws IOException 访问文件、流或网络资源失败时
+	 */
 	private static File outputFile(String path) throws IOException {
 		if (path == null || path.isEmpty()) {
 			throw new IOException("输出路径不能为空");
@@ -211,9 +219,16 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 		return file;
 	}
 
+	/**
+	 * 复制并按尺寸排序相机支持的分辨率。
+	 *
+	 * @param sizes 相机支持的尺寸列表
+	 * @return 排序后的尺寸列表副本
+	 */
 	private static List<Camera.Size> sortedSizes(List<Camera.Size> sizes) {
 		List<Camera.Size> result = sizes == null ? new ArrayList<Camera.Size>() : new ArrayList<Camera.Size>(sizes);
 		Collections.sort(result, new Comparator<Camera.Size>() {
+
 			@Override
 			public int compare(Camera.Size first, Camera.Size second) {
 				int width = Integer.compare(first.width, second.width);
@@ -223,6 +238,12 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 		return result;
 	}
 
+	/**
+	 * 从相机支持的分辨率中选择适用尺寸。
+	 *
+	 * @param sizes 相机支持的尺寸列表
+	 * @return 选中的相机分辨率
+	 */
 	private Camera.Size selectSize(List<Camera.Size> sizes) {
 		Camera.Size selected = null;
 
@@ -239,6 +260,12 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 		return selected;
 	}
 
+	/**
+	 * 将分辨率列表转换为显示文本。
+	 *
+	 * @param sizes 相机支持的尺寸列表
+	 * @return 分辨率列表的显示文本
+	 */
 	private static String sizeText(List<Camera.Size> sizes) {
 		StringBuilder text = new StringBuilder();
 
@@ -254,6 +281,9 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 		return text.toString();
 	}
 
+	/**
+	 * 管理相机预览表面、拍摄和录制资源的视图。
+	 */
 	private final class CameraView extends SurfaceView implements SurfaceHolder.Callback {
 
 		private final SurfaceHolder holder;
@@ -273,6 +303,11 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 			setKeepScreenOn(true);
 		}
 
+		/**
+		 * 判断当前预览视图是否仍持有可用相机。
+		 *
+		 * @return 当前预览视图仍持有可用相机时为 {@code true}，否则为 {@code false}
+		 */
 		private boolean active() {
 			return !closed && cameraView == this && camera != null;
 		}
@@ -315,6 +350,9 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 			}
 		}
 
+		/**
+		 * 配置相机方向、预览尺寸和拍摄参数。
+		 */
 		private void configureCamera() {
 			Camera.Parameters parameters = camera.getParameters();
 			parameters.setPictureFormat(ImageFormat.JPEG);
@@ -360,6 +398,11 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 			releaseCamera();
 		}
 
+		/**
+		 * 按组件设置更新相机闪光灯模式。
+		 *
+		 * @param parameters 相机参数
+		 */
 		private void setFlashMode(Camera.Parameters parameters) {
 			List<String> modes = parameters.getSupportedFlashModes();
 			String mode = flashlight ? Camera.Parameters.FLASH_MODE_TORCH : Camera.Parameters.FLASH_MODE_OFF;
@@ -369,6 +412,9 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 			}
 		}
 
+		/**
+		 * 将当前闪光灯设置应用到相机。
+		 */
 		void applyFlashlight() {
 			if (active() && recorder == null) {
 				Camera.Parameters parameters = camera.getParameters();
@@ -378,6 +424,9 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 			}
 		}
 
+		/**
+		 * 发起相机自动对焦。
+		 */
 		void focus() {
 			if (!active() || recorder != null || picturePending) {
 				return;
@@ -394,6 +443,7 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 			parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
 			camera.setParameters(parameters);
 			camera.autoFocus(new Camera.AutoFocusCallback() {
+
 				@Override
 				public void onAutoFocus(boolean success, Camera focusedCamera) {
 					if (active() && camera == focusedCamera) {
@@ -404,6 +454,14 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 			});
 		}
 
+		/**
+		 * 发起照片拍摄并按要求返回文件或字节数据。
+		 *
+		 * @param path 文件或目录路径
+		 * @param format 图像或数据格式
+		 * @param quality 编码质量
+		 * @param returnBytes 是否将结果作为字节集返回
+		 */
 		void takePicture(final String path, int format, final int quality, final boolean returnBytes) {
 			if (!active() || recorder != null || picturePending) {
 				return;
@@ -420,6 +478,7 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 
 			try {
 				camera.takePicture(null, null, new Camera.PictureCallback() {
+
 					@Override
 					public void onPictureTaken(byte[] data, Camera capturedCamera) {
 						if (!active() || camera != capturedCamera) {
@@ -467,6 +526,15 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 			}
 		}
 
+		/**
+		 * 按指定格式与质量编码拍摄图片。
+		 *
+		 * @param data 本次传入的数据
+		 * @param format 图像或数据格式
+		 * @param quality 编码质量
+		 * @return 按指定格式编码的图片数据
+		 * @throws IOException 访问文件、流或网络资源失败时
+		 */
 		private byte[] encodePicture(byte[] data, Bitmap.CompressFormat format, int quality) throws IOException {
 			Bitmap source = BitmapFactory.decodeByteArray(data, 0, data.length);
 			if (source == null) {
@@ -494,6 +562,9 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 			}
 		}
 
+		/**
+		 * 恢复相机预览。
+		 */
 		private void resumePreview() {
 			if (active() && recorder == null) {
 				try {
@@ -504,6 +575,13 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 			}
 		}
 
+		/**
+		 * 配置并开始视频录制。
+		 *
+		 * @param path 文件或目录路径
+		 * @param quality 编码质量
+		 * @param sound 是否录制声音
+		 */
 		void takeVideo(String path, int quality, boolean sound) {
 			if (!active() || recorder != null || picturePending) {
 				return;
@@ -546,6 +624,7 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 				recorder.setOutputFile(file.getAbsolutePath());
 				recorder.setPreviewDisplay(holder.getSurface());
 				recorder.setOnErrorListener(new MediaRecorder.OnErrorListener() {
+
 					@Override
 					public void onError(MediaRecorder failed, int what, int extra) {
 						if (recorder == failed) {
@@ -562,6 +641,9 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 			}
 		}
 
+		/**
+		 * 停止当前视频录制。
+		 */
 		void stopVideo() {
 			MediaRecorder previous = recorder;
 			recorder = null;
@@ -597,7 +679,10 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 			}
 		}
 
-		// Surface 销毁和显式关闭共享同一释放顺序：先录像器，后摄像头。
+		/**
+		 * 停止预览并释放相机资源。
+		 * <p>Surface 销毁和显式关闭共享同一释放顺序：先录像器，后摄像头。
+		 */
 		private void releaseCamera() {
 			stopVideo();
 			Camera previous = camera;
@@ -614,6 +699,9 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 			}
 		}
 
+		/**
+		 * 关闭当前对象持有的资源。
+		 */
 		void close() {
 			closed = true;
 			holder.removeCallback(this);

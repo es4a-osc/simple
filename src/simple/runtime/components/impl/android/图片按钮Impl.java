@@ -39,6 +39,7 @@ public final class 图片按钮Impl extends 图片视图组件 implements 图片
 
 		// 焦点改变监听器，注意该事件受 可否触摸焦点() 影响
 		view.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+
 			@Override
 			public void onFocusChange(View previouslyFocused, boolean gainFocus) {
 				if (gainFocus) {
@@ -128,6 +129,7 @@ public final class 图片按钮Impl extends 图片视图组件 implements 图片
 
 		// 单击监听器
 		view.setOnClickListener(new View.OnClickListener() {
+
 			@Override
 			public void onClick(View view) {
 				被单击();
@@ -136,6 +138,7 @@ public final class 图片按钮Impl extends 图片视图组件 implements 图片
 
 		// 长按监听器
 		view.setOnLongClickListener(new View.OnLongClickListener(){
+
 			@Override
 			public boolean onLongClick(View view) {
 				被长按();

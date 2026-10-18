@@ -21,14 +21,12 @@ import java.io.IOException;
 import android.content.res.Resources.NotFoundException;
 import android.graphics.drawable.Drawable;
 
-
 /**
  * 图片辅助方法。
  *
  * @author 树先生 xhwsd@qq.com
  */
 public class ImageUtil {
-
 
 	private ImageUtil() {
 	}
@@ -37,7 +35,6 @@ public class ImageUtil {
 	 * 取图片可绘制对象。
 	 *
 	 * @param image 图片标识，支持资源标识、{@code @drawable/资源名}、{@code 资产文件名}、{@code /外部文件名}。
-	 * @param context 活动上下文。
 	 * @return 返回可绘制对象，如果{@code image}为空或空文本返回{@code null}。
 	 * @throws IOException 如果找不到图片。
 	 */

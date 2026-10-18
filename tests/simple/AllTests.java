@@ -17,6 +17,13 @@
 package simple;
 
 import simple.compiler.CompilerSmokeTest;
+import simple.compiler.ClipboardOperationsTest;
+import simple.compiler.StorageSpaceTest;
+import simple.compiler.DateTimePickerTest;
+import simple.compiler.DataTableComponentTest;
+import simple.compiler.RichTextComponentTest;
+import simple.runtime.components.impl.android.RichTextRangesTest;
+import simple.runtime.components.impl.android.DataTableModelTest;
 import simple.compiler.ContactsPermissionsTest;
 import simple.compiler.LibraryDependenciesTest;
 import simple.compiler.KeywordMemberTest;
@@ -29,6 +36,7 @@ import simple.runtime.FilesPathTest;
 import simple.runtime.FilesTest;
 import simple.runtime.MathTest;
 import simple.runtime.PixelsTest;
+import simple.runtime.ProgramOperationsTest;
 import simple.runtime.SequencesTest;
 import simple.runtime.StringsTest;
 import simple.compiler.util.ResourceTest;
@@ -49,6 +57,13 @@ public class AllTests {
 		TestSuite suite = new TestSuite("Simple Tests");
 		// compiler
 		suite.addTestSuite(CompilerSmokeTest.class);
+		suite.addTestSuite(ClipboardOperationsTest.class);
+		suite.addTestSuite(StorageSpaceTest.class);
+		suite.addTestSuite(DateTimePickerTest.class);
+		suite.addTestSuite(DataTableComponentTest.class);
+		suite.addTestSuite(RichTextComponentTest.class);
+		suite.addTestSuite(RichTextRangesTest.class);
+		suite.addTestSuite(DataTableModelTest.class);
 		suite.addTestSuite(ContactsPermissionsTest.class);
 		suite.addTestSuite(LibraryDependenciesTest.class);
 		suite.addTestSuite(KeywordMemberTest.class);
@@ -67,6 +82,7 @@ public class AllTests {
 		suite.addTestSuite(FilesPathTest.class);
 		suite.addTestSuite(MathTest.class);
 		suite.addTestSuite(PixelsTest.class);
+		suite.addTestSuite(ProgramOperationsTest.class);
 		suite.addTestSuite(StringsTest.class);
 		suite.addTestSuite(SequencesTest.class);
 		return suite;

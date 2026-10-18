@@ -39,8 +39,10 @@ public final class SingleVariant extends Variant {
 		return new SingleVariant(value);
 	}
 
-	/*
-	 * Creates a new Single variant.
+	/**
+	 * 将单精度小数包装为对应的 Simple 变体。
+	 *
+	 * @param value 要包装的单精度小数。
 	 */
 	private SingleVariant(float value) {
 		super(VARIANT_SINGLE);

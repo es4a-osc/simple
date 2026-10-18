@@ -104,7 +104,7 @@ public interface 图片按钮 extends 图片组件 {
 	/**
 	 * 使其获得焦点。
 	 *
-	 * @return 获得焦点返回{@cdoe true}，否则返回{@code false}。
+	 * @return 获得焦点返回{@code true}，否则返回{@code false}。
 	 */
 	@SimpleFunction
 	boolean 获取焦点();

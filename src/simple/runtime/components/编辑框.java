@@ -110,9 +110,7 @@ public interface 编辑框 extends 文本组件 {
 	 *
 	 * @param color 带透明度的文本RGB颜色。
 	 */
-	@SimpleProperty(
-		type = SimpleProperty.PROPERTY_TYPE_COLOR
-	)
+	@SimpleProperty(type = SimpleProperty.PROPERTY_TYPE_COLOR)
 	void 提示颜色(int color);
 
 	/**
@@ -177,7 +175,7 @@ public interface 编辑框 extends 文本组件 {
 	/**
 	 * 使其获得焦点。
 	 *
-	 * @return 获得焦点返回{@cdoe true}，否则返回{@code false}。
+	 * @return 获得焦点返回{@code true}，否则返回{@code false}。
 	 */
 	@SimpleFunction
 	boolean 获取焦点();

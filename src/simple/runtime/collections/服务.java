@@ -48,12 +48,12 @@ public class 服务 extends IntentService {
 		return ste.length > 4 ? ste[4].getClassName() : "IntentService";
 	}
 
-	/*
-	 * 注意该构造方法必须公开
+	/**
+	 * 创建服务实例；保留公开的无参数构造方法，供系统实例化。
 	 */
 	public 服务() {
 		super(getClassName());
-		
+
 		日志输出.info("[" + hashCode() + "/服务] 构造对象；服务名称=" +  getClassName());
 	}
 
@@ -95,6 +95,8 @@ public class 服务 extends IntentService {
 
 	/**
 	 * 处理意图；在工作线程上调用此方法并请求处理。
+	 *
+	 * @param intent 系统意图
 	 */
 	@Override
 	protected void onHandleIntent(Intent intent) {
@@ -111,7 +113,7 @@ public class 服务 extends IntentService {
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		
+
 		日志输出.info("[" + hashCode() + "/服务.onDestroy] 服务被销毁");
 		服务销毁();
 	}

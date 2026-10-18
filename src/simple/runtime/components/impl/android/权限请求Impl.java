@@ -39,6 +39,7 @@ public final class 权限请求Impl extends 组件Impl implements 权限请求 {
 
 		// 请求权限结果监听器
 		MainActivity.getContext().addOnRequestPermissionsResultListener(new MainActivity.OnRequestPermissionsResultListener() {
+
 			@Override
 			public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
 				// 仅触发当前窗口申请权限的事件
@@ -59,7 +60,7 @@ public final class 权限请求Impl extends 组件Impl implements 权限请求 {
 	/* 组件方法 */
 
 	@Override
-    public boolean 需要请求() {
+	public boolean 需要请求() {
 		//安卓6.0的版本号是23，只有当安卓版本号为23以上时才需要动态申请权限
 		return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
 	}
@@ -167,10 +168,10 @@ public final class 权限请求Impl extends 组件Impl implements 权限请求 {
 
 	@Override
 	public void 打开设置() {
-    	Intent intent = new Intent();
-    	intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-    	Uri uri = Uri.fromParts("package", MainActivity.getContext().getPackageName(), null);
-    	intent.setData(uri);
-    	MainActivity.getContext().startActivityForResult(intent, 123456789);
+		Intent intent = new Intent();
+		intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+		Uri uri = Uri.fromParts("package", MainActivity.getContext().getPackageName(), null);
+		intent.setData(uri);
+		MainActivity.getContext().startActivityForResult(intent, 123456789);
 	}
 }

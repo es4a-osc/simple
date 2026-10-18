@@ -68,10 +68,12 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 		if (treeRequest > 0x7fff) {
 			throw new IllegalStateException("文件选择器请求标识已耗尽");
 		}
+
 		activity = MainActivity.getContext();
 		resolver = activity.getContentResolver();
 		handler = new Handler(activity.getMainLooper());
 		destroyListener = new MainActivity.OnDestroyListener() {
+
 			@Override
 			public void onDestroy() {
 				dispose(false);
@@ -245,10 +247,12 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 			if (name == null || name.trim().length() == 0 || name.contains("/") || name.contains("\\")) {
 				throw new IllegalArgumentException("请提供不含路径的文件名");
 			}
+
 			String type = validateMimeType(mimeType);
 			if (type.contains("*")) {
 				throw new IllegalArgumentException("创建文件必须指定准确的 MIME 类型");
 			}
+
 			Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
 			intent.addCategory(Intent.CATEGORY_OPENABLE);
 			intent.setType(type);
@@ -298,6 +302,7 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 	public String 取名称(String uri) {
 		try {
 			Uri document = documentUri(checkedUri(uri));
+
 			try (Cursor cursor = resolver.query(document, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
 				if (cursor != null && cursor.moveToFirst() && !cursor.isNull(0)) {
 					lastError = "";
@@ -322,6 +327,7 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 	public long 取文件大小(String uri) {
 		try {
 			Uri document = documentUri(checkedUri(uri));
+
 			try (Cursor cursor = resolver.query(document, new String[]{OpenableColumns.SIZE}, null, null, null)) {
 				if (cursor != null && cursor.moveToFirst() && !cursor.isNull(0)) {
 					lastError = "";
@@ -367,6 +373,7 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 			if (input == null) {
 				throw new IOException("提供方未返回输入流");
 			}
+
 			copy(input, output);
 			lastError = "";
 			return output.toByteArray();
@@ -389,6 +396,7 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 			if (data == null) {
 				throw new IllegalArgumentException("写入数据不得为空引用");
 			}
+
 			try (OutputStream output = resolver.openOutputStream(target, "wt")) {
 				if (output == null) {
 					throw new IOException("提供方未返回输出流");
@@ -413,11 +421,13 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 	public String 复制到文件(String uri, String targetPath) {
 		AtomicFile target = null;
 		FileOutputStream output = null;
+
 		try {
 			Uri source = checkedUri(uri);
 			if (targetPath == null || targetPath.length() == 0) {
 				throw new IllegalArgumentException("目标路径不得为空");
 			}
+
 			File destination = new File(targetPath);
 			if (!destination.isAbsolute()) {
 				File base = activity.getFilesDir().getCanonicalFile();
@@ -426,10 +436,12 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 					throw new IllegalArgumentException("相对目标路径不能越出应用私有目录");
 				}
 			}
+
 			try (InputStream input = resolver.openInputStream(source)) {
 				if (input == null) {
 					throw new IOException("提供方未返回输入流");
 				}
+
 				target = new AtomicFile(destination);
 				output = target.startWrite();
 				copy(input, output);
@@ -531,10 +543,12 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 			if (name == null || name.trim().length() == 0 || name.contains("/") || name.contains("\\") || type.contains("*")) {
 				throw new IllegalArgumentException("请提供有效文件名和准确 MIME 类型");
 			}
+
 			Uri result = Api21.create(resolver, parent, type, name);
 			if (result == null) {
 				throw new IllegalStateException("提供方未创建文件");
 			}
+
 			lastError = "";
 			return result.toString();
 		} catch (IOException | RuntimeException error) {
@@ -564,11 +578,13 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 		if (destroyed || pendingRequest == 0 || requestCode != pendingRequest) {
 			return;
 		}
+
 		final boolean multiple = pendingMultiple;
 		pendingRequest = 0;
 		pendingMultiple = false;
 
 		handler.post(new Runnable() {
+
 			@Override
 			public void run() {
 				if (destroyed) {
@@ -583,12 +599,15 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 					notifyFailure("系统没有返回有效的文档选择结果");
 					return;
 				}
+
 				String[] uris;
+
 				try {
 					uris = Api19.results(data, requestCode == openRequest && multiple);
 					if (uris.length == 0) {
 						throw new IllegalArgumentException("未返回文档 URI");
 					}
+
 					for (String uri : uris) {
 						checkedUri(uri);
 					}
@@ -619,6 +638,7 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 		if (destroyed) {
 			return;
 		}
+
 		destroyed = true;
 		pendingRequest = 0;
 		handler.removeCallbacksAndMessages(null);
@@ -626,6 +646,7 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 
 		if (removeListeners) {
 			handler.post(new Runnable() {
+
 				@Override
 				public void run() {
 					activity.removeOnActivityResultListener(文件选择器Impl.this);
@@ -659,6 +680,7 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 			notifyFailure("当前文件选择器仍在等待系统返回结果");
 			return false;
 		}
+
 		return true;
 	}
 
@@ -672,6 +694,7 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 		if (initialUri == null) {
 			throw new IllegalArgumentException("初始位置不得为空引用");
 		}
+
 		intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
 			| Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
 		if (initialUri.length() > 0) {
@@ -715,6 +738,7 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 			}
 		} else {
 			handler.post(new Runnable() {
+
 				@Override
 				public void run() {
 					if (!destroyed) {
@@ -735,11 +759,13 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 		if (mimeType == null) {
 			throw new IllegalArgumentException("MIME 类型不得为空引用");
 		}
+
 		String value = mimeType.trim().toLowerCase(Locale.US);
 		if (!value.matches("(?:[a-z0-9!#$&^_.+\\-]+|\\*)/(?:[a-z0-9!#$&^_.+\\-]+|\\*)")
 			|| (value.startsWith("*/") && !"*/*".equals(value))) {
 			throw new IllegalArgumentException("MIME 类型无效：" + mimeType);
 		}
+
 		return value;
 	}
 
@@ -759,10 +785,12 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 		if (value == null || value.length() == 0) {
 			throw new IllegalArgumentException("文档 URI 不得为空");
 		}
+
 		Uri uri = Uri.parse(value);
 		if (!"content".equals(uri.getScheme()) || (uri.getAuthority() == null || uri.getAuthority().length() == 0)) {
 			throw new IllegalArgumentException("请使用系统返回的 content URI");
 		}
+
 		return uri;
 	}
 
@@ -778,6 +806,7 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 			|| !"tree".equals(uri.getPathSegments().get(0))) {
 			throw new IllegalArgumentException("此操作需要 Android 5.0 及目录选择返回的授权树 URI");
 		}
+
 		return uri;
 	}
 
@@ -913,6 +942,7 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 			if (segments.size() == 2 && "tree".equals(segments.get(0))) {
 				return DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
 			}
+
 			return uri;
 		}
 
@@ -928,6 +958,7 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 			String id = DocumentsContract.getDocumentId(directory);
 			Uri children = DocumentsContract.buildChildDocumentsUriUsingTree(uri, id);
 			List<String> result = new ArrayList<String>();
+
 			try (Cursor cursor = resolver.query(children, new String[]{DocumentsContract.Document.COLUMN_DOCUMENT_ID},
 				null, null, null)) {
 				if (cursor == null) {
@@ -937,6 +968,7 @@ public final class 文件选择器Impl extends 组件Impl implements 文件选�
 					result.add(DocumentsContract.buildDocumentUriUsingTree(uri, cursor.getString(0)).toString());
 				}
 			}
+
 			return result.toArray(new String[result.size()]);
 		}
 

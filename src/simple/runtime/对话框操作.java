@@ -1,19 +1,26 @@
 package simple.runtime;
 
+import java.util.Calendar;
+
 import simple.runtime.android.MainActivity;
 import simple.runtime.annotations.SimpleFunction;
 import simple.runtime.annotations.SimpleObject;
+import simple.runtime.parameters.DateReferenceParameter;
 import simple.runtime.components.窗口;
 import simple.runtime.components.组件;
 import simple.runtime.components.impl.android.窗口Impl;
 import simple.runtime.components.impl.android.util.EditTextUtil;
 
 import android.widget.EditText;
+import android.widget.DatePicker;
+import android.widget.TimePicker;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.DialogInterface;
 import android.os.Handler;
 import android.os.Looper;
@@ -125,12 +132,14 @@ public final class 对话框操作 {
 		builder.setTitle(title);
 		builder.setMessage(message);
 		builder.setPositiveButton(btnOK, new DialogInterface.OnClickListener() {
+
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				wait.end(true);
 			}
 		});
 		builder.setNegativeButton(btnNO, new DialogInterface.OnClickListener() {
+
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				wait.end(false);
@@ -178,18 +187,21 @@ public final class 对话框操作 {
 		builder.setCancelable(false);
 		builder.setTitle(title);
 		builder.setSingleChoiceItems(items, checkedItem, new DialogInterface.OnClickListener() {
+
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				wait.expand = which;
 			}
 		});
 		builder.setPositiveButton("确认", new DialogInterface.OnClickListener() {
+
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				wait.end(true);
 			}
 		});
 		builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				wait.end(false);
@@ -239,18 +251,21 @@ public final class 对话框操作 {
 		builder.setCancelable(false);
 		builder.setTitle(title);
 		builder.setMultiChoiceItems(items, checkedItems, new DialogInterface.OnMultiChoiceClickListener() {
+
 			@Override
 			public void onClick(DialogInterface dialog, int which, boolean isChecked) {
 				checkedItems[which] = isChecked;
 			}
 		});
 		builder.setPositiveButton("确认", new DialogInterface.OnClickListener() {
+
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				wait.end(true);
 			}
 		});
 		builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				wait.end(false);
@@ -332,12 +347,14 @@ public final class 对话框操作 {
 		builder.setTitle(title);
 		builder.setView(layout);
 		builder.setPositiveButton("确认", new DialogInterface.OnClickListener() {
+
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				wait.end(true);
 			}
 		});
 		builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				wait.end(false);
@@ -351,6 +368,157 @@ public final class 对话框操作 {
 		} else {
 			return null;
 		}
+	}
+
+	/* 日期与时间选择 */
+
+	/**
+	 * 显示日期选择框，以设备当前日期时间作为初值。
+	 *
+	 * <p>须在界面线程调用，沿用对话框等待返回的约定，不在错误处理语句中调用。</p>
+	 *
+	 * @param title 对话框标题。
+	 * @param result 接收确认结果的日期时间变量，仅确认时被替换；可与初值使用同一变量。
+	 * @return 确认返回真并写入新对象，保留初始时间和时区；取消返回假，结果变量不变。
+	 */
+	@SimpleFunction
+	public static boolean 弹出日期选择框(String title, DateReferenceParameter result) {
+		return 弹出日期选择框(title, Calendar.getInstance(), result);
+	}
+
+	/**
+	 * 显示日期选择框，以指定日期时间的年月日作为初值。
+	 *
+	 * <p>不修改初值，确认后仅替换年月日，保留时间和时区；
+	 * 日期字段沿用 Calendar 的月份编号，一月为 0。
+	 * 须在界面线程调用，不在错误处理语句中调用。</p>
+	 *
+	 * @param title 对话框标题。
+	 * @param initial 初始日期时间，不得为空。
+	 * @param result 接收确认结果的日期时间变量，仅确认时被替换；可与初值使用同一变量。
+	 * @return 确认返回真并写入新对象；取消按钮、返回键或框外点击返回假，结果变量不变。
+	 * @throws IllegalArgumentException 初值或结果参数为空，初值无效或超出平台日期选择器范围。
+	 * @throws IllegalStateException 当前不是界面线程，或没有可用活动。
+	 */
+	@SimpleFunction
+	public static boolean 弹出日期选择框(String title, Calendar initial, DateReferenceParameter result) {
+		Calendar value = copyPickerInitial(initial);
+		if (result == null) {
+			throw new IllegalArgumentException("结果参数不得为空");
+		}
+
+		MainActivity activity = requirePickerActivity();
+		PickerWait wait = new PickerWait();
+		DatePickerDialog dialog = new DatePickerDialog(activity, null,
+			value.get(Calendar.YEAR), value.get(Calendar.MONTH), value.get(Calendar.DAY_OF_MONTH));
+		DatePicker picker = dialog.getDatePicker();
+		if (picker.getYear() != value.get(Calendar.YEAR)
+			|| picker.getMonth() != value.get(Calendar.MONTH)
+			|| picker.getDayOfMonth() != value.get(Calendar.DAY_OF_MONTH)) {
+			throw new IllegalArgumentException("初始日期超出平台日期选择器范围");
+		}
+
+		// 仅确认按钮读取日期，避免旧平台在关闭时回调导致取消被误判。
+		dialog.setTitle(title);
+		dialog.setButton(DialogInterface.BUTTON_POSITIVE, "确认", new DialogInterface.OnClickListener() {
+
+			@Override
+			public void onClick(DialogInterface source, int which) {
+				picker.clearFocus();
+				wait.selected = selectPickerDate(value, picker.getYear(),
+					picker.getMonth(), picker.getDayOfMonth());
+				wait.confirmed = true;
+			}
+		});
+		return commitPickerResult(wait.showAndWait(dialog), result);
+	}
+
+	/**
+	 * 显示时间选择框，以设备当前时间和系统 12／24 小时制作为初值。
+	 *
+	 * <p>须在界面线程调用，不在错误处理语句中调用。</p>
+	 *
+	 * @param title 对话框标题。
+	 * @param result 接收确认结果的日期时间变量，仅确认时被替换；可与初值使用同一变量。
+	 * @return 确认返回真并写入新对象，保留日期和时区，秒及毫秒归零；取消返回假，结果变量不变。
+	 */
+	@SimpleFunction
+	public static boolean 弹出时间选择框(String title, DateReferenceParameter result) {
+		return 弹出时间选择框(title, Calendar.getInstance(), result);
+	}
+
+	/**
+	 * 显示时间选择框，使用指定初值及系统 12／24 小时制。
+	 *
+	 * <p>不修改初值；须在界面线程调用，不在错误处理语句中调用。</p>
+	 *
+	 * @param title 对话框标题。
+	 * @param initial 初始日期时间，不得为空。
+	 * @param result 接收确认结果的日期时间变量，仅确认时被替换；可与初值使用同一变量。
+	 * @return 确认返回真并写入新对象，保留日期和时区，秒及毫秒归零；取消返回假，结果变量不变。
+	 * @throws IllegalArgumentException 初值或结果参数为空，或初值无效。
+	 * @throws IllegalStateException 当前不是界面线程，或没有可用活动。
+	 */
+	@SimpleFunction
+	public static boolean 弹出时间选择框(String title, Calendar initial, DateReferenceParameter result) {
+		Calendar value = copyPickerInitial(initial);
+		return 弹出时间选择框(title, value,
+			android.text.format.DateFormat.is24HourFormat(requirePickerActivity()), result);
+	}
+
+	/**
+	 * 显示时间选择框，显式指定初值及 12／24 小时制。
+	 *
+	 * <p>确认时保留初值的日期和时区，秒及毫秒归零，不修改初值。
+	 * 12 小时制只影响界面显示，返回对象的小时仍可按 0–23 读取。
+	 * 须在界面线程调用，不在错误处理语句中调用。</p>
+	 *
+	 * @param title 对话框标题。
+	 * @param initial 初始日期时间，不得为空。
+	 * @param is24Hour 真表示 24 小时制，假表示 12 小时制。
+	 * @param result 接收确认结果的日期时间变量，仅确认时被替换；可与初值使用同一变量。
+	 * @return 确认返回真并写入新对象；取消按钮、返回键或框外点击返回假，结果变量不变。
+	 * @throws IllegalArgumentException 初值或结果参数为空，或初值无效。
+	 * @throws IllegalStateException 当前不是界面线程，或没有可用活动。
+	 */
+	@SimpleFunction
+	public static boolean 弹出时间选择框(String title, Calendar initial,
+		boolean is24Hour, DateReferenceParameter result) {
+		Calendar value = copyPickerInitial(initial);
+		if (result == null) {
+			throw new IllegalArgumentException("结果参数不得为空");
+		}
+
+		MainActivity activity = requirePickerActivity();
+		PickerWait wait = new PickerWait();
+		TimePickerDialog dialog = new TimePickerDialog(activity, new TimePickerDialog.OnTimeSetListener() {
+
+			@Override
+			public void onTimeSet(TimePicker picker, int hour, int minute) {
+				// 部分旧平台在 onStop 也调用监听器，只有明确确认才接受结果。
+				if (wait.confirmed) {
+					wait.selected = selectPickerTime(value, hour, minute);
+				}
+			}
+		}, value.get(Calendar.HOUR_OF_DAY), value.get(Calendar.MINUTE), is24Hour) {
+
+			@Override
+			public void onClick(DialogInterface source, int which) {
+				if (which == DialogInterface.BUTTON_POSITIVE) {
+					wait.confirmed = true;
+					// show() 会重设确认按钮监听，须在原生提交入口标记确认并提交编辑值。
+					android.view.View focused = getCurrentFocus();
+					if (focused != null) {
+						focused.clearFocus();
+					}
+				}
+				super.onClick(source, which);
+			}
+		};
+
+		dialog.setTitle(title);
+		dialog.setButton(DialogInterface.BUTTON_POSITIVE, "确认", dialog);
+		return commitPickerResult(wait.showAndWait(dialog), result);
 	}
 
 	/**
@@ -420,7 +588,7 @@ public final class 对话框操作 {
 	/**
 	 * 关闭进度框。
 	 *
-	 * @param dialog 进度框对象实例。
+	 * @param object 进度框对象实例。
 	 */
 	@SimpleFunction
 	public static void 关闭进度框(Object object) {
@@ -467,12 +635,14 @@ public final class 对话框操作 {
 		builder.setTitle(title);
 		builder.setView(((窗口Impl) form).getView());
 		builder.setPositiveButton(btnOK, new DialogInterface.OnClickListener() {
+
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				wait.end(true);
 			}
 		});
 		builder.setNegativeButton(btnNO, new DialogInterface.OnClickListener() {
+
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				wait.end(false);
@@ -482,6 +652,164 @@ public final class 对话框操作 {
 
 		// 开始等待
 		return (boolean) wait.start();
+	}
+
+	/* 日期时间选择内部状态 */
+
+	/**
+	 * 复制并验证初值，避免读取日历字段时规范化调用者的对象。
+	 *
+	 * @param initial 初始日期时间
+	 * @return 与输入对象相互独立的日期时间副本
+	 */
+	private static Calendar copyPickerInitial(Calendar initial) {
+		if (initial == null) {
+			throw new IllegalArgumentException("初始日期时间不得为空");
+		}
+
+		Calendar value = (Calendar) initial.clone();
+		value.getTimeInMillis();
+		return value;
+	}
+
+	/**
+	 * 替换年月日前先回到月初，避免月末跨月规范化影响所选日期。
+	 *
+	 * @param initial 初始日期时间
+	 * @param year 年份
+	 * @param month 月份
+	 * @param day 日期
+	 * @return 更新了年月日的日期时间
+	 */
+	private static Calendar selectPickerDate(Calendar initial, int year, int month, int day) {
+		Calendar value = copyPickerInitial(initial);
+		value.set(Calendar.DAY_OF_MONTH, 1);
+		value.set(year, month, day);
+		return value;
+	}
+
+	/**
+	 * 时间选择精确到分钟，保留初值日期及其时区。
+	 *
+	 * @param initial 初始日期时间
+	 * @param hour 小时
+	 * @param minute 分钟
+	 * @return 更新了时分并清零秒和毫秒的日期时间
+	 */
+	private static Calendar selectPickerTime(Calendar initial, int hour, int minute) {
+		Calendar value = copyPickerInitial(initial);
+		value.set(Calendar.HOUR_OF_DAY, hour);
+		value.set(Calendar.MINUTE, minute);
+		value.set(Calendar.SECOND, 0);
+		value.set(Calendar.MILLISECOND, 0);
+		return value;
+	}
+
+	/**
+	 * 只有确认结果才替换输出，取消时保持原变量及其引用不变。
+	 *
+	 * @param selected 是否选中
+	 * @param result 输出结果引用
+	 * @return 选择结果非空且已写入输出参数时为真；取消时为假并保留原输出值。
+	 */
+	private static boolean commitPickerResult(Calendar selected, DateReferenceParameter result) {
+		if (selected == null) {
+			return false;
+		}
+
+		result.set(selected);
+		return true;
+	}
+
+	/**
+	 * 原生对话框仅在仍可用的界面活动上创建。
+	 *
+	 * @return 可用于显示选择框的当前活动
+	 */
+	private static MainActivity requirePickerActivity() {
+		if (Looper.myLooper() != Looper.getMainLooper()) {
+			throw new IllegalStateException("日期时间选择框须在界面线程调用");
+		}
+
+		MainActivity activity = MainActivity.getContext();
+		if (activity == null || activity.isFinishing()
+			|| (android.os.Build.VERSION.SDK_INT >= 17 && activity.isDestroyed())) {
+			throw new IllegalStateException("没有可用的界面活动");
+		}
+
+		return activity;
+	}
+
+	/**
+	 * 每次选择独立等待关闭，只捕获自身退出信号，避免吞掉界面回调中的其它异常。
+	 */
+	private static final class PickerWait implements DialogInterface.OnDismissListener,
+		DialogInterface.OnCancelListener {
+
+		private final RuntimeException exitSignal = new RuntimeException();
+		private final Handler handler = new Handler(Looper.getMainLooper());
+		private final Runnable exit = new Runnable() {
+
+			@Override
+			public void run() {
+				throw exitSignal;
+			}
+		};
+		private Calendar selected;
+		private boolean confirmed;
+		private boolean finished;
+
+		@Override
+		public void onCancel(DialogInterface dialog) {
+			confirmed = false;
+			selected = null;
+		}
+
+		@Override
+		public void onDismiss(DialogInterface dialog) {
+			if (!finished) {
+				finished = true;
+				handler.post(exit);
+			}
+		}
+
+		/**
+		 * 确认、取消和返回均先关闭对话框，再恢复调用方。
+		 *
+		 * @param dialog 当前弹窗
+		 * @return showAndWait回调
+		 */
+		private Calendar showAndWait(AlertDialog dialog) {
+			dialog.setButton(DialogInterface.BUTTON_NEGATIVE, "取消", new DialogInterface.OnClickListener() {
+
+				@Override
+				public void onClick(DialogInterface source, int which) {
+					onCancel(source);
+				}
+			});
+			dialog.setCanceledOnTouchOutside(true);
+			dialog.setOnCancelListener(this);
+			dialog.setOnDismissListener(this);
+
+			try {
+				dialog.show();
+				if (!finished) {
+					Looper.loop();
+				}
+			} catch (RuntimeException error) {
+				if (error != exitSignal) {
+					throw error;
+				}
+			} finally {
+				finished = true;
+				handler.removeCallbacks(exit);
+				dialog.setOnDismissListener(null);
+				dialog.setOnCancelListener(null);
+				dialog.dismiss();
+			}
+
+			return confirmed ? selected : null;
+		}
 	}
 
 	/**
@@ -498,6 +826,7 @@ public final class 对话框操作 {
 
 		// 处理器
 		private Handler handler = new Handler() {
+
 			@Override
 			public void handleMessage(Message mesg) {
 				// 收到任意消息抛出异常

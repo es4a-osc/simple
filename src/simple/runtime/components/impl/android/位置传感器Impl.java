@@ -89,8 +89,8 @@ public final class 位置传感器Impl extends 组件Impl
 	 * Creates a new LocationSensor component.
 	 *
 	 * @param container container which will hold the component (must not be
-	 *                   {@code null}, for non-visible component, like this one
-	 *                   must be the form)
+	 * {@code null}, for non-visible component, like this one
+	 * must be the form)
 	 */
 	public 位置传感器Impl(组件容器 container) {
 		super(container);
@@ -196,10 +196,12 @@ public final class 位置传感器Impl extends 组件Impl
 					Address address = addresses.get(0);
 					if (address != null) {
 						StringBuilder sb = new StringBuilder();
+
 						for (int i = 0; i <= address.getMaxAddressLineIndex(); i++) {
 							sb.append(address.getAddressLine(i));
 							sb.append("\n");
 						}
+
 						return sb.toString();
 					}
 				}
@@ -234,11 +236,7 @@ public final class 位置传感器Impl extends 组件Impl
 	// Methods to stop and start listening to LocationProviders
 
 	/**
-	 * This unregisters {@link #myLocationListener} as a listener to location
-	 * updates.  It is safe to call this even if no listener had been registered,
-	 * in which case it has no effect.  This also sets the values of
-	 * {@link #providerName}, {@link #locationProvider}, and {@link #allProviders}
-	 * to {@code null} and sets {@link #listening} to {@code false}.
+	 * 停止已登记的定位监听，并清除提供者及监听状态。
 	 */
 	private void stopListening() {
 		if (listening) {
@@ -251,24 +249,10 @@ public final class 位置传感器Impl extends 组件Impl
 	}
 
 	/**
-	 * This tries to find the best available location provider and to
-	 * register {@link #myLocationListener} as a listener.
-	 * <p>
-	 * This method is called in two situations, to choose a provider when either
-	 * (1) none is currently selected (such as on start/restart or when one
-	 * becomes available for the first time), or (2) there is a problem with the
-	 * provider currently in use, such as its having been reported no longer
-	 * available via onStatusChanged().  To prevent the same poorly
-	 * performing provider from being selected, this does not select the current
-	 * provider unless it is the only one.
+	 * 按当前条件选择可用定位提供者并登记监听。
 	 *
-	 * If this can find and listen to a provider, the private field
-	 * {@link #listening} is set to {@code true}, and the variables
-	 * {@link #providerName}, {@link #locationProvider}, and {@link
-	 * #allProviders}  are given the appropriate values.  Otherwise,
-	 * {@link #available} is set to {@code false}, and {@link #providerName},
-	 * {@link #locationProvider}, and {@link #allProviders} are set to
-	 * {@code null}.
+	 * <p>先停止旧监听；有其它候选时优先避开上次使用的提供者。
+	 * 未找到可用提供者时保持未监听状态。
 	 */
 	private void tryToStartListening() {
 		// We may be able to find a provider better than the previous one,
@@ -324,12 +308,15 @@ public final class 位置传感器Impl extends 组件Impl
 	 * @author spertus@google.com (Ellen Spertus)
 	 */
 	private class LocationSensorListener implements LocationListener {
+
 		/**
-		 * {@inheritDoc}
+		 * 保存最新经纬度、海拔与有效状态，然后分发位置变化事件。
 		 *
 		 * This sets fields longitude, latitude, altitude, hasLocationData, and
 		 * hasAltitude, then calls LocationSensor.LocationChanged(), all in the
 		 * enclosing class LocationSensor.
+		 *
+		 * @param location 定位结果
 		 */
 		@Override
 		public void onLocationChanged(Location location) {

@@ -22,7 +22,6 @@ import java.util.List;
  */
 public class TCP服务端Impl extends 组件Impl implements TCP服务端 {
 
-
 	/* 消息标识 */
 
 	private static final int CLIENT_ENTER = 1;
@@ -210,6 +209,11 @@ public class TCP服务端Impl extends 组件Impl implements TCP服务端 {
 			}
 		}
 
+		/**
+		 * 向当前连接发送数据。
+		 *
+		 * @param buf 要写出的数据缓冲区
+		 */
 		public void send(byte[] buf) {
 			try {
 				this.output.write(buf);

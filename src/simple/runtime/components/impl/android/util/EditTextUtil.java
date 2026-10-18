@@ -8,12 +8,27 @@ import android.text.InputType;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
+/**
+ * 封装编辑框启用状态、提示文字与光标显示操作。
+ */
 public class EditTextUtil {
 
+	/**
+	 * 读取控件当前是否启用。
+	 *
+	 * @param editText 目标编辑框
+	 * @return 编辑框已启用时为真，否则为假。
+	 */
 	public static boolean isEnabled(EditText editText) {
 		return editText.isEnabled();
 	}
 
+	/**
+	 * 设置控件的启用状态。
+	 *
+	 * @param editText 目标编辑框
+	 * @param enabled 是否启用
+	 */
 	public static void setEnabled(EditText editText, boolean enabled) {
 		editText.setEnabled(enabled);
 		editText.setFocusable(enabled);
@@ -21,24 +36,54 @@ public class EditTextUtil {
 		editText.invalidate();
 	}
 
+	/**
+	 * 读取编辑框的提示文本。
+	 *
+	 * @param editText 目标编辑框
+	 * @return 编辑框提示文本
+	 */
 	public static String getHintText(EditText editText) {
 		return editText.getHint().toString();
 	}
 
+	/**
+	 * 设置编辑框的提示文本。
+	 *
+	 * @param editText 目标编辑框
+	 * @param hint 输入提示
+	 */
 	public static void setHintText(EditText editText, String hint) {
 		editText.setHint(hint);
 		editText.invalidate();
 	}
 
+	/**
+	 * 设置编辑框的提示文本颜色。
+	 *
+	 * @param editText 目标编辑框
+	 * @param color ARGB 颜色值
+	 */
 	public static void setHintTextColor(EditText editText, int color) {
 		editText.setHintTextColor(color);
 		editText.invalidate();
 	}
 
+	/**
+	 * 读取编辑框光标是否可见。
+	 *
+	 * @param editText 目标编辑框
+	 * @return 编辑框光标可见时为真，否则为假。
+	 */
 	public static boolean isCursorVisible(EditText editText) {
 		return editText.isCursorVisible();
 	}
 
+	/**
+	 * 设置编辑框光标是否可见。
+	 *
+	 * @param editText 目标编辑框
+	 * @param visible 是否可见
+	 */
 	public static void setCursorVisible(EditText editText, boolean visible) {
 		editText.setCursorVisible(visible);
 	}
@@ -47,10 +92,10 @@ public class EditTextUtil {
 	 * 设置输入模式。
 	 *
 	 * <p>参考文档：
-	 * {@link https://www.jianshu.com/p/7d896821b413}
-	 * {@link https://developer.android.google.cn/reference/android/text/InputType.html}
+	 * <a href="https://www.jianshu.com/p/7d896821b413">参考说明</a>
+	 * <a href="https://developer.android.google.cn/reference/android/text/InputType.html">参考说明</a>
 	 *
-	 * @param textview 文本视图。
+	 * @param editText 文本视图。
 	 * @param inputModel 当前输入模式，可选值请参考{@link 组件#输入模式_文本}等常量。
 	 */
 	public static void setInputModel(EditText editText, int inputModel) {
@@ -210,7 +255,7 @@ public class EditTextUtil {
 	 * 显示输入法。
 	 *
 	 * @param editText 编辑框对象。
-	 * @param isForced
+	 * @param isForced 是否强制应用
 	 */
 	public static void showSoftInput(EditText editText, boolean isForced) {
 		InputMethodManager imm = (InputMethodManager) MainActivity.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -222,7 +267,7 @@ public class EditTextUtil {
 	 * 隐藏输入法 。
 	 *
 	 * @param editText 编辑框对象。
-	 * @param isAlways
+	 * @param isAlways 是否保持启用
 	 */
 	public static void hideSoftInput(EditText editText, boolean isAlways) {
 		InputMethodManager imm = (InputMethodManager) MainActivity.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);

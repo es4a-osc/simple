@@ -38,8 +38,10 @@ public final class BooleanVariant extends Variant {
 		return new BooleanVariant(value);
 	}
 
-	/*
-	 * Creates a new Boolean variant.
+	/**
+	 * 将逻辑值包装为对应的 Simple 变体。
+	 *
+	 * @param value 要包装的逻辑值。
 	 */
 	private BooleanVariant(boolean value) {
 		super(VARIANT_BOOLEAN);

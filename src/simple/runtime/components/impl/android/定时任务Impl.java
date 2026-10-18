@@ -204,6 +204,7 @@ public final class 定时任务Impl extends 组件Impl implements 定时任务 {
 		if (delayMillis < 0 || intervalMillis < 0 || delayMillis > Long.MAX_VALUE - now) {
 			throw new IllegalArgumentException("延迟和间隔必须非负，首次触发时间不能溢出");
 		}
+
 		return now + delayMillis;
 	}
 

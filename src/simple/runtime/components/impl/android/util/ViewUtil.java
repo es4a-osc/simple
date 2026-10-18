@@ -187,7 +187,7 @@ public final class ViewUtil {
 	 * 判断视图是否可视。
 	 *
 	 * @param view 视图实例。
-	 * @return 可视返回{@code true}，非可视返回{@cdoe false}。
+	 * @return 可视返回{@code true}，非可视返回{@code false}。
 	 */
 	public static boolean isVisible(View view) {
 		return view.getVisibility() == View.VISIBLE;
@@ -197,7 +197,7 @@ public final class ViewUtil {
 	 * 置视图是否可视。
 	 *
 	 * @param view 视图实例。
-	 * @param visiable 是否可视。
+	 * @param visible 是否可视。
 	 */
 	public static void setVisible(View view, boolean visible) {
 		view.setVisibility(visible == true ? View.VISIBLE : View.GONE);
@@ -229,7 +229,7 @@ public final class ViewUtil {
 	 * 请求视图获得焦点。
 	 *
 	 * @param view 视图实例。
-	 * @return 获得焦点返回{@cdoe trur}，否则返回{@code false}。
+	 * @return 获得焦点返回{@code true}，否则返回{@code false}。
 	 */
 	public static boolean requestFocus(View view) {
 		return view.requestFocus();
@@ -465,6 +465,7 @@ public final class ViewUtil {
 		if(params instanceof MarginLayoutParams) {
 			return ((MarginLayoutParams) params).leftMargin;
 		}
+
 		return 0;
 	}
 
@@ -482,6 +483,7 @@ public final class ViewUtil {
 			view.requestLayout();
 			return true;
 		}
+
 		return false;
 	}
 
@@ -496,6 +498,7 @@ public final class ViewUtil {
 		if(params instanceof MarginLayoutParams) {
 			return ((MarginLayoutParams) params).topMargin;
 		}
+
 		return 0;
 	}
 
@@ -513,6 +516,7 @@ public final class ViewUtil {
 			view.requestLayout();
 			return true;
 		}
+
 		return false;
 	}
 
@@ -527,6 +531,7 @@ public final class ViewUtil {
 		if(params instanceof MarginLayoutParams) {
 			return ((MarginLayoutParams) params).rightMargin;
 		}
+
 		return 0;
 	}
 
@@ -544,6 +549,7 @@ public final class ViewUtil {
 			view.requestLayout();
 			return true;
 		}
+
 		return false;
 	}
 
@@ -558,6 +564,7 @@ public final class ViewUtil {
 		if(params instanceof MarginLayoutParams) {
 			return ((MarginLayoutParams) params).bottomMargin;
 		}
+
 		return 0;
 	}
 
@@ -575,6 +582,7 @@ public final class ViewUtil {
 			view.requestLayout();
 			return true;
 		}
+
 		return false;
 	}
 
@@ -595,6 +603,7 @@ public final class ViewUtil {
 			view.requestLayout();
 			return true;
 		}
+
 		return false;
 	}
 
@@ -647,10 +656,10 @@ public final class ViewUtil {
 				throw new IllegalArgumentException();
 		}
 	}
-	
+
 	/**
 	 * 是否具有线性布局参数
-	 * 
+	 *
 	 * @param view 视图
 	 * @return 有返回{@code true}，无返回{@code false}
 	 */
@@ -670,6 +679,7 @@ public final class ViewUtil {
 		if (params instanceof LinearLayout.LayoutParams) {
 			return ((LinearLayout.LayoutParams) params).gravity;
 		}
+
 		return Gravity.NO_GRAVITY;
 	}
 
@@ -687,6 +697,7 @@ public final class ViewUtil {
 			view.requestLayout();
 			return true;
 		}
+
 		return  false;
 	}
 
@@ -703,6 +714,7 @@ public final class ViewUtil {
 		if (params instanceof LinearLayout.LayoutParams) {
 			return ((LinearLayout.LayoutParams) params).weight;
 		}
+
 		return 0;
 	}
 
@@ -720,6 +732,7 @@ public final class ViewUtil {
 			view.requestLayout();
 			return true;
 		}
+
 		return false;
 	}
 }

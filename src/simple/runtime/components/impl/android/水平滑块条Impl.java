@@ -35,6 +35,7 @@ public class 水平滑块条Impl extends 进度视图组件 implements 水平滑
 		ViewUtil.setFocusable(view, true);
 		view.setThumbOffset(0);
 		view.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+
 			@Override
 			public void onStartTrackingTouch(SeekBar seekbar) {
 				开始拖动();

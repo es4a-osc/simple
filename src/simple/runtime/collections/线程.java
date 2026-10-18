@@ -15,18 +15,42 @@ import simple.runtime.variants.Variant;
  */
 @SimpleObject
 public class 线程 {
+
+	/**
+	 * 线程已创建，尚未启动。
+	 */
 	@SimpleDataElement
-	static final int 状态_新建 = 0; // Thread.State.NEW
+	public static final int 状态_新建 = 0; // Thread.State.NEW
+
+	/**
+	 * 线程可以由系统调度执行。
+	 */
 	@SimpleDataElement
-	static final int 状态_可运行 = 1; // Thread.State.Runnable
+	public static final int 状态_可运行 = 1; // Thread.State.Runnable
+
+	/**
+	 * 线程正在等待进入同步监视器。
+	 */
 	@SimpleDataElement
-	static final int 状态_阻塞 = 2; // Thread.State.BLOCKED
+	public static final int 状态_阻塞 = 2; // Thread.State.BLOCKED
+
+	/**
+	 * 线程正在无限期等待其它线程的通知或结束。
+	 */
 	@SimpleDataElement
-	static final int 状态_无限等待 = 3; // Thread.State.WAITING
+	public static final int 状态_无限等待 = 3; // Thread.State.WAITING
+
+	/**
+	 * 线程正在等待且设置了最长等待时间。
+	 */
 	@SimpleDataElement
-	static final int 状态_限时等待 = 4; // Thread.State.TIMED_WAITING
+	public static final int 状态_限时等待 = 4; // Thread.State.TIMED_WAITING
+
+	/**
+	 * 线程已经执行结束。
+	 */
 	@SimpleDataElement
-	static final int 状态_结束 = 5; // Thread.State.TERMINATED
+	public static final int 状态_结束 = 5; // Thread.State.TERMINATED
 
 	// 线程实例
 	private Thread thread;
@@ -38,6 +62,7 @@ public class 线程 {
 	 */
 	public 线程() {
 		thread = new Thread() {
+
 			@Override
 			public void run() {
 				线程运行();
@@ -56,6 +81,7 @@ public class 线程 {
 	 */
 	public 线程(Object unit, String name, Variant[] args) {
 		thread = new Thread() {
+
 			@Override
 			public void run() {
 				程序操作.调用方法(unit, name, args);
@@ -126,7 +152,7 @@ public class 线程 {
 	/**
 	 * 名称属性获取方法。
 	 *
-	 * @return 线程名称
+	 * @param name 要操作的名称
 	 */
 	@SimpleProperty
 	public void 名称(String name) {
@@ -169,7 +195,7 @@ public class 线程 {
 	 *
 	 * @param millis 以毫秒为单位的等待时间，为 0 意味着要一直等下去。
 	 * @return 成功返回{@code true}，否则返回{@code false}。
-	 * @throws 非法参数错误  millis为负数
+	 * @throws IllegalArgumentException  millis为负数
 	 */
 	@SimpleFunction
 	public boolean 参与(long millis) {
@@ -188,7 +214,7 @@ public class 线程 {
 	 *
 	 * @param timeout 要等待的最长时间（以毫秒为单位），为 0 意味着要一直等下去。
 	 * @return 成功返回{@code true}，否则返回{@code false}。
-	 * @throws 非法参数错误 timeout为负数
+	 * @throws IllegalArgumentException timeout为负数
 	 */
 	@SimpleFunction
 	public boolean 等待(long timeout) {

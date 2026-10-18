@@ -36,66 +36,178 @@ import simple.runtime.annotations.SimpleObject;
 public final class 日期时间操作 {
 
 	/* 日期/时间间隔类型 */
+
+	/**
+	 * 日期运算使用的年字段。
+	 */
 	@SimpleDataElement
 	public static final int 日期_年 = Calendar.YEAR;
+
+	/**
+	 * 日期运算使用的月字段。
+	 */
 	@SimpleDataElement
 	public static final int 日期_月 = Calendar.MONTH;
+
+	/**
+	 * 日期运算使用的天字段。
+	 */
 	@SimpleDataElement
 	public static final int 日期_天 = Calendar.DATE;
+
+	/**
+	 * 日期运算使用的星期字段。
+	 */
 	@SimpleDataElement
 	public static final int 日期_星期 = Calendar.WEEK_OF_YEAR;
+
+	/**
+	 * 日期运算使用的时字段。
+	 */
 	@SimpleDataElement
 	public static final int 日期_时 = Calendar.HOUR_OF_DAY;
+
+	/**
+	 * 日期运算使用的分字段。
+	 */
 	@SimpleDataElement
 	public static final int 日期_分 = Calendar.MINUTE;
+
+	/**
+	 * 日期运算使用的秒字段。
+	 */
 	@SimpleDataElement
 	public static final int 日期_秒 = Calendar.SECOND;
 
 	/* 一星期中第几天 */
+
+	/**
+	 * Java 日期星期常量：星期一。
+	 */
 	@SimpleDataElement
 	public static final int 星期_星期一 = Calendar.MONDAY;
+
+	/**
+	 * Java 日期星期常量：星期二。
+	 */
 	@SimpleDataElement
 	public static final int 星期_星期二 = Calendar.TUESDAY;
+
+	/**
+	 * Java 日期星期常量：星期三。
+	 */
 	@SimpleDataElement
 	public static final int 星期_星期三 = Calendar.WEDNESDAY;
+
+	/**
+	 * Java 日期星期常量：星期四。
+	 */
 	@SimpleDataElement
 	public static final int 星期_星期四 = Calendar.THURSDAY;
+
+	/**
+	 * Java 日期星期常量：星期五。
+	 */
 	@SimpleDataElement
 	public static final int 星期_星期五 = Calendar.FRIDAY;
+
+	/**
+	 * Java 日期星期常量：星期六。
+	 */
 	@SimpleDataElement
 	public static final int 星期_星期六 = Calendar.SATURDAY;
+
+	/**
+	 * Java 日期星期常量：星期天。
+	 */
 	@SimpleDataElement
 	public static final int 星期_星期天 = Calendar.SUNDAY;
 
 	/* 月份：沿用 Calendar 的 0–11 编号，一月为 0。 */
+
+	/**
+	 * Java 日期月份常量：一月，月份编号从 0 开始。对应 {@code Calendar.JANUARY}。
+	 */
 	@SimpleDataElement
 	public static final int 月份_一月 = Calendar.JANUARY;
+
+	/**
+	 * Java 日期月份常量：二月，月份编号从 0 开始。对应 {@code Calendar.FEBRUARY}。
+	 */
 	@SimpleDataElement
 	public static final int 月份_二月 = Calendar.FEBRUARY;
+
+	/**
+	 * Java 日期月份常量：三月，月份编号从 0 开始。对应 {@code Calendar.MARCH}。
+	 */
 	@SimpleDataElement
 	public static final int 月份_三月 = Calendar.MARCH;
+
+	/**
+	 * Java 日期月份常量：四月，月份编号从 0 开始。对应 {@code Calendar.APRIL}。
+	 */
 	@SimpleDataElement
 	public static final int 月份_四月 = Calendar.APRIL;
+
+	/**
+	 * Java 日期月份常量：五月，月份编号从 0 开始。对应 {@code Calendar.MAY}。
+	 */
 	@SimpleDataElement
 	public static final int 月份_五月 = Calendar.MAY;
+
+	/**
+	 * Java 日期月份常量：六月，月份编号从 0 开始。对应 {@code Calendar.JUNE}。
+	 */
 	@SimpleDataElement
 	public static final int 月份_六月 = Calendar.JUNE;
+
+	/**
+	 * Java 日期月份常量：七月，月份编号从 0 开始。对应 {@code Calendar.JULY}。
+	 */
 	@SimpleDataElement
 	public static final int 月份_七月 = Calendar.JULY;
+
+	/**
+	 * Java 日期月份常量：八月，月份编号从 0 开始。对应 {@code Calendar.AUGUST}。
+	 */
 	@SimpleDataElement
 	public static final int 月份_八月 = Calendar.AUGUST;
+
+	/**
+	 * Java 日期月份常量：九月，月份编号从 0 开始。对应 {@code Calendar.SEPTEMBER}。
+	 */
 	@SimpleDataElement
 	public static final int 月份_九月 = Calendar.SEPTEMBER;
+
+	/**
+	 * Java 日期月份常量：十月，月份编号从 0 开始。对应 {@code Calendar.OCTOBER}。
+	 */
 	@SimpleDataElement
 	public static final int 月份_十月 = Calendar.OCTOBER;
+
+	/**
+	 * Java 日期月份常量：十一月，月份编号从 0 开始。对应 {@code Calendar.NOVEMBER}。
+	 */
 	@SimpleDataElement
 	public static final int 月份_十一月 = Calendar.NOVEMBER;
+
+	/**
+	 * Java 日期月份常量：十二月，月份编号从 0 开始。对应 {@code Calendar.DECEMBER}。
+	 */
 	@SimpleDataElement
 	public static final int 月份_十二月 = Calendar.DECEMBER;
 
 	/* 时区：北京时间为 UTC+08:00，换算为 GMT 时应减去 8 小时。 */
+
+	/**
+	 * 格林尼治时区标识。
+	 */
 	@SimpleDataElement
 	public static final String 时区_格林尼治 = "GMT";
+
+	/**
+	 * 上海时区标识。
+	 */
 	@SimpleDataElement
 	public static final String 时区_上海 = "Asia/Shanghai";
 
@@ -150,6 +262,7 @@ public final class 日期时间操作 {
 	@SimpleFunction
 	public static Calendar 日期值(String value) {
 		Calendar calendar = new GregorianCalendar();
+
 		for (String format : DATE_FORMATS) {
 			try {
 				DateFormat dateFormat = new SimpleDateFormat(format);

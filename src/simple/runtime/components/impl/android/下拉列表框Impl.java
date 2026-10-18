@@ -14,6 +14,9 @@ import android.widget.ArrayAdapter;
 import android.widget.AdapterView;
 import android.widget.Spinner;
 
+/**
+ * 下拉列表框的 Android 视图与选择事件实现。
+ */
 public class 下拉列表框Impl extends 列表视图组件 implements 下拉列表框 {
 
 	private List<String> list;
@@ -36,6 +39,7 @@ public class 下拉列表框Impl extends 列表视图组件 implements 下拉列
 
 		// 项目选择监听器
 		view.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
 			@Override
 			public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 				selection = position;

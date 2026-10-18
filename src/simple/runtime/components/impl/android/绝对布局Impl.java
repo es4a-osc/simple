@@ -6,9 +6,9 @@ import simple.runtime.components.impl.android.util.ViewUtil;
 
 /**
  * 绝对布局的实现。
- * 
+ *
  * 注意：绝对布局已在API3版本中废弃。
- * 
+ *
  * @author 树先生 xhwsd@qq.com
  */
 public class 绝对布局Impl extends 布局Impl implements 绝对布局 {
@@ -53,10 +53,10 @@ public class 绝对布局Impl extends 布局Impl implements 绝对布局 {
 
 	/**
 	 * 删除组件
-	 * 
+	 *
 	 * @param component 组件
 	 */
 	public void removeComponent(视图组件 component) {
-		getLayoutManager().removeView(component.getView());  
+		getLayoutManager().removeView(component.getView());
 	}
 }

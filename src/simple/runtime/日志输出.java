@@ -52,8 +52,8 @@ public final class 日志输出 {
 
 	/**
 	 * 取堆栈类方法名
-	 * 
-	 * @param index
+	 *
+	 * @param index 索引位置
 	 * @return 堆栈类方法名
 	 */
 	private static String getClassMethod(int index) {
@@ -99,7 +99,7 @@ public final class 日志输出 {
 			logFunctions.info(MODULE_NAME_RTL, "[" + getClassMethod(2) + "] " + String.format(format, args));
 		}
 	}
-	
+
 	/**
 	 * 供运行库输出调试。
 	 *
@@ -114,7 +114,7 @@ public final class 日志输出 {
 
 	/**
 	 * 置输出缺省模型名称。
-	 * 
+	 *
 	 * @param moduleName 模块名称
 	 */
 	@SimpleFunction
@@ -124,7 +124,7 @@ public final class 日志输出 {
 
 	/**
 	 * 取输出缺省模块名称。
-	 * 
+	 *
 	 * @return 模块名称
 	 */
 	@SimpleFunction
@@ -166,14 +166,14 @@ public final class 日志输出 {
 
 	/**
 	 * 记录警告消息。
-	 * 
+	 *
 	 * @param message 要记录的日志
 	 */
 	@SimpleFunction
 	public static void 输出警告(String message) {
 		输出警告(defaulModuleNamet, message);
 	}
-	
+
 	/**
 	 * 记录信息消息。
 	 *
@@ -208,7 +208,7 @@ public final class 日志输出 {
 
 	/**
 	 * 记录调试消息。
-	 * 
+	 *
 	 * @param message 要记录的日志
 	 */
 	@SimpleFunction

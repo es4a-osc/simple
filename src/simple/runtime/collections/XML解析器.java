@@ -78,6 +78,7 @@ public final class XML解析器 {
 		if (text == null) {
 			throw failure("XML 文本不得为空引用", null);
 		}
+
 		try {
 			XmlPullParser current = createParser();
 			current.setInput(new StringReader(text));
@@ -111,6 +112,7 @@ public final class XML解析器 {
 		if (data == null || encoding == null) {
 			throw failure("XML 数据和编码不得为空引用", null);
 		}
+
 		try {
 			String charset = encoding.length() == 0 ? null : Charset.forName(encoding).name();
 			XmlPullParser current = createParser();
@@ -322,6 +324,7 @@ public final class XML解析器 {
 		if (取节点类型() != 节点_开始 || namespace == null || name == null || name.length() == 0) {
 			throw failure("请在开始节点提供属性命名空间和本地名称", null);
 		}
+
 		return text(current.getAttributeValue(namespace, name));
 	}
 
@@ -381,6 +384,7 @@ public final class XML解析器 {
 		if (index < 0 || index >= current.getAttributeCount()) {
 			throw failure("属性索引超出范围：" + index, null);
 		}
+
 		return current;
 	}
 

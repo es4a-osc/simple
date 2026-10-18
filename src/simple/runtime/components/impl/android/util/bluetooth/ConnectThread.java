@@ -56,13 +56,20 @@ public final class ConnectThread extends Thread {
 		}
 	}
 
-	// 清空线程持有的引用，避免后续取消把已交给组件的连接一起关闭。
+	/**
+	 * 取出并移交线程持有的套接字，后续清理不再关闭已移交连接。
+	 *
+	 * @return 移交给调用方的套接字；没有可移交连接时为 {@code null}
+	 */
 	public synchronized BluetoothSocket takeSocket() {
 		BluetoothSocket result = socket;
 		socket = null;
 		return result;
 	}
 
+	/**
+	 * 取消当前任务并释放相应资源。
+	 */
 	public synchronized void cancel() {
 		cancelled = true;
 		if (socket != null) {

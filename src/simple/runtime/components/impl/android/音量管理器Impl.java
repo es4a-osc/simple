@@ -34,9 +34,6 @@ public final class 音量管理器Impl extends 组件Impl implements 音量管�
 
 	/* 组件方法 */
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public int 取音量(int type) {
 		try {
@@ -46,9 +43,6 @@ public final class 音量管理器Impl extends 组件Impl implements 音量管�
 		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public int 取最大音量(int type) {
 		try {
@@ -58,9 +52,6 @@ public final class 音量管理器Impl extends 组件Impl implements 音量管�
 		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public void 置音量(int type, int volume) {
 		try {
@@ -71,9 +62,6 @@ public final class 音量管理器Impl extends 组件Impl implements 音量管�
 		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	@SuppressWarnings("deprecation")
 	public boolean 有线耳机是否连接() {

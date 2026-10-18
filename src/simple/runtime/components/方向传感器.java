@@ -38,12 +38,12 @@ public interface 方向传感器 extends 传感器组件 {
 	 * Default OrientationChanged event handler.
 	 *
 	 * @param yaw angle between the magnetic north direction and the
-	 *             Y axis, around the Z axis (0 to 359). 0=North, 90=East,
-	 *             180=South, 270=West
+	 * Y axis, around the Z axis (0 to 359). 0=North, 90=East,
+	 * 180=South, 270=West
 	 * @param pitch rotation around X axis (-180 to 180), with positive
-	 *               values when the z-axis moves toward the y-axis.
+	 * values when the z-axis moves toward the y-axis.
 	 * @param roll rotation around Y axis (-90 to 90), with positive
-	 *              values when the x-axis moves away from the z-axis.
+	 * values when the x-axis moves away from the z-axis.
 	 */
 	@SimpleEvent
 	void 方向改变(float yaw, float pitch, float roll);
@@ -54,7 +54,7 @@ public interface 方向传感器 extends 传感器组件 {
 	 * Available property getter method (read-only property).
 	 *
 	 * @return {@code true} indicates that an orientation sensor is available,
-	 *         {@code false} that it isn't
+	 * {@code false} that it isn't
 	 */
 	@SimpleProperty
 	boolean 可用();
@@ -63,7 +63,7 @@ public interface 方向传感器 extends 传感器组件 {
 	 * Enabled property getter method.
 	 *
 	 * @return {@code true} indicates that the sensor generates events,
-	 *         {@code false} that it doesn't
+	 * {@code false} that it doesn't
 	 */
 	@SimpleProperty
 	boolean 启用();
@@ -72,7 +72,7 @@ public interface 方向传感器 extends 传感器组件 {
 	 * Enabled property setter method.
 	 *
 	 * @param enabled {@code true} enables sensor event generation,
-	 *                 {@code false} disables it
+	 * {@code false} disables it
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_BOOLEAN,

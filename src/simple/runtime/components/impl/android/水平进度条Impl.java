@@ -11,6 +11,9 @@ import android.widget.ProgressBar;
 
 import java.lang.reflect.Field;
 
+/**
+ * 水平进度条的 Android 实现。
+ */
 public class 水平进度条Impl extends 进度视图组件 implements 水平进度条 {
 
 	public 水平进度条Impl(组件容器 container) {

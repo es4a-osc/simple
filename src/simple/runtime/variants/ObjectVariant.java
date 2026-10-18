@@ -44,8 +44,10 @@ public final class ObjectVariant extends Variant {
 		return new ObjectVariant(value);
 	}
 
-	/*
-	 * 创建一个新的对象变量。
+	/**
+	 * 将Java 对象包装为对应的 Simple 变体。
+	 *
+	 * @param value 要包装的Java 对象。
 	 */
 	private ObjectVariant(Object value) {
 		super(VARIANT_OBJECT);
@@ -67,8 +69,12 @@ public final class ObjectVariant extends Variant {
 		return value == rightOp.getObject();
 	}
 
-	/*
-	 * 将变体值转换为等效的Java值。
+	/**
+	 * 将 Variant 转换为目标 Java 参数类型。
+	 *
+	 * @param type 目标类型
+	 * @param variant 待转换的 Variant 值
+	 * @return 转换后的 Java 值
 	 */
 	private Object convertVariant(Class<?> type, Variant variant) {
 		if (type.isArray()) {
@@ -108,8 +114,12 @@ public final class ObjectVariant extends Variant {
 		return variant.getObject();
 	}
 
-	/*
-	 * 将Java值转换为变体值。
+	/**
+	 * 按 Java 返回类型将结果包装为对应的 Simple 变体。
+	 *
+	 * @param type Java 方法声明的返回类型。
+	 * @param object Java 方法实际返回的值。
+	 * @return 对应的 Simple 变体；void 返回类型对应未初始化变体。
 	 */
 	private Variant convertObject(Class<?> type, Object object) {
 		if (type == Void.TYPE) {
@@ -152,15 +162,21 @@ public final class ObjectVariant extends Variant {
 		return ObjectVariant.getObjectVariant(object);
 	}
 
-	/*
-	 * 将函数参数转换为适当的Java方法参数。
+	/**
+	 * 按反射方法的参数类型转换实参数组。
+	 *
+	 * @param argTypes 目标 Java 方法的参数类型
+	 * @param args 调用实参
+	 * @return 与目标参数类型对应的实参数组
 	 */
 	private Object[] convertArguments(Class<?>[] argTypes, Variant[] args) {
 		int len = argTypes.length;
 		Object[] objArgs = new Object[len];
+
 		for (int i = 0; i < len; i++) {
 			objArgs[i] = convertVariant(argTypes[i], args[i]);
 		}
+
 		return objArgs;
 	}
 
@@ -179,6 +195,7 @@ public final class ObjectVariant extends Variant {
 
 					// 调用方法
 					Object result = null;
+
 					try {
 						result = method.invoke(value, convertedArgs);
 					} catch (IllegalAccessException iae) {
@@ -200,6 +217,7 @@ public final class ObjectVariant extends Variant {
 	@Override
 	public Variant dataMember(String name) {
 		Class<?> type = value.getClass();
+
 		try {
 			Field field = type.getField(name);
 			return convertObject(field.getType(), field.get(value));

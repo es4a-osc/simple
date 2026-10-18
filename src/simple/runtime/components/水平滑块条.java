@@ -16,12 +16,23 @@ public interface 水平滑块条 extends 进度组件 {
 
 	/* 组件事件 */
 
+	/**
+	 * 通知开始拖动事件。
+	 */
 	@SimpleEvent
 	void 开始拖动();
 
+	/**
+	 * 通知停止拖动事件。
+	 */
 	@SimpleEvent
 	void 停止拖动();
 
+	/**
+	 * 通知位置被改变事件。
+	 *
+	 * @param progress 当前进度值
+	 */
 	@SimpleEvent
 	void 位置被改变(int progress);
 
@@ -40,9 +51,7 @@ public interface 水平滑块条 extends 进度组件 {
 	 *
 	 * @param maxHeight 最大高度。
 	 */
-	@SimpleProperty(
-		type = SimpleProperty.PROPERTY_TYPE_INTEGER
-	)
+	@SimpleProperty(type = SimpleProperty.PROPERTY_TYPE_INTEGER)
 	void 最大高度(int maxHeight);
 
 	/**
@@ -58,9 +67,7 @@ public interface 水平滑块条 extends 进度组件 {
 	 *
 	 * @param minHeight 最小高度。
 	 */
-	@SimpleProperty(
-		type = SimpleProperty.PROPERTY_TYPE_INTEGER
-	)
+	@SimpleProperty(type = SimpleProperty.PROPERTY_TYPE_INTEGER)
 	void 最小高度(int minHeight);
 
 	/**
@@ -68,8 +75,6 @@ public interface 水平滑块条 extends 进度组件 {
 	 *
 	 * @param image 图片路径。
 	 */
-	@SimpleProperty(
-		type = SimpleProperty.PROPERTY_TYPE_ASSET
-	)
+	@SimpleProperty(type = SimpleProperty.PROPERTY_TYPE_ASSET)
 	void 滑块图片(String image);
 }

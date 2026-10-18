@@ -60,7 +60,7 @@ public interface 图片组件 extends 可视组件 {
 	 * 图片属性设置方法。
 	 *
 	 * @param image 图片标识，支持{@code 资源标识}、{@code @drawable/资源名}、
-	 * 				{@code 资产文件名}、{@code /外部文件名}。
+	 * {@code 资产文件名}、{@code /外部文件名}。
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_ASSET,
@@ -84,9 +84,7 @@ public interface 图片组件 extends 可视组件 {
 	 *
 	 * @param adjustViewBounds 是否保持宽高比。
 	 */
-	@SimpleProperty(
-		type = SimpleProperty.PROPERTY_TYPE_BOOLEAN
-	)
+	@SimpleProperty(type = SimpleProperty.PROPERTY_TYPE_BOOLEAN)
 	void 保持宽高比(boolean adjustViewBounds);
 
 	/**
@@ -108,9 +106,7 @@ public interface 图片组件 extends 可视组件 {
 	 *
 	 * @param maxWidth 最大宽度。
 	 */
-	@SimpleProperty(
-		type = SimpleProperty.PROPERTY_TYPE_INTEGER
-	)
+	@SimpleProperty(type = SimpleProperty.PROPERTY_TYPE_INTEGER)
 	void 最大宽度(int maxWidth);
 
 	/**
@@ -128,9 +124,7 @@ public interface 图片组件 extends 可视组件 {
 	 *
 	 * @param maxHeight 最大高度。
 	 */
-	@SimpleProperty(
-		type = SimpleProperty.PROPERTY_TYPE_INTEGER
-	)
+	@SimpleProperty(type = SimpleProperty.PROPERTY_TYPE_INTEGER)
 	void 最大高度(int maxHeight);
 
 	/**
@@ -146,8 +140,6 @@ public interface 图片组件 extends 可视组件 {
 	 *
 	 * @param scaleType 设置显示方式，可选值请参考{@link 图片框#显示方式_缩放图片}等常量。
 	 */
-	@SimpleProperty(
-		type = SimpleProperty.PROPERTY_TYPE_INTEGER
-	)
+	@SimpleProperty(type = SimpleProperty.PROPERTY_TYPE_INTEGER)
 	void 显示方式(int scaleType);
 }

@@ -25,10 +25,21 @@ public final class JSON值 {
 	https://developer.android.google.cn/reference/org/json/package-summary
 	*/
 
+	/**
+	 * JSON null 值的类型标识。
+	 */
 	@SimpleDataElement
 	public static final int 值类型_空 = 0;
+
+	/**
+	 * JSON 对象的类型标识。
+	 */
 	@SimpleDataElement
 	public static final int 值类型_对象 = 1;
+
+	/**
+	 * JSON 数组的类型标识。
+	 */
 	@SimpleDataElement
 	public static final int 值类型_数组 = 2;
 

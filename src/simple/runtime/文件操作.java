@@ -56,20 +56,36 @@ public final class 文件操作 {
 	 * 提供应用文件根目录的接口。
 	 */
 	public static interface RootProvider {
+
+		/**
+		 * 返回应用文件操作所使用的根目录。
+		 *
+		 * @return 文件操作所使用的应用根目录
+		 */
 		File getApplicationRootDirectory();
 	}
 
-	/*
-	 * Helper class for handling file I/O.
+	/**
+	 * 保存已打开文件及其读写状态的句柄对象。
 	 */
 	private static class FileDescriptor {
 		private final File file;
 		private RandomAccessFile raf;
 
+		/**
+		 * 抛出当前文件描述符对应的运行库错误。
+		 *
+		 * @param message 消息文本
+		 */
 		private void raiseError(String message) {
 			throw new 文件读写错误(message + ": " + file.getName());
 		}
 
+		/**
+		 * 打开并保存文件读写所使用的状态。
+		 *
+		 * @param file 本次操作的文件
+		 */
 		FileDescriptor(File file) {
 			this.file = file;
 
@@ -80,6 +96,9 @@ public final class 文件操作 {
 			}
 		}
 
+		/**
+		 * 关闭当前对象持有的资源。
+		 */
 		void close() {
 			try {
 				raf.close();
@@ -481,6 +500,91 @@ public final class 文件操作 {
 	@SimpleFunction
 	public static String[] 取子目录(String path) {
 		return listPaths(path, true);
+	}
+
+	/* 存储空间查询 */
+
+	/**
+	 * 查询应用私有 files 目录所在存储卷的总空间。
+	 *
+	 * @return 总字节数，系统无法提供统计值时可能返回 0。
+	 * @throws IllegalStateException 应用私有文件目录尚未初始化。
+	 * @throws 文件未存在错误 应用私有文件目录不存在。
+	 * @throws 文件读写错误 系统拒绝查询。
+	 */
+	@SimpleFunction
+	public static long 取存储总空间() {
+		File directory = rootDirectory;
+		if (directory == null) {
+			throw new IllegalStateException("应用私有文件目录尚未初始化");
+		}
+
+		return 取存储总空间(directory.getAbsolutePath());
+	}
+
+	/**
+	 * 查询指定已有文件或目录所在存储卷的总空间。
+	 *
+	 * <p>统计整个存储卷，不累计目录中的文件，也不表示设备所有存储的合计容量。
+	 * 相对路径沿用应用私有 files 目录基准；绝对路径仍受系统访问限制。</p>
+	 *
+	 * @param path 已存在的文件或目录路径，不支持 content URI。
+	 * @return 总字节数，系统无法提供统计值时可能返回 0。
+	 * @throws IllegalArgumentException 路径为空或为 content URI。
+	 * @throws 文件未存在错误 路径不存在。
+	 * @throws 文件读写错误 系统拒绝查询。
+	 */
+	@SimpleFunction
+	public static long 取存储总空间(String path) {
+		File file = requireExistingPath(path);
+
+		try {
+			return file.getTotalSpace();
+		} catch (SecurityException exception) {
+			throw pathError("查询存储总空间失败", file, exception);
+		}
+	}
+
+	/**
+	 * 查询应用私有 files 目录所在存储卷的可用空间估计值。
+	 *
+	 * @return 普通应用可用的字节数，可能为 0；不保证后续写入成功。
+	 * @throws IllegalStateException 应用私有文件目录尚未初始化。
+	 * @throws 文件未存在错误 应用私有文件目录不存在。
+	 * @throws 文件读写错误 系统拒绝查询。
+	 */
+	@SimpleFunction
+	public static long 取存储可用空间() {
+		File directory = rootDirectory;
+		if (directory == null) {
+			throw new IllegalStateException("应用私有文件目录尚未初始化");
+		}
+
+		return 取存储可用空间(directory.getAbsolutePath());
+	}
+
+	/**
+	 * 查询指定已有文件或目录所在存储卷的可用空间估计值。
+	 *
+	 * <p>采用系统向普通应用报告的可用字节数，不包含仅向 root 保留的空间。
+	 * Android 的应用配额、目录写权限等限制未必反映在数值中，其他程序也可能同时占用空间；
+	 * 因而结果不保证后续写入成功。查询不创建文件，也不申请或授予存储权限。</p>
+	 *
+	 * @param path 已存在的文件或目录路径，不支持 content URI。
+	 * @return 可用字节数；空间耗尽或系统无法提供统计值时可能返回 0。
+	 * @throws IllegalArgumentException 路径为空或为 content URI。
+	 * @throws 文件未存在错误 路径不存在。
+	 * @throws 文件读写错误 系统拒绝查询。
+	 */
+	@SimpleFunction
+	public static long 取存储可用空间(String path) {
+		File file = requireExistingPath(path);
+
+		try {
+			return file.getUsableSpace();
+		} catch (SecurityException exception) {
+			throw pathError("查询存储可用空间失败", file, exception);
+		}
 	}
 
 	/* 整文件读写与编码 */
@@ -1038,9 +1142,11 @@ public final class 文件操作 {
 
 	/* 句柄内部辅助 */
 
-	/*
-	 * Gets a File object for a given file name and raises a runtime error if the
-	 * file doesn't exist.
+	/**
+	 * 解析文件路径并要求文件已经存在。
+	 *
+	 * @param name 文件名或文件路径。
+	 * @return 已存在的文件对象
 	 */
 	private static File getExistingFile(String name) {
 		File file = new File(rootDirectory, name);
@@ -1051,9 +1157,11 @@ public final class 文件操作 {
 		return file;
 	}
 
-	/*
-	 * Gets a File object for a given file name and raises a runtime error if the
-	 * file already exists.
+	/**
+	 * 解析文件路径并要求目标尚不存在。
+	 *
+	 * @param name 文件名或文件路径。
+	 * @return 尚未存在的目标文件对象
 	 */
 	private static File getNonExistingFile(String name) {
 		File file = new File(rootDirectory, name);
@@ -1064,9 +1172,11 @@ public final class 文件操作 {
 		return file;
 	}
 
-	/*
-	 * Gets the file descriptor associated with the file handle. Raises a runtime
-	 * error if no file descriptor can be found.
+	/**
+	 * 按句柄查找已打开的文件描述符。
+	 *
+	 * @param handle 已打开文件的句柄
+	 * @return 句柄对应的已打开文件
 	 */
 	private static FileDescriptor getFileDescriptor(int handle) {
 		FileDescriptor descriptor = fileHandleMap.get(handle);
@@ -1077,29 +1187,37 @@ public final class 文件操作 {
 		return descriptor;
 	}
 
-	/*
-	 * Raises a file write runtime error.
+	/**
+	 * 抛出指定文件的写入错误。
+	 *
+	 * @param name 文件名或文件路径。
 	 */
 	private static void writeError(String name) {
 		throw new 文件读写错误("Write error: " + name);
 	}
 
-	/*
-	 * Raises a file read runtime error.
+	/**
+	 * 抛出指定文件的读取错误。
+	 *
+	 * @param name 文件名或文件路径。
 	 */
 	private static void readError(String name) {
 		throw new 文件读写错误("Read error: " + name);
 	}
 
-	/*
-	 * Raises a file read runtime error.
+	/**
+	 * 抛出指定文件的定位错误。
+	 *
+	 * @param name 文件名或文件路径。
 	 */
 	private static void seekError(String name) {
 		throw new 文件读写错误("移动文件指针 error: " + name);
 	}
 
-	/*
-	 * Raises a file access runtime error.
+	/**
+	 * 抛出指定文件的访问错误。
+	 *
+	 * @param name 文件名或文件路径。
 	 */
 	private static void accessError(String name) {
 		throw new 文件读写错误("Access error: " + name);

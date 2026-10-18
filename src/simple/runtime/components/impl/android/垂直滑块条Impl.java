@@ -31,6 +31,7 @@ public class 垂直滑块条Impl extends 进度视图组件 implements 垂直滑
 
 		// 滑块条改变监听器
 		view.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+
 			@Override
 			public void onStartTrackingTouch(SeekBar seekbar) {
 				开始拖动();

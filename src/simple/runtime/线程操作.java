@@ -45,6 +45,7 @@ public final class 线程操作 {
 	 *
 	 * @param unit 单元对象实例。
 	 * @param name 回调过程名。
+	 * @return 创建并启动线程
 	 */
 	@SimpleFunction
 	public static 线程 启动线程(Object unit, String name) {
@@ -57,6 +58,7 @@ public final class 线程操作 {
 	 * @param unit 单元对象实例。
 	 * @param name 回调过程名。
 	 * @param args 传递给过程的参数；成员与参数对应，没有参数可传递{@code null}或没有成员的数组。
+	 * @return 创建并启动线程
 	 */
 	@SimpleFunction
 	public static 线程 启动线程(Object unit, String name, Variant[] args) {

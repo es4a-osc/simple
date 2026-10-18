@@ -65,6 +65,7 @@ public final class 蓝牙通信器Impl extends 组件Impl implements 蓝牙通�
 		activity = MainActivity.getContext();
 		adapter = BluetoothAdapter.getDefaultAdapter();
 		handler = new Handler(Looper.getMainLooper()) {
+
 			@Override
 			public void handleMessage(Message message) {
 				handleConnectionMessage(message);
@@ -72,6 +73,7 @@ public final class 蓝牙通信器Impl extends 组件Impl implements 蓝牙通�
 		};
 
 		receiver = new BroadcastReceiver() {
+
 			@Override
 			public void onReceive(Context context, Intent intent) {
 				if (destroyed || !BluetoothDevice.ACTION_FOUND.equals(intent.getAction())) {
@@ -357,6 +359,11 @@ public final class 蓝牙通信器Impl extends 组件Impl implements 蓝牙通�
 
 	/* 内部辅助方法 */
 
+	/**
+	 * 按蓝牙连接消息更新状态并分发组件事件。
+	 *
+	 * @param message 消息文本
+	 */
 	private void handleConnectionMessage(Message message) {
 		if (destroyed) {
 			return;
@@ -423,6 +430,12 @@ public final class 蓝牙通信器Impl extends 组件Impl implements 蓝牙通�
 		}
 	}
 
+	/**
+	 * 启动指定模式的蓝牙连接线程。
+	 *
+	 * @param connection 当前连接对象
+	 * @param mode 操作模式
+	 */
 	private void beginConnection(BluetoothSocket connection, int mode) {
 		if (connection == null) {
 			return;
@@ -443,16 +456,29 @@ public final class 蓝牙通信器Impl extends 组件Impl implements 蓝牙通�
 	@SuppressWarnings("serial")
 	private static final class BluetoothOperationError extends 运行错误 {
 
+		/**
+		 * 保存蓝牙操作失败的说明文本。
+		 *
+		 * @param message 消息文本
+		 */
 		BluetoothOperationError(String message) {
 			super(message);
 		}
 	}
 
+	/**
+	 * 检查蓝牙硬件和适配器是否可用。
+	 *
+	 * @return 蓝牙硬件和适配器可用时为 {@code true}，否则为 {@code false}
+	 */
 	private boolean available() {
 		return !destroyed && adapter != null;
 	}
 
-	// 关闭套接字才能打断阻塞 I/O；仅调用 Thread.interrupt 无法释放这些资源。
+	/**
+	 * 关闭当前连接并清理连接状态。
+	 * <p>关闭套接字才能打断阻塞 I/O；仅调用 Thread.interrupt 无法释放这些资源。
+	 */
 	private void disconnect() {
 		if (connectThread != null) {
 			connectThread.cancel();

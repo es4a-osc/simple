@@ -57,7 +57,7 @@ public final class ExprHelpers {
 	 * @param string  string to compare
 	 * @param pattern  regular expression pattern
 	 * @return  {@code true} if the the string matches the pattern, {@code false}
-	 *          otherwise
+	 * otherwise
 	 */
 	public static boolean like(String string, String pattern) {
 		return Pattern.matches(pattern, string);

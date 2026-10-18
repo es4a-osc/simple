@@ -44,8 +44,8 @@ public interface 面板 extends 可视组件, 组件容器 {
 	 * 布局属性设置器：我们为将常量转换为布局对象实例的属性为属性分配一个布局。
 	 *
 	 * @param layoutType 其中之一{@link 组件#布局_线性}，
-	 *                    {@link 组件#布局_表格}或
-	 *                    {@link 组件#布局_单帧}
+	 * {@link 组件#布局_表格}或
+	 * {@link 组件#布局_单帧}
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_LAYOUT,

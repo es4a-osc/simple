@@ -37,6 +37,7 @@ public final class 音频播放器Impl extends 组件Impl implements 音频播�
 
 		// 注册一个在异步操作过程中发生错误回调的监听器;
 		mp.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+
 			/**
 			 * 调用以指示错误。
 			 *
@@ -54,6 +55,7 @@ public final class 音频播放器Impl extends 组件Impl implements 音频播�
 
 		// 注册一个当有信息或者警告出现就会回调的监听器;
 		mp.setOnInfoListener(new MediaPlayer.OnInfoListener() {
+
 			/**
 			 * 如果方法处理信息，则为True，否则为false。返回false或根本没有OnInfoListener将导致信息被丢弃。
 			 *
@@ -71,6 +73,7 @@ public final class 音频播放器Impl extends 组件Impl implements 音频播�
 
 		// 注册一个在网络缓冲数据流发生变化后回调的监听器;
 		mp.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
+
 			/**
 			 * 被调用以更新缓冲通过渐进式HTTP下载接收的媒体流的状态。 接收的缓冲百分比表示已缓冲或播放了多少内容。
 			 * 例如，当已播放一半内容时，缓冲更新为80％表示要播放的下一个30％的内容已被缓冲。
@@ -86,6 +89,7 @@ public final class 音频播放器Impl extends 组件Impl implements 音频播�
 
 		// 注册一个当媒体资源准备播放时回调的监听器;
 		mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+
 			/**
 			 * 媒体源准备好播放时调用的回调的接口定义。
 			 *
@@ -99,6 +103,7 @@ public final class 音频播放器Impl extends 组件Impl implements 音频播�
 
 		// 注册一个搜寻操作完成后回调的监听器;
 		mp.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
+
 			/**
 			 * 调用以指示搜索操作的完成。
 			 *
@@ -112,6 +117,7 @@ public final class 音频播放器Impl extends 组件Impl implements 音频播�
 
 		// 注册一个在媒体资源播放完毕之后回调的播放事件;
 		mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+
 			/**
 			 * 在播放期间到达媒体源结尾时调用。
 			 *

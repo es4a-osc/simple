@@ -164,10 +164,20 @@ public final class 画板Impl extends 视图组件 implements 画板 {
 
 	/* 内部接口与平台回调 */
 
+	/**
+	 * 读取画笔类型。
+	 *
+	 * @return 画笔类型
+	 */
 	public int 画笔类型() {
 		return paintstyle;
 	}
 
+	/**
+	 * 设置画笔类型。
+	 *
+	 * @param style 要应用的样式
+	 */
 	public void 画笔类型(int style) {
 		if (style == 1) {
 			paintColor.setStyle(Paint.Style.FILL);
@@ -177,14 +187,34 @@ public final class 画板Impl extends 视图组件 implements 画板 {
 		paintstyle = style;
 	}
 
+	/**
+	 * 读取字体大小。
+	 *
+	 * @return 字体大小
+	 */
 	public float 字体大小() {
 		return paintColor.getTextSize();
 	}
 
+	/**
+	 * 设置字体大小。
+	 *
+	 * @param size 字体或控件尺寸
+	 */
 	public void 字体大小(float size) {
 		paintColor.setTextSize(size);
 	}
 
+	/**
+	 * 画贝塞尔曲线。
+	 *
+	 * @param qx 贝塞尔曲线起点横坐标
+	 * @param qy 贝塞尔曲线起点纵坐标
+	 * @param fx 贝塞尔曲线控制点横坐标
+	 * @param fy 贝塞尔曲线控制点纵坐标
+	 * @param zx 贝塞尔曲线终点横坐标
+	 * @param zy 贝塞尔曲线终点纵坐标
+	 */
 	public void 画贝塞尔曲线(int qx, int qy, int fx, int fy, int zx, int zy) {
 		Path path = new Path();
 		path.moveTo(qx, qy);
@@ -194,6 +224,14 @@ public final class 画板Impl extends 视图组件 implements 画板 {
 		view.invalidate();
 	}
 
+		/**
+		 * 画矩形。
+		 *
+		 * @param x 横坐标
+		 * @param y 纵坐标或行位置
+		 * @param w 当前宽度
+		 * @param h 当前高度
+		 */
 		public void 画矩形(int x, int y, int w, int h) {
 				CanvasView view = (CanvasView) getView();
 				Rect dst = new Rect(x, y, x + w, y + h);
@@ -201,6 +239,15 @@ public final class 画板Impl extends 视图组件 implements 画板 {
 				view.invalidate();
 		}
 
+		/**
+		 * 画圆角矩形。
+		 *
+		 * @param x 横坐标
+		 * @param y 纵坐标或行位置
+		 * @param w 当前宽度
+		 * @param h 当前高度
+		 * @param r 圆角半径
+		 */
 		public void 画圆角矩形(int x, int y, int w, int h, float r) {
 				CanvasView view = (CanvasView) getView();
 				RectF dst = new RectF(x, y, x + w, y + h);
@@ -208,6 +255,17 @@ public final class 画板Impl extends 视图组件 implements 画板 {
 				view.invalidate();
 	}
 
+		/**
+		 * 画弧形。
+		 *
+		 * @param x 横坐标
+		 * @param y 纵坐标或行位置
+		 * @param w 当前宽度
+		 * @param h 当前高度
+		 * @param startAngle 起始角度
+		 * @param sweepAngle 扫过角度
+		 * @param useCenter 是否连接圆心
+		 */
 		public void 画弧形(int x, int y, int w, int h, float startAngle, float sweepAngle, boolean useCenter) {
 		CanvasView view = (CanvasView) getView();
 		RectF dst = new RectF(x, y, x + w, y + h);

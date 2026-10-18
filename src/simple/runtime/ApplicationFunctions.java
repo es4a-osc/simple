@@ -74,6 +74,8 @@ public interface ApplicationFunctions {
 
 	/**
 	 * 获取应用程序名称
+	 *
+	 * @return 当前应用的显示名称
 	 */
 	String getAppName();
 
@@ -135,7 +137,7 @@ public interface ApplicationFunctions {
 	 *
 	 * @return 密度
 	 */
-  	double getScreenDensity();
+	double getScreenDensity();
 
 	/**
 	 * 取状态栏高度

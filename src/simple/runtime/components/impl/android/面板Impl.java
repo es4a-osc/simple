@@ -102,8 +102,8 @@ public class 面板Impl extends 视图组件 implements 面板, 视图组件容�
 			case 组件.布局_相对:
 				viewLayout = new 相对布局Impl(this);
 				break;
-      		case 组件.布局_绝对:
-        		viewLayout = new 绝对布局Impl(this);
+			case 组件.布局_绝对:
+				viewLayout = new 绝对布局Impl(this);
 				break;
 		}
 
@@ -184,6 +184,9 @@ public class 面板Impl extends 视图组件 implements 面板, 视图组件容�
 
 	/* 内部辅助方法 */
 
+	/**
+	 * 将原生视图加入所属容器。
+	 */
 	protected void addToContainer() {
 		// 无法在ViewComponent构造函数中提前添加此组件 - 现在执行它
 		getComponentContainer().addComponent(this);
