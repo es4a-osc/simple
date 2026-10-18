@@ -50,6 +50,17 @@ public abstract class 文本视图组件 extends 视图组件 implements 文本�
 	private boolean singleLine;
 
 	/**
+	 * 以指定正方形尺寸设置图标，宽和高均为 size 个物理像素。
+	 *
+	 * @param image 图片路径或资源表示，与完整方法一致。
+	 * @param size 正方形图标的边长，单位为物理像素。
+	 */
+	@Override
+	public void 置左边图标(String image, int size) {
+		置左边图标(image, size, size);
+	}
+
+	/**
 	 * 创建一个新的文本框基础组件
 	 * @param container 容纳组件的容器（不可为{@code null})
 	 */
@@ -155,6 +166,17 @@ public abstract class 文本视图组件 extends 视图组件 implements 文本�
 		}
 	}
 
+	/**
+	 * 以指定正方形尺寸设置图标，宽和高均为 size 个物理像素。
+	 *
+	 * @param image 图片路径或资源表示，与完整方法一致。
+	 * @param size 正方形图标的边长，单位为物理像素。
+	 */
+	@Override
+	public void 置顶边图标(String image, int size) {
+		置顶边图标(image, size, size);
+	}
+
 	@Override
 	public void 置顶边图标(String image, int width, int height) {
 		try {
@@ -165,6 +187,17 @@ public abstract class 文本视图组件 extends 视图组件 implements 文本�
 		}
 	}
 
+	/**
+	 * 以指定正方形尺寸设置图标，宽和高均为 size 个物理像素。
+	 *
+	 * @param image 图片路径或资源表示，与完整方法一致。
+	 * @param size 正方形图标的边长，单位为物理像素。
+	 */
+	@Override
+	public void 置右边图标(String image, int size) {
+		置右边图标(image, size, size);
+	}
+
 	@Override
 	public void 置右边图标(String image, int width, int height) {
 		try {
@@ -173,6 +206,17 @@ public abstract class 文本视图组件 extends 视图组件 implements 文本�
 		} catch (IOException e) {
 			throw new 文件未存在错误(image);
 		}
+	}
+
+	/**
+	 * 以指定正方形尺寸设置图标，宽和高均为 size 个物理像素。
+	 *
+	 * @param image 图片路径或资源表示，与完整方法一致。
+	 * @param size 正方形图标的边长，单位为物理像素。
+	 */
+	@Override
+	public void 置底边图标(String image, int size) {
+		置底边图标(image, size, size);
 	}
 
 	@Override

@@ -4,6 +4,8 @@ import simple.runtime.annotations.SimpleDataElement;
 import simple.runtime.annotations.SimpleFunction;
 import simple.runtime.annotations.SimpleObject;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.regex.Matcher;
@@ -43,6 +45,16 @@ public class 正则表达式 {
 
 	private Pattern pattern;
 	private Matcher matcher;
+
+	/**
+	 * 以默认匹配标志编译正则表达式，匹配标志为 0。
+	 *
+	 * @param regex 要编译的正则表达式。
+	 */
+	@SimpleFunction
+	public void 编译(String regex) {
+		编译(regex, 0);
+	}
 
 	/**
 	 * 将给定的正则表达式编译到模式中。
@@ -126,6 +138,32 @@ public class 正则表达式 {
 	public String 取匹配文本() {
 		if (matcher == null) throw new NullPointerException("未匹配表达式");
 		return matcher.group();
+	}
+
+	/**
+	 * 使用已编译的表达式查找指定文本中的全部完整匹配，不改变已有匹配器的状态。
+	 *
+	 * <p>沿用编译时的匹配标志，按出现顺序返回非重叠匹配；零长度匹配也会保留。
+	 * 无需先调用匹配方法，不影响匹配下一个、取匹配文本及捕获组读取。</p>
+	 *
+	 * @param input 待查找文本，不得为空引用。
+	 * @return 全部完整匹配组成的文本数组；未找到时返回空数组，不返回空引用。
+	 * @throws NullPointerException 未编译表达式或待查找文本为空引用。
+	 */
+	@SimpleFunction
+	public String[] 取全部匹配(String input) {
+		if (pattern == null) {
+			throw new NullPointerException("未编译表达式");
+		}
+
+		// 独立匹配器保留已有逐项查找的位置、捕获组及替换状态。
+		Matcher search = pattern.matcher(input);
+		List<String> results = new ArrayList<String>();
+
+		while (search.find()) {
+			results.add(search.group());
+		}
+		return results.toArray(new String[results.size()]);
 	}
 
 	/**

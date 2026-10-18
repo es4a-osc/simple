@@ -57,7 +57,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -159,6 +158,9 @@ public final class RuntimeLoader {
 	// 已发现且包含classes.jar的扩展库目录，按目录名稳定排序
 	private final List<File> extensionLibraryDirectories;
 
+	// 本次加载和项目打包共用的依赖选择结果。
+	private LibraryDependencies dependencies;
+
 	// 类名到来源文件的映射，用于按项目实际引用收集扩展库
 	private final Map<String, File> classOriginFiles;
 
@@ -241,9 +243,8 @@ public final class RuntimeLoader {
 					new File(simpleRuntime).toURI().toURL(), new File(platformRuntime).toURI().toURL() },
 					getClass().getClassLoader());
 			loadExtensionLibraryURLs();
-		} catch (MalformedURLException mue) {
-			compiler.error(Scanner.NO_POSITION, Error.errReadError,
-					librariesRoot == null ? simpleRuntime : librariesRoot.toString());
+		} catch (IOException failure) {
+			compiler.error(Scanner.NO_POSITION, failure.getMessage());
 		}
 
 		// 组件哈希表
@@ -295,7 +296,7 @@ public final class RuntimeLoader {
 	 * 发现固定结构的扩展库，并把全部类路径先加入类加载器。
 	 * 先完成类路径装配、后分析classes.jar，可保证类库之间的加载顺序不影响依赖解析。
 	 */
-	private void loadExtensionLibraryURLs() throws MalformedURLException {
+	private void loadExtensionLibraryURLs() throws IOException {
 		if (librariesRoot == null) {
 			return;
 		}
@@ -334,39 +335,25 @@ public final class RuntimeLoader {
 			originLibraryDirectories.put(classesFile, directory.getAbsoluteFile());
 		}
 
-		// 扩展库自己的依赖必须先于classes.jar分析进入类加载器。
+		dependencies = new LibraryDependencies(extensionLibraryDirectories);
+		List<File> inputs = new ArrayList<File>();
+		inputs.add(runtimeRoot);
 		for (File directory : extensionLibraryDirectories) {
-			for (File dependency : listJarFiles(new File(directory, "libs"))) {
-				runtimeClassLoader.addURL(dependency.toURI().toURL());
-			}
+			inputs.add(new File(directory, "classes.jar"));
 		}
+		inputs.addAll(dependencies.getFiles());
+		LibraryDependencies.validateClasses(inputs);
+
+		// 依赖先于类库实现装配，加载器和后续打包不能分别选择不同版本。
+		for (File dependency : dependencies.getFiles()) runtimeClassLoader.addURL(dependency.toURI().toURL());
 		for (File directory : extensionLibraryDirectories) {
 			runtimeClassLoader.addURL(new File(directory, "classes.jar").toURI().toURL());
 		}
 	}
 
-	private static List<File> listJarFiles(File directory) {
-		if (!directory.isDirectory()) {
-			return Collections.emptyList();
-		}
-		File[] files = directory.listFiles();
-		if (files == null) {
-			return Collections.emptyList();
-		}
-		Arrays.sort(files, new Comparator<File>() {
-			@Override
-			public int compare(File left, File right) {
-				int result = left.getName().compareToIgnoreCase(right.getName());
-				return result != 0 ? result : left.getName().compareTo(right.getName());
-			}
-		});
-		List<File> jars = new ArrayList<File>();
-		for (File file : files) {
-			if (file.isFile() && file.getName().toLowerCase().endsWith(".jar")) {
-				jars.add(file.getAbsoluteFile());
-			}
-		}
-		return jars;
+	/** 返回项目所需依赖组在加载阶段已经选定的 JAR。 */
+	public List<File> getDependenciesForLibraries(List<File> libraries) {
+		return dependencies == null ? Collections.<File>emptyList() : dependencies.getFilesForLibraries(libraries);
 	}
 
 	/*
@@ -666,6 +653,8 @@ public final class RuntimeLoader {
 			// 如果无法定位该类
 			LOG.log(Level.SEVERE, "运行库加载失败", e);
 			compiler.error(Scanner.NO_POSITION, Error.errReadError, className);
+		} catch (LinkageError failure) {
+			compiler.error(Scanner.NO_POSITION, "类库类型加载失败：%1\n%2", className, failure.toString());
 		}
 	}
 
@@ -784,6 +773,7 @@ public final class RuntimeLoader {
 	 * 并将符号信息输入编译器符号表中。
 	 */
 	public void loadSimpleObjects() {
+		if (compiler.getErrorCount() > 0) return;
 		// 加载所有Simple对象
 		classList = new ArrayList<Class<?>>();
 		classMap = new HashMap<Class<?>, ObjectSymbol>();
@@ -793,7 +783,7 @@ public final class RuntimeLoader {
 		}
 
 		// 查找Simple的组件实现
-		findComponentImplementations();
+		if (compiler.getErrorCount() == 0) findComponentImplementations();
 		classList = null;
 		classMap = null;
 	}

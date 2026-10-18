@@ -95,6 +95,7 @@ public interface 可视组件 extends 组件 {
 	 *
 	 * @param height 布局所使用的高度属性，兼容解析单位像素字符串
 	 */
+	@SimpleProperty
 	void 高度(Variant height);
 
 	/* 边距相关，该布局参数支持所有布局 */
@@ -881,6 +882,23 @@ public interface 可视组件 extends 组件 {
 	/* 组件方法 */
 
 	/**
+	 * 统一设置组件四边的边距，沿用原方法的单位解析。
+	 *
+	 * @param spacing 四边统一的边距；支持现有像素单位表示。
+	 */
+	@SimpleFunction
+	void 置边距(Variant spacing);
+
+	/**
+	 * 按水平、垂直两个方向设置组件边距，左右相同且上下相同。
+	 *
+	 * @param horizontal 左右边距；支持现有像素单位表示。
+	 * @param vertical 上下边距；支持现有像素单位表示。
+	 */
+	@SimpleFunction
+	void 置边距(Variant horizontal, Variant vertical);
+
+	/**
 	 * 设置组件的边距。
 	 *
 	 * @param leftMargin 左边距
@@ -890,6 +908,23 @@ public interface 可视组件 extends 组件 {
 	 */
 	@SimpleFunction
 	void 置边距(Variant leftMargin, Variant topMargin, Variant rightMargin, Variant bottomMargin);
+
+	/**
+	 * 统一设置组件四边的填充，沿用原方法的单位解析。
+	 *
+	 * @param spacing 四边统一的填充；支持现有像素单位表示。
+	 */
+	@SimpleFunction
+	void 置填充(Variant spacing);
+
+	/**
+	 * 按水平、垂直两个方向设置组件填充，左右相同且上下相同。
+	 *
+	 * @param horizontal 左右填充；支持现有像素单位表示。
+	 * @param vertical 上下填充；支持现有像素单位表示。
+	 */
+	@SimpleFunction
+	void 置填充(Variant horizontal, Variant vertical);
 
 	/**
 	 * 设置组件的填充。

@@ -481,6 +481,17 @@ public class 网页浏览框Impl extends 视图组件 implements 网页浏览框
 		view.addJavascriptInterface(new WebAppInterface(name), name);
 	}
 
+	/**
+	 * 执行脚本且不请求接口返回事件，沿用完整方法的系统兼容行为。
+	 *
+	 * @param script 要执行的脚本，与完整方法的脚本格式要求一致。
+	 * @return 已发起执行返回真，否则返回假，不表示脚本业务成功。
+	 */
+	@Override
+	public boolean 调用接口(String script) {
+		return 调用接口(script, false);
+	}
+
 	@Override
 	public boolean 调用接口(String script, boolean isReturn) {
 		WebView view = (WebView) getView();

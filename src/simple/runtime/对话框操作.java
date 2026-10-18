@@ -55,8 +55,20 @@ public final class 对话框操作 {
 			// 注销之前显示的那条信息
 			toast.cancel();
 		}
+
 		toast = Toast.makeText(MainActivity.getContext(), text, Toast.LENGTH_LONG);
 		toast.show();
+	}
+
+	/**
+	 * 显示使用“确认”按钮的提示对话框。
+	 *
+	 * @param title 对话框标题。
+	 * @param message 对话框信息。
+	 */
+	@SimpleFunction
+	public static void 弹出确认框(String title, String message) {
+		弹出确认框(title, message, "确认");
 	}
 
 	/**
@@ -75,6 +87,20 @@ public final class 对话框操作 {
 		builder.setMessage(message);
 		builder.setPositiveButton(btnOK, null);
 		builder.show();
+	}
+
+	/**
+	 * 显示使用“是”和“否”按钮的对话框，沿用阻塞等待约定。
+	 *
+	 * <p>不能在 Simple 的错误处理语句中调用。</p>
+	 *
+	 * @param title 对话框标题。
+	 * @param message 对话框信息。
+	 * @return 选择是返回真，选择否返回假。
+	 */
+	@SimpleFunction
+	public static boolean 弹出是否框(String title, String message) {
+		return 弹出是否框(title, message, "是", "否");
 	}
 
 	/**
@@ -114,6 +140,20 @@ public final class 对话框操作 {
 
 		// 开始等待
 		return (boolean) wait.start();
+	}
+
+	/**
+	 * 显示单选列表，初始不选中任何项目，沿用确认与取消约定。
+	 *
+	 * <p>不能在 Simple 的错误处理语句中调用。</p>
+	 *
+	 * @param title 对话框标题。
+	 * @param items 可选项目文本。
+	 * @return 确认返回所选索引；取消或未选择返回 -1。
+	 */
+	@SimpleFunction
+	public static int 弹出单选框(String title, String[] items) {
+		return 弹出单选框(title, items, -1);
 	}
 
 	/**
@@ -166,6 +206,20 @@ public final class 对话框操作 {
 	}
 
 	/**
+	 * 显示多选列表，初始项目全部不选中，沿用确认与取消约定。
+	 *
+	 * <p>不能在 Simple 的错误处理语句中调用。</p>
+	 *
+	 * @param title 对话框标题。
+	 * @param items 可选项目文本。
+	 * @return 确认返回各项选中状态，取消返回空引用。
+	 */
+	@SimpleFunction
+	public static boolean[] 弹出多选框(String title, String[] items) {
+		return 弹出多选框(title, items, new boolean[items.length]);
+	}
+
+	/**
 	 * 弹出具备多选列表的对话框。
 	 *
 	 * <p>注意会堵塞等待结果，无法在{@code 位于 错误}语句中使用。
@@ -210,6 +264,35 @@ public final class 对话框操作 {
 		} else {
 			return null;
 		}
+	}
+
+	/**
+	 * 显示单行文本输入框，使用文本输入模式。
+	 *
+	 * <p>沿用完整方法的阻塞等待约定。</p>
+	 *
+	 * @param title 对话框标题。
+	 * @param hint 输入框提示。
+	 * @return 确认返回输入内容，取消返回空引用。
+	 */
+	@SimpleFunction
+	public static String 弹出输入框(String title, String hint) {
+		return 弹出输入框(title, hint, false, 组件.输入模式_文本);
+	}
+
+	/**
+	 * 显示文本输入框，使用文本输入模式并显式指定是否允许多行。
+	 *
+	 * <p>沿用完整方法的阻塞等待约定。</p>
+	 *
+	 * @param title 对话框标题。
+	 * @param hint 输入框提示。
+	 * @param multiline 是否允许多行输入。
+	 * @return 确认返回输入内容，取消返回空引用。
+	 */
+	@SimpleFunction
+	public static String 弹出输入框(String title, String hint, boolean multiline) {
+		return 弹出输入框(title, hint, multiline, 组件.输入模式_文本);
 	}
 
 	/**
@@ -330,7 +413,7 @@ public final class 对话框操作 {
 			TextView text = dialog.findViewById(dialog.hashCode());
 			text.setText(message);
 		} else {
-			throw new IllegalArgumentException("[对话框.置进度框信息] 进度框对象错误，设置信息失败");
+			throw new IllegalArgumentException("进度框对象错误，设置信息失败");
 		}
 	}
 
@@ -344,8 +427,22 @@ public final class 对话框操作 {
 		if (object instanceof AlertDialog) {
 			((AlertDialog) object).dismiss();
 		} else {
-			throw new IllegalArgumentException("[对话框.关闭进度框] 进度框对象错误，关闭进度框失败");
+			throw new IllegalArgumentException("进度框对象错误，关闭进度框失败");
 		}
+	}
+
+	/**
+	 * 显示嵌入窗口的对话框，按钮为“确认”和“取消”。
+	 *
+	 * <p>不能在 Simple 的错误处理语句中调用。</p>
+	 *
+	 * @param title 对话框标题。
+	 * @param form 嵌入对话框的窗口对象。
+	 * @return 确认返回真，取消返回假。
+	 */
+	@SimpleFunction
+	public static boolean 弹出对话框(String title, 窗口 form) {
+		return 弹出对话框(title, form, "确认", "取消");
 	}
 
 	/**

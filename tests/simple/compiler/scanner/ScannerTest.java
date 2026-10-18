@@ -292,9 +292,24 @@ public class ScannerTest extends TestCase {
 	}
 
 	/**
-	 * Tests {@link Scanner#nextToken()}, {@link Scanner#getOffset(long)},
-	 * {@link Scanner#getLine(long)} and {@link Scanner#getColumn(long)}.
+	 * 成员名称读取不会改变扫描器的令牌分类，也不会接受字符串、数字或标点。
 	 */
+	public void testWordMemberNamesKeepTheirTokenKinds() {
+		Scanner scanner = new Scanner(compiler, "匹配 真 假 空 结束 文本型 普通 . + % \"匹配\" 123\n");
+		TokenKind[] kinds = {TokenKind.TOK_LIKE, TokenKind.TOK_BOOLEANCONSTANT,
+				TokenKind.TOK_BOOLEANCONSTANT, TokenKind.TOK_NOTHING, TokenKind.TOK_END,
+				TokenKind.TOK_STRING, TokenKind.TOK_IDENTIFIER, TokenKind.TOK_DOT,
+				TokenKind.TOK_PLUS, TokenKind.TOK_MOD, TokenKind.TOK_STRINGCONSTANT,
+				TokenKind.TOK_NUMERICCONSTANT, TokenKind.TOK_EOS, TokenKind.TOK_EOF};
+		for (int index = 0; index < kinds.length; index++) {
+			assertEquals(kinds[index], scanner.nextToken());
+			assertEquals(index < 7, scanner.isIdentifierOrWordKeyword());
+			assertEquals(kinds[index], scanner.getToken());
+		}
+		assertEquals(0, compiler.getErrorCount());
+	}
+
+	/** 验证令牌的源位置。 */
 	public void testTokenPosition() {
 		// Offset                                0 1 234567
 		// Line                                  1 2 3

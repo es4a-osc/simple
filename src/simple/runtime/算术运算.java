@@ -67,26 +67,26 @@ public final class 算术运算 {
 	}
 
 	/**
-	 * 返回给定值的反正切值。
+	 * 根据正切比值求反正切。
 	 *
-	 * @param v  值
-	 * @return  {@code v}的反正切值
+	 * @param v 正切比值。
+	 * @return 反正切值，单位为弧度，范围为 [-π/2, π/2]。
 	 */
 	@SimpleFunction
 	public static double 求反正切(double v) {
 		return java.lang.Math.atan(v);
 	}
 
- /**
-	* 返回从直角坐标（x，y）到极坐标（r，theta>）的转换的角度θ。
-	*
-	* @param   y  纵坐标
-	* @param   x  横坐标
-	* @return  极坐标中点（r，theta）的 theta 分量，对应于笛卡尔坐标系中的点（x，y）
-	*/
+	/**
+	 * 根据纵坐标 y 和横坐标 x 求四象限反正切，参数顺序为 y、x。
+	 *
+	 * @param y 纵坐标，第一个参数。
+	 * @param x 横坐标，第二个参数。
+	 * @return 点 (x, y) 相对 X 轴正方向的方向角，单位为弧度，范围为 [-π, π]。
+	 */
 	@SimpleFunction
 	public static double 求反正切2(double y, double x) {
-		return java.lang.Math.atan2(y,x);
+		return java.lang.Math.atan2(y, x);
 	}
 
 	/**

@@ -447,6 +447,11 @@ public final class Parser {
 	 * 解析限定标识符。
 	 */
 	private IdentifierExpression parseQualifiedIdentifier() {
+		return parseQualifiedIdentifier(false);
+	}
+
+	/* 类型和别名目标沿用严格标识符规则，只有表达式入口允许读取关键字成员名。 */
+	private IdentifierExpression parseQualifiedIdentifier(boolean allowKeywordMembers) {
 		// 检验当前令牌是否是标识符
 		Preconditions.checkState(scanner.getToken() == TokenKind.TOK_IDENTIFIER);
 
@@ -458,13 +463,22 @@ public final class Parser {
 		if (scanner.nextToken() == TokenKind.TOK_DOT) {
 			do {
 				scanner.nextToken(); // 跳过 '.'
-				accept(TokenKind.TOK_IDENTIFIER);
-				expr = new QualifiedIdentifierExpression(scanner.getTokenStartPosition(), expr,
-						scanner.getTokenValueIdentifier());
+				expr = parseMemberIdentifier(expr, allowKeywordMembers);
 			} while (scanner.nextToken() == TokenKind.TOK_DOT);
 		}
 
 		return expr;
+	}
+
+	/* 只读取点号后的一段名称，关键字名称最终必须解析为对象成员。 */
+	private QualifiedIdentifierExpression parseMemberIdentifier(Expression qualifier,
+			boolean allowKeywordMembers) {
+		boolean keywordMember = scanner.getToken() != TokenKind.TOK_IDENTIFIER;
+		if (!allowKeywordMembers || !scanner.isIdentifierOrWordKeyword()) {
+			accept(TokenKind.TOK_IDENTIFIER);
+		}
+		return new QualifiedIdentifierExpression(scanner.getTokenStartPosition(), qualifier,
+				scanner.getTokenValueIdentifier(), keywordMember);
 	}
 
 	/*
@@ -531,7 +545,7 @@ public final class Parser {
 
 			case TOK_IDENTIFIER: // 标识符
 				// 解析限定标识符
-				expr = parseQualifiedIdentifier();
+				expr = parseQualifiedIdentifier(true);
 				// 子表达式
 				if (scanner.getToken() == TokenKind.TOK_OPENPARENTHESIS) {
 					expr = new CallExpression(scanner.getTokenStartPosition(), expr,
@@ -634,9 +648,7 @@ public final class Parser {
 
 				case TOK_DOT:
 					scanner.nextToken(); // 跳过 '.'
-					accept(TokenKind.TOK_IDENTIFIER);
-					expr = new QualifiedIdentifierExpression(scanner.getTokenStartPosition(), expr,
-							scanner.getTokenValueIdentifier());
+					expr = parseMemberIdentifier(expr, true);
 					scanner.nextToken();
 					break;
 

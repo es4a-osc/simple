@@ -54,6 +54,17 @@ public final class JSON操作 {
 	}
 
 	/**
+	 * 使用两个空格缩进格式化 JSON 对象或数组文本。
+	 *
+	 * @param text JSON 对象或数组文本。
+	 * @return 格式化后的 JSON 文本；沿用完整方法的解析失败行为。
+	 */
+	@SimpleFunction
+	public static String 格式化JSON文本(String text) {
+		return 格式化JSON文本(text, 2);
+	}
+
+	/**
 	 * 格式化JSON文本。
 	 *
 	 * @param text JSON文本。

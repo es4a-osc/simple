@@ -352,13 +352,24 @@ public final class Scanner {
 	}
 
 	/**
-	 * If the current token is {@link TokenKind#TOK_IDENTIFIER} then this method
-	 * will return the name of the identifier.
+	 * 返回标识符的原始名称；成员名称读取也可用于词形关键字及“真”“假”。
 	 *
 	 * @return  identifier name
 	 */
 	public String getTokenValueIdentifier() {
 		return tokenValueString;
+	}
+
+	/**
+	 * 判断当前令牌能否在成员名称位置按原始词形读取，不改变其关键字或字面量分类。
+	 * 数字、字符串、标点及带美元符号的属性区关键字均不属于成员名称。
+	 */
+	public boolean isIdentifierOrWordKeyword() {
+		return tokenKind == TokenKind.TOK_IDENTIFIER
+				|| tokenKind == TokenKind.TOK_BOOLEANCONSTANT
+				|| (tokenValueString != null && !tokenValueString.isEmpty()
+						&& isSimpleIdentifierStart(tokenValueString.charAt(0))
+						&& keywords.checkForKeyword(tokenValueString) == tokenKind);
 	}
 
 	/**

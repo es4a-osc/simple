@@ -62,8 +62,11 @@ public final class 像素转换 {
 	 */
 	@SimpleFunction
 	public static int 到绝对像素(float dipValue) {
-		return (int) (TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dipValue,
-				MainActivity.getContext().getResources().getDisplayMetrics()));
+		return (int) (TypedValue.applyDimension(
+			TypedValue.COMPLEX_UNIT_DIP,
+			dipValue,
+			MainActivity.getContext().getResources().getDisplayMetrics()
+		));
 	}
 
 	/**

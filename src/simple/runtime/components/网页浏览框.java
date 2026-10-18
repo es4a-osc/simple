@@ -354,6 +354,15 @@ public interface 网页浏览框 extends 可视组件 {
 	void 注册接口(String name);
 
 	/**
+	 * 执行脚本且不请求接口返回事件，沿用完整方法的系统兼容行为。
+	 *
+	 * @param script 要执行的脚本，与完整方法的脚本格式要求一致。
+	 * @return 已发起执行返回真，否则返回假，不表示脚本业务成功。
+	 */
+	@SimpleFunction
+	boolean 调用接口(String script);
+
+	/**
 	 * 调用JS中的函数，会开启JS。
 	 *
 	 * <p>注意仅API19及以上版本才可有返回值，

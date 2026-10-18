@@ -120,6 +120,7 @@ public final class HTTP请求 {
 		try {
 			// URL对象
 			URL url = new URL(requestUrl);
+
 			// 使用URL打开一个链接，注意这里还未建立连接
 			connection = (HttpURLConnection) url.openConnection(proxy);
 			return true;
@@ -139,6 +140,7 @@ public final class HTTP请求 {
 			// 如果发生 I/O 异常。
 			日志输出.输出错误(日志输出.MODULE_NAME_RTL, "[" + hashCode() + "/HTTP请求.打开] I/O异常");
 		}
+
 		return false;
 	}
 
@@ -287,6 +289,7 @@ public final class HTTP请求 {
 				日志输出.输出错误(日志输出.MODULE_NAME_RTL, "[" + hashCode() + "/HTTP请求.置请求头] 协议头为空");
 			}
 		}
+
 		return false;
 	}
 
@@ -308,7 +311,19 @@ public final class HTTP请求 {
 				日志输出.输出错误(日志输出.MODULE_NAME_RTL, "[" + hashCode() + "/HTTP请求.取请求头] 已连接");
 			}
 		}
+
 		return "";
+	}
+
+	/**
+	 * 按 UTF-8 编码表单键和值，在发送前设置并沿用 POST 提交方式。
+	 *
+	 * @param data 表单键值；按 UTF-8 编码后提交。
+	 * @return 设置成功返回真，否则返回假。
+	 */
+	@SimpleFunction
+	public boolean 置提交哈希表(哈希表 data) {
+		return 置提交哈希表(data, "UTF-8");
 	}
 
 	/**
@@ -317,7 +332,7 @@ public final class HTTP请求 {
 	 * <p>将强制传为POST方式
 	 *
 	 * @param data 哈希表
-	 * @param enc  编码方式（如：utf-8），{@code null}或空文本将不编码
+	 * @param enc 编码方式（如：utf-8），{@code null}或空文本将不编码
 	 * @return 成功返回{@code true}，否则返回{@code false}
 	 */
 	@SimpleFunction
@@ -325,8 +340,10 @@ public final class HTTP请求 {
 		// 将哈希表转为查询参数
 		StringBuilder sb = new StringBuilder();
 		Map<String, Variant> map = data.getMap();
+
 		for (String key : map.keySet()) {
 			String value = map.get(key).getString();
+
 			// 编码键值对
 			if(enc != null && enc.length() > 0) {
 				try {
@@ -337,10 +354,12 @@ public final class HTTP请求 {
 					return false;
 				}
 			}
+
 			// 拼接键值对
 			if (sb.length() > 0) sb.append("&");
 			sb.append(key + "=" + value);
 		}
+
 		return 置提交文本(sb.toString());
 	}
 
@@ -394,6 +413,11 @@ public final class HTTP请求 {
 
 		// 连接服务器
 		try {
+			// POST 正文需要在建立连接前开启输出；GET 保持默认行为。
+			if (postData != null && postData.length > 0 && connection.getRequestMethod().equalsIgnoreCase("POST")) {
+				connection.setDoOutput(true);
+			}
+
 			// 打开到此 URL 引用的资源的通信链接（如果尚未建立这样的连接）。
 			connection.connect();
 		} catch (SocketTimeoutException e) {
@@ -412,8 +436,10 @@ public final class HTTP请求 {
 				// 将字节集写入输出流
 				OutputStream outputStream = connection.getOutputStream();
 				DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
+
 				dataOutputStream.write(postData);
 				dataOutputStream.close();
+
 				// 释放提交数据
 				postData = null;
 			} catch (IOException e) {
@@ -425,6 +451,7 @@ public final class HTTP请求 {
 
 		// 取响应字节集
 		boolean success = true;
+
 		try {
 			// 将输入流读出字节集
 			InputStream is = connection.getResponseCode() == HttpURLConnection.HTTP_OK ? connection.getInputStream() : connection.getErrorStream();
@@ -432,9 +459,11 @@ public final class HTTP请求 {
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();
 				byte[] buffer = new byte[1024];
 				int len = 0;
+
 				while ((len = is.read(buffer)) != -1) {
 					baos.write(buffer, 0, len);
 				}
+
 				baos.close();
 				is.close();
 				responseData = baos.toByteArray();
@@ -448,6 +477,7 @@ public final class HTTP请求 {
 			// 指示近期服务器不太可能有其他请求。
 			connection.disconnect();
 		}
+
 		return success;
 	}
 
@@ -468,6 +498,7 @@ public final class HTTP请求 {
 		} else {
 			日志输出.输出错误(日志输出.MODULE_NAME_RTL, "[" + hashCode() + "/HTTP请求.响应代码] 未执行前置方法");
 		}
+
 		return 0;
 	}
 
@@ -486,6 +517,7 @@ public final class HTTP请求 {
 				日志输出.输出错误(日志输出.MODULE_NAME_RTL, "[" + hashCode() + "/HTTP请求.响应消息] 连接到服务器发生错误");
 			}
 		}
+
 		return "";
 	}
 

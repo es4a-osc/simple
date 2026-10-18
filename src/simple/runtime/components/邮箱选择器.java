@@ -30,7 +30,9 @@ import simple.runtime.annotations.UsesPermissions;
  */
 @SimpleComponent
 @SimpleObject
-@UsesPermissions(permissionNames = "android.permission.READ_CONTACTS")
+@UsesPermissions(permissionNames =
+	"android.permission.READ_CONTACTS"
+)
 public interface 邮箱选择器 extends 文本组件 {
 
 	/* 组件事件 */

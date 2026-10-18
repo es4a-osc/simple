@@ -16,12 +16,13 @@ import simple.runtime.annotations.UsesPermissions;
 @SimpleComponent
 @SimpleObject
 @UsesPermissions(permissionNames =
-								// 允许程序访问网络连接，可能产生GPRS流量
-								"android.permission.INTERNET," +
-								// 允许程序挂载、反挂载外部文件系统
-								"android.permission.WRITE_EXTERNAL_STORAGE," +
-								// 允许程序写入外部存储,如SD卡上写文件
-								"android.permission.MOUNT_UNMOUNT_FILESYSTEMS")
+	// 允许程序访问网络连接，可能产生GPRS流量
+	"android.permission.INTERNET," +
+	// 允许程序挂载、反挂载外部文件系统
+	"android.permission.WRITE_EXTERNAL_STORAGE," +
+	// 允许程序写入外部存储,如SD卡上写文件
+	"android.permission.MOUNT_UNMOUNT_FILESYSTEMS"
+)
 public interface 音频播放器 extends 组件 {
 
 	// 错误类型
@@ -185,6 +186,14 @@ public interface 音频播放器 extends 组件 {
 	 */
 	@SimpleFunction
 	boolean 是否正在播放();
+
+	/**
+	 * 统一设置左右声道音量，不改变原有音量取值约定。
+	 *
+	 * @param volume 左右声道统一的音量，范围 0 至 1。
+	 */
+	@SimpleFunction
+	void 置音量(float volume);
 
 	/**
 	 * 设置音量。（范围0.0~1.0之间）

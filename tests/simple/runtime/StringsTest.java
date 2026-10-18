@@ -437,7 +437,8 @@ public class StringsTest extends TestCase {
 
 		strRef.set("foo");
 		文本操作.子文本替换(strRef, "", "f", 2, 2);
-		assertEquals("foffo", strRef.get());
+		// 空查找文本匹配原有边界，新写入的 f 不应再次参与匹配。
+		assertEquals("fofof", strRef.get());
 
 		// Make sure reg expr characters in the find expression are ignored
 		strRef.set("f.o.o");

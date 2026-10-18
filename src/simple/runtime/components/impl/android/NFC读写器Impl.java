@@ -187,6 +187,7 @@ public final class NFC读写器Impl extends 组件Impl implements NFC读写器,
 		if (id != null && id.length > 0) {
 			// 保留原卡号约定：小端字节序转无符号十进制，避免长卡号溢出。
 			byte[] reversed = new byte[id.length];
+
 			for (int i = 0; i < id.length; i++) {
 				reversed[i] = id[id.length - 1 - i];
 			}
@@ -223,6 +224,7 @@ public final class NFC读写器Impl extends 组件Impl implements NFC读写器,
 
 		NdefRecord record = records[0];
 		byte[] payload = record.getPayload();
+
 		if (record.getTnf() == NdefRecord.TNF_WELL_KNOWN && Arrays.equals(record.getType(), NdefRecord.RTD_TEXT)) {
 			if (payload.length == 0) {
 				return "";
@@ -230,6 +232,7 @@ public final class NFC读写器Impl extends 组件Impl implements NFC读写器,
 
 			int languageLength = payload[0] & 0x3f;
 			int start = languageLength + 1;
+
 			if (start > payload.length) {
 				return "";
 			}

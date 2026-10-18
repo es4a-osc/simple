@@ -62,6 +62,7 @@ public final class 红外发射器Impl extends 组件Impl implements 红外发�
 
 		// 保留设备返回顺序和原有“最小频率-最大频率”接口格式。
 		String[] frequencies = new String[ranges.length];
+
 		for (int index = 0; index < ranges.length; index++) {
 			ConsumerIrManager.CarrierFrequencyRange range = ranges[index];
 			frequencies[index] = range.getMinFrequency() + "-" + range.getMaxFrequency();
@@ -75,6 +76,7 @@ public final class 红外发射器Impl extends 组件Impl implements 红外发�
 		if (frequency <= 0) {
 			throw new IllegalArgumentException("红外载波频率必须为正数");
 		}
+
 		if (pattern == null || pattern.length == 0) {
 			throw new IllegalArgumentException("红外脉冲数组不能为空");
 		}
@@ -101,6 +103,7 @@ public final class 红外发射器Impl extends 组件Impl implements 红外发�
 	 */
 	private static void validatePattern(int[] pattern) {
 		long totalDuration = 0;
+
 		for (int duration : pattern) {
 			if (duration <= 0) {
 				throw new IllegalArgumentException("红外脉冲时长必须为正数");

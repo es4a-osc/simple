@@ -25,6 +25,7 @@ import java.lang.String;
  * 日志记录相关运行时函数的实现。
  *
  * @author Herbert Czymontek
+ * @author 树先生 xhwsd@qq.com
  */
 @SimpleObject
 public final class 日志输出 {
@@ -117,8 +118,7 @@ public final class 日志输出 {
 	 * @param moduleName 模块名称
 	 */
 	@SimpleFunction
-	public static void 置输出模块名(String moduleName)
-	{
+	public static void 置输出模块名(String moduleName) {
 		defaulModuleNamet = moduleName;
 	}
 
@@ -128,8 +128,7 @@ public final class 日志输出 {
 	 * @return 模块名称
 	 */
 	@SimpleFunction
-	public static String 取输出模块名()
-	{
+	public static String 取输出模块名() {
 		return defaulModuleNamet;
 	}
 
@@ -185,6 +184,7 @@ public final class 日志输出 {
 	public static void 输出信息(String moduleName, String message) {
 		logFunctions.info(moduleName, message);
 	}
+
 	/**
 	 * 记录信息消息。
 	 *

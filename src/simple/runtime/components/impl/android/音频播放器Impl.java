@@ -220,6 +220,7 @@ public final class 音频播放器Impl extends 组件Impl implements 音频播�
 			} else {
 				AssetFileDescriptor aFD = MainActivity.getContext().getAssets().openFd(mFile);
 				FileDescriptor fileDescriptor = aFD.getFileDescriptor();
+
 				mp.setDataSource(fileDescriptor, aFD.getStartOffset(), aFD.getLength());
 				aFD.close();
 			}
@@ -297,6 +298,16 @@ public final class 音频播放器Impl extends 组件Impl implements 音频播�
 		-- 无效状态 : Error 状态, 在 Error 状态调用该方法, 会进入 Error 状态, 抛出 IllegalStateException;
 		*/
 		return mp.isPlaying();
+	}
+
+	/**
+	 * 统一设置左右声道音量，不改变原有音量取值约定。
+	 *
+	 * @param volume 左右声道统一的音量，范围 0 至 1。
+	 */
+	@Override
+	public void 置音量(float volume) {
+		置音量(volume, volume);
 	}
 
 	@Override

@@ -130,47 +130,62 @@ public final class 意图 {
 			// 如果使用JDK1.8的方法将导致Android编译需要 dx8.jar
 			Object array = value.getArray();
 			Class<?> type = array.getClass().getComponentType();
+
 			if (type == Boolean.class) {
 				boolean[] values = new boolean[Array.getLength(array)];
+
 				for (int i = 0; i < values.length; i++) {
 					values[i] = Array.getBoolean(array, i);
 				}
+
 				intent.putExtra(name, values);
 			} else if (type == Byte.class) {
 				byte[] values = new byte[Array.getLength(array)];
+
 				for (int i = 0; i < values.length; i++) {
 					values[i] = Array.getByte(array, i);
 				}
+
 				intent.putExtra(name, values);
 			} else if (type == Short.class) {
 				short[] values = new short[Array.getLength(array)];
+
 				for (int i = 0; i < values.length; i++) {
 					values[i] = Array.getShort(array, i);
 				}
+
 				intent.putExtra(name, values);
 			} else if (type == Integer.class) {
 				int[] values = new int[Array.getLength(array)];
+
 				for (int i = 0; i < values.length; i++) {
 					values[i] = Array.getInt(array, i);
 				}
+
 				intent.putExtra(name, values);
 			} else if (type == Long.class) {
 				long[] values = new long[Array.getLength(array)];
+
 				for (int i = 0; i < values.length; i++) {
 					values[i] = Array.getLong(array, i);
 				}
+
 				intent.putExtra(name, values);
 			} else if (type == Float.class) {
 				float[] values = new float[Array.getLength(array)];
+
 				for (int i = 0; i < values.length; i++) {
 					values[i] = Array.getFloat(array, i);
 				}
+
 				intent.putExtra(name, values);
 			} else if (type == Double.class) {
 				double[] values = new double[Array.getLength(array)];
+
 				for (int i = 0; i < values.length; i++) {
 					values[i] = Array.getDouble(array, i);
 				}
+
 				intent.putExtra(name, values);
 			} else if (type == String.class) {
 				String[] values = ConvHelpers.object2list(array).toArray(new String[0]);
@@ -178,10 +193,10 @@ public final class 意图 {
 			} else if (Calendar.class.isAssignableFrom(type)) {
 				intent.putExtra(name, (Serializable) array);
 			} else {
-				throw new IllegalArgumentException("意图.置附加 非法参数值");
+				throw new IllegalArgumentException("非法参数值");
 			}
 		} else {
-			throw new IllegalArgumentException("意图.置附加 非法参数值");
+			throw new IllegalArgumentException("非法参数值");
 		}
 	}
 

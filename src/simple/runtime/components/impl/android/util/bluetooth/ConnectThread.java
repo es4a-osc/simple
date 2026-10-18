@@ -33,6 +33,7 @@ public final class ConnectThread extends Thread {
 	public void run() {
 		try {
 			BluetoothSocket connection = device.createRfcommSocketToServiceRecord(service);
+
 			synchronized (this) {
 				if (cancelled) {
 					connection.close();

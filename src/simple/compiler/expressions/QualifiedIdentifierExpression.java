@@ -18,9 +18,12 @@ package simple.compiler.expressions;
 
 import simple.compiler.Compiler;
 import simple.compiler.Error;
+import simple.compiler.scanner.TokenKind;
 import simple.compiler.scopes.ObjectScope;
+import simple.compiler.scopes.synthetic.ErrorScope;
 import simple.compiler.symbols.FunctionSymbol;
 import simple.compiler.symbols.InstanceMember;
+import simple.compiler.symbols.NamespaceSymbol;
 import simple.compiler.symbols.ObjectSymbol;
 import simple.compiler.symbols.SymbolWithType;
 import simple.compiler.symbols.synthetic.ErrorSymbol;
@@ -34,6 +37,8 @@ import simple.compiler.types.synthetic.ErrorType;
  * @author 树先生 xhwsd@qq.com
  */
 public final class QualifiedIdentifierExpression extends IdentifierExpression {
+	// 语法层暂按名称读取的关键字，只能落到对象成员，不能借此放宽命名空间或类型名称。
+	private final boolean keywordMember;
 
 	/**
 	 * 创建新的限定标识符表达式。
@@ -44,7 +49,14 @@ public final class QualifiedIdentifierExpression extends IdentifierExpression {
 	 */
 	public QualifiedIdentifierExpression(long position, Expression qualifyingExpression,
 			String identifier) {
+		this(position, qualifyingExpression, identifier, false);
+	}
+
+	/** 创建成员表达式，并保留关键字名称需要进行对象成员校验的约束。 */
+	public QualifiedIdentifierExpression(long position, Expression qualifyingExpression,
+			String identifier, boolean keywordMember) {
 		super(position, null, qualifyingExpression, identifier);
+		this.keywordMember = keywordMember;
 	}
 
 	@Override
@@ -59,12 +71,29 @@ public final class QualifiedIdentifierExpression extends IdentifierExpression {
 		} else if (qualifyingExpression instanceof ExpressionWithScope) {
 			// 在限定表达式的作用域内解析标识符
 			scope = ((ExpressionWithScope) qualifyingExpression).getScope();
+			if (keywordMember && !(scope instanceof ObjectScope)) {
+				if (!(scope instanceof ErrorScope)) {
+					compiler.error(getPosition(), Error.errExpected, TokenKind.TOK_IDENTIFIER.toString(), identifier);
+				}
+				scope = new ErrorScope();
+				resolvedIdentifier = new ErrorSymbol(identifier);
+				type = ErrorType.errorType;
+				return this;
+			}
 			if (scope instanceof ObjectScope) {
 				// 如果作用域属于一个对象，那么我们需要在对象层次结构中查找
 				resolvedIdentifier = ((ObjectScope) scope).lookupInObject(identifier);
 			} else {
 				// 否则浅查找（仅在给定的作用域内）就够了
 				resolvedIdentifier = scope.lookupShallow(identifier);
+			}
+			if (keywordMember && (resolvedIdentifier instanceof ObjectSymbol
+					|| resolvedIdentifier instanceof NamespaceSymbol)) {
+				compiler.error(getPosition(), Error.errExpected, TokenKind.TOK_IDENTIFIER.toString(), identifier);
+				scope = new ErrorScope();
+				resolvedIdentifier = new ErrorSymbol(identifier);
+				type = ErrorType.errorType;
+				return this;
 			}
 
 			// 确保标识符已成功解析或报告错误

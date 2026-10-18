@@ -18,6 +18,7 @@ import java.util.UUID;
 public final class AcceptThread extends Thread {
 
 	public static final int CONNECTED = 6;
+	public static final int FAILED = 10;
 	private final Handler handler;
 	private final BluetoothAdapter adapter;
 	private final UUID service;
@@ -35,6 +36,7 @@ public final class AcceptThread extends Thread {
 	public void run() {
 		try {
 			BluetoothServerSocket server = adapter.listenUsingRfcommWithServiceRecord("Simple", service);
+
 			synchronized (this) {
 				if (cancelled) {
 					server.close();
@@ -45,6 +47,7 @@ public final class AcceptThread extends Thread {
 			}
 
 			BluetoothSocket accepted = server.accept();
+
 			synchronized (this) {
 				if (cancelled) {
 					accepted.close();
@@ -58,6 +61,7 @@ public final class AcceptThread extends Thread {
 		} catch (IOException | RuntimeException error) {
 			if (!cancelled) {
 				Log.e("蓝牙", "接收连接失败", error);
+				handler.sendMessage(handler.obtainMessage(FAILED, this));
 			}
 		} finally {
 			closeServer();

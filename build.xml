@@ -184,7 +184,6 @@
         <javac debug="true" destdir="${build.tests}" source="1.8" target="1.8"
           encoding="UTF-8" deprecation="true" includeantruntime="false">
             <src path="${tests}"/>
-            <exclude name="simple/runtime/DeviceTests/"/>
             <classpath refid="tests.compile.classpath"/>
         </javac>
     </target>

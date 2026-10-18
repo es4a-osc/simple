@@ -196,6 +196,15 @@ public interface 文本组件 extends 可视组件 {
 	/* 组件方法 */
 
 	/**
+	 * 以指定正方形尺寸设置图标，宽和高均为 size 个物理像素。
+	 *
+	 * @param image 图片路径或资源表示，与完整方法一致。
+	 * @param size 正方形图标的边长，单位为物理像素。
+	 */
+	@SimpleFunction
+	void 置左边图标(String image, int size);
+
+	/**
 	 * 设置左边图标。
 	 *
 	 * @param image 图片，支持{@code 资源标识}、{@code @drawable/资源名}、
@@ -205,6 +214,15 @@ public interface 文本组件 extends 可视组件 {
 	 */
 	@SimpleFunction
 	void 置左边图标(String image, int width, int height);
+
+	/**
+	 * 以指定正方形尺寸设置图标，宽和高均为 size 个物理像素。
+	 *
+	 * @param image 图片路径或资源表示，与完整方法一致。
+	 * @param size 正方形图标的边长，单位为物理像素。
+	 */
+	@SimpleFunction
+	void 置顶边图标(String image, int size);
 
 	/**
 	 * 设置顶边图标。
@@ -218,6 +236,15 @@ public interface 文本组件 extends 可视组件 {
 	void 置顶边图标(String image, int width, int height);
 
 	/**
+	 * 以指定正方形尺寸设置图标，宽和高均为 size 个物理像素。
+	 *
+	 * @param image 图片路径或资源表示，与完整方法一致。
+	 * @param size 正方形图标的边长，单位为物理像素。
+	 */
+	@SimpleFunction
+	void 置右边图标(String image, int size);
+
+	/**
 	 * 设置右边图标。
 	 *
 	 * @param image 图片，支持{@code 资源标识}、{@code @drawable/资源名}、
@@ -227,6 +254,15 @@ public interface 文本组件 extends 可视组件 {
 	 */
 	@SimpleFunction
 	void 置右边图标(String image, int width, int height);
+
+	/**
+	 * 以指定正方形尺寸设置图标，宽和高均为 size 个物理像素。
+	 *
+	 * @param image 图片路径或资源表示，与完整方法一致。
+	 * @param size 正方形图标的边长，单位为物理像素。
+	 */
+	@SimpleFunction
+	void 置底边图标(String image, int size);
 
 	/**
 	 * 设置底边图标。

@@ -17,14 +17,19 @@
 package simple;
 
 import simple.compiler.CompilerSmokeTest;
+import simple.compiler.ContactsPermissionsTest;
+import simple.compiler.LibraryDependenciesTest;
+import simple.compiler.KeywordMemberTest;
 import simple.compiler.parser.ParserTest;
 import simple.compiler.scanner.ScannerTest;
 import simple.runtime.ArraysTest;
 import simple.runtime.ConversionsTest;
 import simple.runtime.DatesTest;
+import simple.runtime.FilesPathTest;
 import simple.runtime.FilesTest;
 import simple.runtime.MathTest;
 import simple.runtime.PixelsTest;
+import simple.runtime.SequencesTest;
 import simple.runtime.StringsTest;
 import simple.compiler.util.ResourceTest;
 
@@ -44,6 +49,9 @@ public class AllTests {
 		TestSuite suite = new TestSuite("Simple Tests");
 		// compiler
 		suite.addTestSuite(CompilerSmokeTest.class);
+		suite.addTestSuite(ContactsPermissionsTest.class);
+		suite.addTestSuite(LibraryDependenciesTest.class);
+		suite.addTestSuite(KeywordMemberTest.class);
 		// simple.compiler.parser
 		suite.addTestSuite(ParserTest.class);
 		// simple.compiler.scanner
@@ -56,9 +64,11 @@ public class AllTests {
 		suite.addTestSuite(ConversionsTest.class);
 		suite.addTestSuite(DatesTest.class);
 		suite.addTestSuite(FilesTest.class);
+		suite.addTestSuite(FilesPathTest.class);
 		suite.addTestSuite(MathTest.class);
 		suite.addTestSuite(PixelsTest.class);
 		suite.addTestSuite(StringsTest.class);
+		suite.addTestSuite(SequencesTest.class);
 		return suite;
 	}
 }

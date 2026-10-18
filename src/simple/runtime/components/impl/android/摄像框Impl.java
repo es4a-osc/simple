@@ -203,6 +203,7 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 
 		File file = new File(path);
 		File parent = file.getAbsoluteFile().getParentFile();
+
 		if (parent != null && !parent.isDirectory() && !parent.mkdirs()) {
 			throw new IOException("无法创建输出目录");
 		}
@@ -224,6 +225,7 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 
 	private Camera.Size selectSize(List<Camera.Size> sizes) {
 		Camera.Size selected = null;
+
 		for (Camera.Size size : sizes) {
 			if (size.height == requestedWidth && size.width == requestedHeight) {
 				return size;
@@ -239,6 +241,7 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 
 	private static String sizeText(List<Camera.Size> sizes) {
 		StringBuilder text = new StringBuilder();
+
 		for (Camera.Size size : sizes) {
 			if (text.length() > 0) {
 				text.append('\n');
@@ -282,6 +285,7 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 
 			// 只打开符合前置／后置选择的一个摄像头，不把“缺少前置”误当成后置。
 			Camera.CameraInfo info = new Camera.CameraInfo();
+
 			for (int id = 0; id < Camera.getNumberOfCameras(); id++) {
 				Camera.getCameraInfo(id, info);
 				if (info.facing == cameraFacing) {
@@ -318,6 +322,7 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 			List<Camera.Size> previews = sortedSizes(parameters.getSupportedPreviewSizes());
 			Camera.Size picture = selectSize(pictures);
 			Camera.Size preview = selectSize(previews);
+
 			if (picture != null) {
 				parameters.setPictureSize(picture.width, picture.height);
 			}
@@ -358,6 +363,7 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 		private void setFlashMode(Camera.Parameters parameters) {
 			List<String> modes = parameters.getSupportedFlashModes();
 			String mode = flashlight ? Camera.Parameters.FLASH_MODE_TORCH : Camera.Parameters.FLASH_MODE_OFF;
+
 			if (modes != null && modes.contains(mode)) {
 				parameters.setFlashMode(mode);
 			}
@@ -379,6 +385,7 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框 {
 
 			Camera.Parameters parameters = camera.getParameters();
 			List<String> modes = parameters.getSupportedFocusModes();
+
 			if (modes == null || !modes.contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
 				对焦完毕(false);
 				return;

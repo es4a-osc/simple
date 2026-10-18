@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.provider.Settings;
+import android.util.Log;
 
 import simple.runtime.android.MainActivity;
 import simple.runtime.collections.集合;
@@ -23,6 +24,7 @@ import simple.runtime.components.impl.android.util.bluetooth.ConnectThread;
 import simple.runtime.components.impl.android.util.bluetooth.ConnectedThread;
 import simple.runtime.components.impl.android.util.bluetooth.BluetoothUuids;
 import simple.runtime.events.EventDispatcher;
+import simple.runtime.errors.运行错误;
 import simple.runtime.variants.ArrayVariant;
 
 import java.util.UUID;
@@ -158,7 +160,9 @@ public final class 蓝牙通信器Impl extends 组件Impl implements 蓝牙通�
 	public void 关闭蓝牙() {
 		if (available()) {
 			disconnect();
-			adapter.disable();
+			if (!adapter.disable()) {
+				throw new BluetoothOperationError("系统未接受关闭蓝牙请求");
+			}
 		}
 	}
 
@@ -228,9 +232,17 @@ public final class 蓝牙通信器Impl extends 组件Impl implements 蓝牙通�
 
 	@Override
 	public void 搜索设备() {
-		if (available()) {
+		if (!available()) {
+			throw new BluetoothOperationError("蓝牙适配器不可用或组件已销毁");
+		}
+
+		try {
 			adapter.cancelDiscovery();
-			adapter.startDiscovery();
+			if (!adapter.startDiscovery()) {
+				throw new BluetoothOperationError("系统未接受蓝牙搜索请求，请检查蓝牙状态与权限");
+			}
+		} catch (SecurityException error) {
+			throw new BluetoothOperationError("蓝牙搜索权限不足");
 		}
 	}
 
@@ -258,9 +270,15 @@ public final class 蓝牙通信器Impl extends 组件Impl implements 蓝牙通�
 
 	@Override
 	public void 发送数据(byte[] data) {
-		if (connectedThread != null) {
-			connectedThread.write(data);
+		if (connectedThread == null) {
+			throw new BluetoothOperationError("尚未连接蓝牙设备");
 		}
+
+		if (data == null) {
+			throw new IllegalArgumentException("发送数据不能为空引用");
+		}
+
+		connectedThread.write(data);
 	}
 
 	@Override
@@ -284,20 +302,38 @@ public final class 蓝牙通信器Impl extends 组件Impl implements 蓝牙通�
 
 	@Override
 	public void 销毁() {
-		停止搜索();
-		destroyed = true;
-		disconnect();
-
-		handler.removeCallbacksAndMessages(null);
-
-		if (receiverRegistered) {
-			activity.unregisterReceiver(receiver);
-			receiverRegistered = false;
+		if (destroyed) {
+			return;
 		}
 
-		activity.removeOnActivityResultListener(this);
+		destroyed = true;
+		enablePending = false;
+		discoverablePending = false;
 
-		super.销毁();
+		// 权限被撤销时停止搜索可能失败，仍须关闭连接并撤销监听。
+		try {
+			if (adapter != null) {
+				adapter.cancelDiscovery();
+			}
+		} catch (RuntimeException error) {
+			Log.w("蓝牙", "销毁时停止搜索失败", error);
+		}
+
+		try {
+			disconnect();
+		} finally {
+			handler.removeCallbacksAndMessages(null);
+
+			try {
+				if (receiverRegistered) {
+					receiverRegistered = false;
+					activity.unregisterReceiver(receiver);
+				}
+			} finally {
+				activity.removeOnActivityResultListener(this);
+				super.销毁();
+			}
+		}
 	}
 
 	/* 内部接口与平台回调 */
@@ -344,6 +380,14 @@ public final class 蓝牙通信器Impl extends 组件Impl implements 蓝牙通�
 				}
 
 				break;
+			case AcceptThread.FAILED:
+				if (message.obj == acceptThread) {
+					acceptThread.cancel();
+					acceptThread = null;
+					连接完毕(false, "", "", 0);
+				}
+
+				break;
 			case AcceptThread.CONNECTED:
 				if (message.obj == acceptThread) {
 					BluetoothSocket connection = acceptThread.takeSocket();
@@ -358,6 +402,7 @@ public final class 蓝牙通信器Impl extends 组件Impl implements 蓝牙通�
 				if (message.obj == connectedThread && socket != null) {
 					BluetoothDevice device = socket.getRemoteDevice();
 					byte[] data = message.getData().getByteArray("data");
+
 					if (message.what == ConnectedThread.RECEIVED) {
 						收到数据(data, device.getName(), device.getAddress());
 					} else {
@@ -390,6 +435,17 @@ public final class 蓝牙通信器Impl extends 组件Impl implements 蓝牙通�
 		connectedThread.start();
 		BluetoothDevice device = connection.getRemoteDevice();
 		连接完毕(true, device.getName(), device.getAddress(), mode);
+	}
+
+	/**
+	 * 让无返回值操作的失败也能由 Simple 的错误分支处理。
+	 */
+	@SuppressWarnings("serial")
+	private static final class BluetoothOperationError extends 运行错误 {
+
+		BluetoothOperationError(String message) {
+			super(message);
+		}
 	}
 
 	private boolean available() {

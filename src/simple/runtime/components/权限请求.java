@@ -64,6 +64,14 @@ public interface 权限请求 extends 组件 {
 	boolean 是否授权(String permission);
 
 	/**
+	 * 请求清单中尚未授权的权限，请求标记为空文本；结果通过原有事件返回。
+	 *
+	 * @return 发起请求返回真，否则返回假。
+	 */
+	@SimpleFunction
+	boolean 请求权限();
+
+	/**
 	 * 请求使用权限，请求结果将通过请求权限结果事件通知。
 	 *
 	 * <p>谷歌不推荐一次请求大量权限，会使用户感到无所适。

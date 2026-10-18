@@ -63,6 +63,7 @@ public final class WIFI管理器Impl extends 组件Impl implements WIFI管理器
 						扫描完毕();
 					}
 				} else if (WifiManager.WIFI_STATE_CHANGED_ACTION.equals(action)) {
+					// 首次状态广播仅用于建立基线，之后的变化才对外通知。
 					if (firstWifiState) {
 						firstWifiState = false;
 					} else {
@@ -124,6 +125,7 @@ public final class WIFI管理器Impl extends 组件Impl implements WIFI管理器
 	@Override
 	public String[] 取已保存网络列表() {
 		List<String> result = new ArrayList<String>();
+
 		for (WifiConfiguration network : savedNetworks()) {
 			result.add(unquote(network.SSID) + "|*|" + network.networkId);
 		}
@@ -163,6 +165,7 @@ public final class WIFI管理器Impl extends 组件Impl implements WIFI管理器
 			// 旧 Android 的隐藏结构；不支持该结构时拒绝写入，避免应用半份 IP 配置。
 			Field assignment = config.getClass().getField("ipAssignment");
 			Object staticValue = null;
+
 			for (Object value : assignment.getType().getEnumConstants()) {
 				if ("STATIC".equals(((Enum<?>) value).name())) {
 					staticValue = value;
@@ -236,6 +239,7 @@ public final class WIFI管理器Impl extends 组件Impl implements WIFI管理器
 		}
 
 		StringBuilder text = new StringBuilder();
+
 		for (ScanResult result : results) {
 			if (text.length() > 0) {
 				text.append('/');
@@ -429,6 +433,7 @@ public final class WIFI管理器Impl extends 组件Impl implements WIFI管理器
 
 	private WifiConfiguration findNetwork(String name) {
 		String quoted = quote(name);
+
 		for (WifiConfiguration network : savedNetworks()) {
 			if (quoted.equals(network.SSID)) {
 				return network;

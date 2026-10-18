@@ -7,7 +7,8 @@
 
 - `src/simple/compiler/`：编译器。
 - `src/simple/runtime/`：Android 运行库。
-- `samples/`：示例项目。
+- `samples/`：[原有演示项目](samples/README.md)。
+- `examples/`：[运行库功能示例](examples/)，按主题选择、编译和运行。
 - `tests/`：编译器和运行库测试。
 
 

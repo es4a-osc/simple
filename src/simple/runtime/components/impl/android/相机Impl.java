@@ -125,6 +125,7 @@ public final class 相机Impl extends 组件Impl implements 相机, MainActivity
 	public int 取照片旋转角度(String path) {
 		try {
 			int orientation = new ExifInterface(path).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+
 			switch (orientation) {
 				case ExifInterface.ORIENTATION_ROTATE_180: return 180;
 				case ExifInterface.ORIENTATION_ROTATE_90: return 90;
@@ -151,6 +152,7 @@ public final class 相机Impl extends 组件Impl implements 相机, MainActivity
 			flashlightCamera = Camera.open();
 			Camera.Parameters parameters = flashlightCamera.getParameters();
 			List<String> modes = parameters.getSupportedFlashModes();
+
 			if (modes == null || !modes.contains(Camera.Parameters.FLASH_MODE_TORCH)) {
 				关闭闪光灯();
 				return;
@@ -378,6 +380,7 @@ public final class 相机Impl extends 组件Impl implements 相机, MainActivity
 			try {
 				byte[] buffer = new byte[8192];
 				int size;
+
 				while ((size = input.read(buffer)) != -1) {
 					output.write(buffer, 0, size);
 				}

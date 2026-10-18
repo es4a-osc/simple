@@ -207,30 +207,6 @@ public final class Compiler {
 		return result;
 	}
 
-	private static List<File> getJarFiles(File directory) {
-		if (!directory.isDirectory()) {
-			return Collections.emptyList();
-		}
-		File[] files = directory.listFiles();
-		if (files == null) {
-			return Collections.emptyList();
-		}
-		List<File> jars = new ArrayList<File>();
-		for (File file : files) {
-			if (file.isFile() && file.getName().toLowerCase().endsWith(".jar")) {
-				jars.add(file.getAbsoluteFile());
-			}
-		}
-		Collections.sort(jars, new java.util.Comparator<File>() {
-			@Override
-			public int compare(File left, File right) {
-				int comparison = left.getName().compareToIgnoreCase(right.getName());
-				return comparison != 0 ? comparison : left.getName().compareTo(right.getName());
-			}
-		});
-		return jars;
-	}
-
 	private static boolean hasFiles(File directory) {
 		if (!directory.isDirectory()) {
 			return false;
@@ -699,6 +675,7 @@ public final class Compiler {
 		// 创建本次构建独立使用的编译器实例，并记录总耗时起点。
 		long start = System.currentTimeMillis();
 		final Compiler compiler = new Compiler(platform, out, err);
+		if (compiler.errorCount > 0) return false;
 
 		// 读取并解析项目中的全部Simple单元，先建立语法树和符号声明。
 		for (Project.SourceDescriptor arg : project.getSources()) {
@@ -823,7 +800,8 @@ public final class Compiler {
 			List<File> compiledLibraryResourceFiles = new ArrayList<File>();
 			List<File> assetsDirectories = new ArrayList<File>();
 			List<File> dexInputFiles = new ArrayList<File>();
-			List<File> dependencyDirectories = new ArrayList<File>();
+			List<File> dependencyFiles = compiler.runtimeLoader.getDependenciesForLibraries(libraryDirectories);
+			dexInputFiles.addAll(dependencyFiles);
 			List<File> nativeDirectories = new ArrayList<File>();
 			File libraryResourceBuildDirectory = Files.createDirectory(resourceBuildDirectory, "libraries");
 
@@ -835,13 +813,6 @@ public final class Compiler {
 					return false;
 				}
 				dexInputFiles.add(classesFile);
-
-				File dependencyDirectory = new File(libraryDirectory, "libs").getAbsoluteFile();
-				List<File> dependencyFiles = getJarFiles(dependencyDirectory);
-				if (!dependencyFiles.isEmpty()) {
-					dexInputFiles.addAll(dependencyFiles);
-					dependencyDirectories.add(dependencyDirectory);
-				}
 
 				File resourceDirectory = new File(libraryDirectory, "res").getAbsoluteFile();
 				if (hasFiles(resourceDirectory)) {
@@ -901,6 +872,12 @@ public final class Compiler {
 			out.println("正在生成可执行类：" + dexFile.getName());
 			dexInputFiles.add(0, new File(SIMPLE_ANDROID_RUNTIME).getAbsoluteFile());
 			dexInputFiles.add(0, classesDir.getAbsoluteFile());
+			try {
+				LibraryDependencies.validateClasses(dexInputFiles);
+			} catch (IOException failure) {
+				compiler.error(Scanner.NO_POSITION, failure.getMessage());
+				return false;
+			}
 			if (!Toolchain.generateDex(dexFile, dexInputFiles, System.out, System.err)) {
 				internalError();
 				return false;
@@ -910,7 +887,7 @@ public final class Compiler {
 			File apkFile = new File(deployDir, project.getProjectName() + ".apk");
 			compiler.out.println("正在生成应用：" + apkFile.getName());
 			if (!Toolchain.buildApplication(apkFile, apFile, dexFile,
-					dependencyDirectories, nativeDirectories, System.err)) {
+					dependencyFiles, nativeDirectories, System.err)) {
 				internalError();
 				return false;
 			}

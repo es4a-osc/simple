@@ -18,16 +18,22 @@ package simple.runtime;
 
 import simple.runtime.annotations.SimpleFunction;
 import simple.runtime.annotations.SimpleObject;
+import simple.runtime.errors.转换错误;
 import simple.runtime.variants.ArrayVariant;
+import simple.runtime.variants.IntegerVariant;
 import simple.runtime.variants.Variant;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
- * 实现各种阵列相关的运行时函数。
+ * 提供数组计数、复制、合并、成员增删及文本数组处理。
+ *
+ * <p>成员索引从 0 开始，维度编号从 1 开始。增删成员返回相同元素类型的新数组，
+ * 不改变原数组；排序和复制直接修改目标数组。</p>
  *
  * @author Herbert Czymontek
  * @author 树先生 xhwsd@qq.com
@@ -35,104 +41,38 @@ import java.util.Set;
 @SimpleObject
 public final class 数组操作 {
 
-	private 数组操作() {  // COV_NF_LINE
-	}                   // COV_NF_LINE
+	private 数组操作() {
+	}
+
+	/* 计数与复制 */
 
 	/**
-	 * 过滤数组的文本内容。
+	 * 返回指定维度的成员数，沿用既有名称，不是最后一个成员的索引。
 	 *
-	 * @param array 要搜索的数组
-	 * @param str 要在数组中搜索的子文本
-	 * @param include 如果{@code true}则在结果中包含匹配的子文本，否则排除它们
-	 * @return 包含（非）匹配数组项的数组
+	 * @param array 原数组。
+	 * @param dimension 维度编号，从 1 开始；更深维度沿第一个成员读取。
+	 * @return 该维度的成员数；空外层数组无法读取更深维度时抛出错误。
 	 */
 	@SimpleFunction
-	public static String[] 过滤数组文本(String[] array, String str, boolean include) {
-		if (str == null) {
-			throw new NullPointerException();
+	public static int 取数组下标(Variant array, int dimension) {
+		if (dimension <= 0) {
+			throw new IllegalArgumentException("数组维度必须从 1 开始。");
 		}
 
-		Set<String> result = new HashSet<String>();
-		for (String a : array) {
-			if (a.contains(str) == include) {
-				result.add(a);
-			}
+		Object result = array.getArray();
+
+		while (--dimension > 0) {
+			result = Array.get(result, 0);
 		}
-		return result.toArray(new String[result.size()]);
+
+		return Array.getLength(result);
 	}
 
 	/**
-	 * 将数组成员追加到单个文本中。
+	 * 返回数组第一维的成员数。
 	 *
-	 * @param array 包含要连接文本的数组
-	 * @param separator 在数组成员之间连接文本
-	 * @return 包含连接数组成员的文本
-	 */
-	@SimpleFunction
-	public static String 连接数组文本(String[] array, String separator) {
-		if (separator == null) {
-			throw new NullPointerException();
-		}
-
-		StringBuilder sb = new StringBuilder();
-		String sep = "";
-		for (String a : array) {
-		 sb.append(sep).append(a);
-		 sep = separator;
-		}
-		return sb.toString();
-	}
-
-	/**
-	 * 查找指定文本来分割文本。
-	 *
-	 * @param str 欲分割的文本
-	 * @param separator 欲查找的分割文本
-	 * @param count 分割次数
-	 * @return 包含分割后的文本数组
-	 */
-	@SimpleFunction
-	public static String[] 分割文本(String str, String separator, int count) {
-		if (separator == null) {
-			throw new NullPointerException();
-		}
-
-		if (count <= 0) {
-			throw new IllegalArgumentException("Count for Split() out of range. Should greater than 0.");
-		}
-
-		return str.split("\\Q" + separator + "\\E", count);
-	}
-
-	/**
-	 * 返回数组维度的大小。
-	 *
-	 * @param array 请求其大小的数组
-	 * @param dim 维度（第一个维度为1，依此类推）
-	 * @return 数组维度的大小
-	 */
-	@SimpleFunction
-	public static int 取数组下标(Variant array, int dim) {
-		if (dim <= 0) {
-			throw new IllegalArgumentException("Dimension for UBound() out of range. " +
-					"Should be greater than 0.");
-		}
-
-		Object arr = array.getArray();
-		while (--dim > 0) {
-			arr = Array.get(arr, 0);
-		}
-
-		return Array.getLength(arr);
-	}
-
-	/* 扩展 */
-
-	/**
-	 * 取数组第一个维度的成员数。
-	 *
-	 * @param array 欲取成员的数组。
-	 * @return 数组维度的大小
+	 * @param array 原数组。
+	 * @return 成员数，空数组返回 0。
 	 */
 	@SimpleFunction
 	public static int 取数组成员数(Variant array) {
@@ -140,144 +80,286 @@ public final class 数组操作 {
 	}
 
 	/**
-	 * 将2个字节数组合并为一个
-	 * 
-	 * @param array1
-	 * @param array2
-	 * @return 新数组
+	 * 从源数组复制指定数量的成员到目标数组，支持同一数组中的重叠区间。
+	 *
+	 * @param source 源数组。
+	 * @param sourceIndex 源起始索引。
+	 * @param target 目标数组，直接修改其内容。
+	 * @param targetIndex 目标起始索引。
+	 * @param length 复制数量，不得为负；类型不兼容或区间越界时抛出错误。
 	 */
 	@SimpleFunction
-	public static byte[] 合并字节数组(byte[] array1, byte[] array2) {
-		byte[] array3 = new byte[array1.length + array2.length];
-		System.arraycopy(array1, 0, array3, 0, array1.length);
-		System.arraycopy(array2, 0, array3, array1.length, array2.length);
-		return array3;
+	public static void 复制数组成员(Variant source, int sourceIndex, Variant target, int targetIndex, int length) {
+		System.arraycopy(source.getArray(), sourceIndex, target.getArray(), targetIndex, length);
+	}
+
+	/* 合并与成员增删 */
+
+	/**
+	 * 按先后顺序合并两个字节数组，不修改输入数组。
+	 *
+	 * @param first 第一个字节数组。
+	 * @param second 第二个字节数组。
+	 * @return 独立的新数组。
+	 */
+	@SimpleFunction
+	public static byte[] 合并字节数组(byte[] first, byte[] second) {
+		byte[] result = new byte[combinedLength(first.length, second.length)];
+		System.arraycopy(first, 0, result, 0, first.length);
+		System.arraycopy(second, 0, result, first.length, second.length);
+		return result;
 	}
 
 	/**
-	 * 将2个文本数组合并为一个
-	 * 
-	 * @param array1
-	 * @param array2
-	 * @return 新数组
+	 * 按先后顺序合并两个文本数组，不修改输入数组。
+	 *
+	 * @param first 第一个文本数组。
+	 * @param second 第二个文本数组。
+	 * @return 独立的新数组。
 	 */
 	@SimpleFunction
-	public static String[] 合并文本数组(String[] array1, String[] array2) {
-		String[] array3 = new String[array1.length + array2.length];
-		System.arraycopy(array1, 0, array3, 0, array1.length);
-		System.arraycopy(array2, 0, array3, array1.length, array2.length);
-		return array3;
+	public static String[] 合并文本数组(String[] first, String[] second) {
+		String[] result = new String[combinedLength(first.length, second.length)];
+		System.arraycopy(first, 0, result, 0, first.length);
+		System.arraycopy(second, 0, result, first.length, second.length);
+		return result;
 	}
 
 	/**
-	 * 从源数组复制成员到目标数组成员
-	 * 
-	 * @param src 源数组
-	 * @param srcPos 源数组中的起始位置，从0开始。
-	 * @param dest 目标数组
-	 * @param destPos 目标数组中的起始位置，从0开始。
-	 * @param length 要复制的数组成员的数量，注意确保从位置拥有的拥有的成员数。
-	 * @return 新数组
+	 * 在指定位置插入成员，保留原数组元素类型。
+	 *
+	 * @param array 原数组。
+	 * @param value 新成员，按原元素类型执行 Simple 转换。
+	 * @param index 插入位置，从 0 到成员数；等于成员数表示追加。
+	 * @return 新数组；沿用既有失败约定，索引无效、类型不兼容或空引用时返回空。
 	 */
 	@SimpleFunction
-	public static void 复制数组成员(Variant src, int srcPos, Variant dest, int destPos, int length) {
-		Object srcArray = src.getArray();
-		Object destArray = dest.getArray();
-		System.arraycopy(srcArray, srcPos, destArray, destPos, length);
-	}
-
-	/**
-	 * 在数组指定位置插入成员
-	 * 
-	 * @param a 数组
-	 * @param data 成员数据
-	 * @param pos 插入位置
-	 * @return 成功返回新数组，失败返回空
-	 */
-	@SimpleFunction
-	public static Variant 插入数组成员(Variant a, Variant data, int pos) {
-		int i = 0;
-		ArrayList<Object> list = new ArrayList<Object>();
+	public static Variant 插入数组成员(Variant array, Variant value, int index) {
 		try {
-			// 将源数组转为列表
-			Object arr = a.getArray();
-			while (i < Array.getLength(arr)) {
-				Object arr1 = Array.get(arr, i);
-				// 插入成员
-				if (i == pos) {
-					list.add(data.getObject());
-				}
-
-				// 添加成员
-				list.add(arr1);
-				i++;
-			}
-
-			// 新建数组同类的对象数组
-			Object objarr = Array.newInstance(
-				Class.forName(arr.getClass().getComponentType().toString()),
-				list.size()
-			);
-			if (objarr == null) {
-				return null;
-			}
-
-			// 把列表成员设置到对象数组
-			i = 0;
-			Object[] tarr = list.toArray();
-			while (i < Array.getLength(objarr)) {
-				Array.set(objarr, i, tarr[i]);
-				i++;
-			}
-			
-			return ArrayVariant.getArrayVariant(objarr);
-		} catch (Exception e) {
+			return insertMember(array.getArray(), value, index);
+		} catch (IllegalArgumentException | NullPointerException | 转换错误 exception) {
 			return null;
 		}
 	}
 
 	/**
-	 * 在数组末尾添加成员
-	 * 
-	 * @param a 数组
-	 * @param data 数据
-	 * @return 成功返回新数组，失败返回空
+	 * 在数组末尾追加成员，不修改原数组。
+	 *
+	 * @param array 原数组。
+	 * @param value 新成员，按原元素类型执行 Simple 转换。
+	 * @return 新数组；类型不兼容或空引用时返回空。
 	 */
 	@SimpleFunction
-	public static Variant 加入数组成员(Variant a, Variant data) {
-		int i = 0;
-		ArrayList<Object> list = new ArrayList<Object>();
+	public static Variant 加入数组成员(Variant array, Variant value) {
 		try {
-			// 将源数组转为列表
-			Object arr = a.getArray();
-			while (i < Array.getLength(arr)) {
-				Object arr1 = Array.get(arr, i);
-				list.add(arr1);
-				i++;
-			}
-			// 将数字添加到末尾
-			list.add(data.getObject());
-			
-			// 新建数组同类的对象数组
-			Object objarr = Array.newInstance(
-				Class.forName(arr.getClass().getComponentType().toString()),
-				list.size()
-			);
-			if (objarr == null) {
+			Object source = array.getArray();
+			return insertMember(source, value, Array.getLength(source));
+		} catch (IllegalArgumentException | NullPointerException | 转换错误 exception) {
+			return null;
+		}
+	}
+
+	/**
+	 * 删除指定索引的一个成员，保留其余成员的顺序和元素类型。
+	 *
+	 * @param array 原数组。
+	 * @param index 待删除成员的索引。
+	 * @return 新数组，不修改原数组；索引无效、不是数组或空引用时返回空。
+	 */
+	@SimpleFunction
+	public static Variant 删除数组成员(Variant array, int index) {
+		try {
+			Object source = array.getArray();
+			int length = Array.getLength(source);
+
+			if (index < 0 || index >= length) {
 				return null;
 			}
 
-			// 把列表成员设置到对象数组
-			i = 0;
-			Object[] tarr = list.toArray();
-			while (i < Array.getLength(objarr)) {
-				Array.set(objarr, i, tarr[i]);
-				i++;
-			}
-			
-			return ArrayVariant.getArrayVariant(objarr);
-		} catch (Exception e) {
+			Object result = Array.newInstance(source.getClass().getComponentType(), length - 1);
+			System.arraycopy(source, 0, result, 0, index);
+			System.arraycopy(source, index + 1, result, index, length - index - 1);
+			return ArrayVariant.getArrayVariant(result);
+		} catch (IllegalArgumentException | NullPointerException | 转换错误 exception) {
 			return null;
 		}
+	}
+
+	/* 排序 */
+
+	/**
+	 * 将整数数组按升序原地排序。
+	 *
+	 * @param array 待排序数组，不得为空引用。
+	 * @return 原数组，内容已排序。
+	 */
+	@SimpleFunction
+	public static int[] 数组排序(int[] array) {
+		Arrays.sort(array);
+		return array;
+	}
+
+	/**
+	 * 将文本数组按 UTF-16 字典顺序原地排序，不进行拼音或数值排序。
+	 *
+	 * @param array 待排序数组，数组及其成员不得为空引用。
+	 * @return 原数组，内容已排序。
+	 */
+	@SimpleFunction
+	public static String[] 文本数组排序(String[] array) {
+		// 先检查全部成员，避免空引用导致排序中途失败并留下部分修改。
+		for (String value : array) {
+			if (value == null) {
+				throw new NullPointerException();
+			}
+		}
+
+		Arrays.sort(array);
+		return array;
+	}
+
+	/* 文本数组处理 */
+
+	/**
+	 * 保留包含指定字面文本的成员，沿用去重及首次出现顺序。
+	 *
+	 * @param array 待筛选的文本数组。
+	 * @param find 要包含的字面文本。
+	 * @return 筛选得到的新数组。
+	 */
+	@SimpleFunction
+	public static String[] 过滤数组文本(String[] array, String find) {
+		return 过滤数组文本(array, find, true);
+	}
+
+	/**
+	 * 按子文本包含关系过滤，并沿用既有去重规则。
+	 *
+	 * @param array 原文本数组，成员不得为空引用。
+	 * @param find 字面子文本。
+	 * @param include 真表示保留匹配项，假表示排除匹配项。
+	 * @return 去重后的新数组，按成员首次出现的顺序排列。
+	 */
+	@SimpleFunction
+	public static String[] 过滤数组文本(String[] array, String find, boolean include) {
+		if (find == null) {
+			throw new NullPointerException();
+		}
+
+		// 使用有序集合去重，结果仍按原成员首次出现的顺序排列。
+		Set<String> result = new LinkedHashSet<String>();
+
+		for (String value : array) {
+			if (value.contains(find) == include) {
+				result.add(value);
+			}
+		}
+
+		return result.toArray(new String[result.size()]);
+	}
+
+	/**
+	 * 使用指定分隔文本连接数组成员。
+	 *
+	 * @param array 文本数组。
+	 * @param separator 成员间的分隔文本，不得为空引用，允许空文本。
+	 * @return 连接结果，空数组返回空文本；空引用成员沿用 Java 文本转换规则。
+	 */
+	@SimpleFunction
+	public static String 连接数组文本(String[] array, String separator) {
+		if (separator == null) {
+			throw new NullPointerException();
+		}
+
+		StringBuilder result = new StringBuilder();
+
+		for (int index = 0; index < array.length; index++) {
+			if (index > 0) {
+				result.append(separator);
+			}
+
+			result.append(array[index]);
+		}
+
+		return result.toString();
+	}
+
+	/**
+	 * 使用字面分隔文本分割全部内容，保留末尾空成员。
+	 *
+	 * @param text 原文本。
+	 * @param separator 字面分隔文本；空文本按 UTF-16 边界分割。
+	 * @return 分割结果。
+	 */
+	@SimpleFunction
+	public static String[] 分割文本(String text, String separator) {
+		return 分割文本(text, separator, Integer.MAX_VALUE);
+	}
+
+	/**
+	 * 使用字面分隔文本分割内容，并限制返回成员数。
+	 *
+	 * @param text 原文本。
+	 * @param separator 字面分隔文本，不是正则表达式。
+	 * @param count 最大成员数，必须大于 0；达到上限后剩余内容作为最后一项。
+	 * @return 分割结果，保留末尾空成员；空分隔文本沿用 Java 的 UTF-16 边界规则。
+	 */
+	@SimpleFunction
+	public static String[] 分割文本(String text, String separator, int count) {
+		if (separator == null) {
+			throw new NullPointerException();
+		}
+
+		if (count <= 0) {
+			throw new IllegalArgumentException("分割文本的最大成员数必须大于 0。");
+		}
+
+		return text.split(Pattern.quote(separator), count);
+	}
+
+	/* 内部辅助 */
+
+	/**
+	 * 检查合并长度，避免整数溢出。
+	 *
+	 * @param first 第一部分长度。
+	 * @param second 第二部分长度。
+	 * @return 合并长度。
+	 */
+	private static int combinedLength(int first, int second) {
+		if (first > Integer.MAX_VALUE - second) {
+			throw new IllegalArgumentException("合并后的数组过长。");
+		}
+
+		return first + second;
+	}
+
+	/**
+	 * 复制数组并写入一个新成员，复用运行库已有的 Variant 类型转换。
+	 *
+	 * @param source 原始 Java 数组。
+	 * @param value 新成员。
+	 * @param index 插入位置。
+	 * @return 包装后的新数组。
+	 */
+	private static Variant insertMember(Object source, Variant value, int index) {
+		int length = Array.getLength(source);
+		if (index < 0 || index > length) {
+			throw new IllegalArgumentException("插入位置超出数组范围。");
+		}
+
+		Class<?> component = source.getClass().getComponentType();
+		Object result = Array.newInstance(component, combinedLength(length, 1));
+
+		System.arraycopy(source, 0, result, 0, index);
+		System.arraycopy(source, index, result, index + 1, length - index);
+		ArrayVariant output = ArrayVariant.getArrayVariant(result);
+		if (component.isArray()) {
+			Array.set(result, index, value.getArray());
+		} else {
+			output.array(new Variant[]{IntegerVariant.getIntegerVariant(index)}, value);
+		}
+
+		return output;
 	}
 }

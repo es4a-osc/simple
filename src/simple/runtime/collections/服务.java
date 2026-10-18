@@ -54,7 +54,7 @@ public class 服务 extends IntentService {
 	public 服务() {
 		super(getClassName());
 		
-		日志输出.输出信息(日志输出.MODULE_NAME_RTL, "[" + hashCode() + "/服务] 构造对象；服务名称=" +  getClassName());
+		日志输出.info("[" + hashCode() + "/服务] 构造对象；服务名称=" +  getClassName());
 	}
 
 	/**
@@ -72,7 +72,7 @@ public class 服务 extends IntentService {
 	 */
 	@SimpleFunction
 	public void 服务处理(意图 intent) {
-		日志输出.输出警告(日志输出.MODULE_NAME_RTL, "[" + hashCode() + "/服务.服务处理] 服务单元未覆写该过程；单元类名=" + getClass().getName());
+		日志输出.warning("[" + hashCode() + "/服务.服务处理] 服务单元未覆写该过程；单元类名=" + getClass().getName());
 	}
 
 	/**
@@ -89,7 +89,7 @@ public class 服务 extends IntentService {
 	public void onCreate() {
 		super.onCreate();
 
-		日志输出.输出信息(日志输出.MODULE_NAME_RTL, "[" + hashCode() + "/服务.onCreate] 服务被创建");
+		日志输出.info("[" + hashCode() + "/服务.onCreate] 服务被创建");
 		服务创建();
 	}
 
@@ -98,7 +98,7 @@ public class 服务 extends IntentService {
 	 */
 	@Override
 	protected void onHandleIntent(Intent intent) {
-		日志输出.输出信息(日志输出.MODULE_NAME_RTL, "[" + hashCode() + "/服务.onHandleIntent] 处理意图");
+		日志输出.info("[" + hashCode() + "/服务.onHandleIntent] 处理意图");
 
 		if (intent != null) {
 			服务处理(new 意图(intent));
@@ -112,7 +112,7 @@ public class 服务 extends IntentService {
 	public void onDestroy() {
 		super.onDestroy();
 		
-		日志输出.输出信息(日志输出.MODULE_NAME_RTL, "[" + hashCode() + "/服务.onDestroy] 服务被销毁");
+		日志输出.info("[" + hashCode() + "/服务.onDestroy] 服务被销毁");
 		服务销毁();
 	}
 }

@@ -36,6 +36,7 @@ public final class ConnectedThread extends Thread {
 
 		try {
 			InputStream input = socket.getInputStream();
+
 			while (!cancelled) {
 				int size = input.read(buffer);
 
@@ -83,6 +84,7 @@ public final class ConnectedThread extends Thread {
 
 		Message message = handler.obtainMessage(kind, this);
 		Bundle bundle = new Bundle();
+
 		bundle.putByteArray("data", data);
 		message.setData(bundle);
 

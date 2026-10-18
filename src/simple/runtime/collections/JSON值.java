@@ -137,6 +137,7 @@ public final class JSON值 {
 				return false;
 			}
 		}
+
 		return true;
 	}
 
@@ -153,6 +154,7 @@ public final class JSON值 {
 		} catch (JSONException e) {
 			return false;
 		}
+
 		return true;
 	}
 
@@ -169,7 +171,18 @@ public final class JSON值 {
 		} catch (JSONException e) {
 			return false;
 		}
+
 		return true;
+	}
+
+	/**
+	 * 使用两个空格缩进序列化当前 JSON 对象或数组。
+	 *
+	 * @return 格式化后的文本；无法序列化时返回空引用。
+	 */
+	@SimpleFunction
+	public String 到文本() {
+		return 到文本(2);
 	}
 
 	/**
@@ -189,6 +202,7 @@ public final class JSON值 {
 		} catch (JSONException e) {
 			//e.printStackTrace();
 		}
+
 		return null;
 	}
 
@@ -204,6 +218,7 @@ public final class JSON值 {
 		} else if (object instanceof JSONArray) {
 			return ((JSONArray) object).length();
 		}
+
 		return 0;
 	}
 
@@ -222,6 +237,7 @@ public final class JSON值 {
 			((JSONArray) object).remove(item.getInteger());
 			return true;
 		}
+
 		return false;
 	}
 
@@ -235,11 +251,14 @@ public final class JSON值 {
 		if (object instanceof JSONObject) {
 			ArrayList<String> list = new ArrayList<String>();
 			Iterator<String> iter = ((JSONObject) object).keys();
+
 			while (iter.hasNext()) {
 				list.add(iter.next());
 			}
+
 			return list.toArray(new String[0]);
 		}
+
 		return null;
 	}
 
@@ -256,6 +275,7 @@ public final class JSON值 {
 		} else if (object instanceof JSONArray) {
 			return item.getInteger() >= 0 && item.getInteger() < ((JSONArray) object).length();
 		}
+
 		return false;
 	}
 
@@ -269,6 +289,7 @@ public final class JSON值 {
 	public boolean 是否为对象(Variant item) {
 		if (item != null) {
 			Object value = null;
+
 			try {
 				if (object instanceof JSONObject) {
 					value = ((JSONObject) object).get(item.getString());
@@ -278,6 +299,7 @@ public final class JSON值 {
 			} catch (JSONException e) {
 				//e.printStackTrace();
 			}
+
 			return value instanceof JSONObject;
 		} else {
 			return object instanceof JSONObject;
@@ -294,6 +316,7 @@ public final class JSON值 {
 	public boolean 是否为数组(Variant item) {
 		if (item != null) {
 			Object value = null;
+
 			try {
 				if (object instanceof JSONObject) {
 					value = ((JSONObject) object).get(item.getString());
@@ -303,6 +326,7 @@ public final class JSON值 {
 			} catch (JSONException e) {
 				//e.printStackTrace();
 			}
+
 			return value instanceof JSONArray;
 		} else {
 			return object instanceof JSONArray;
@@ -323,6 +347,7 @@ public final class JSON值 {
 			} else if (object instanceof JSONArray) {
 				return ((JSONArray) object).isNull(item.getInteger());
 			}
+
 			return false;
 		} else {
 			return object == JSONObject.NULL;
@@ -344,6 +369,7 @@ public final class JSON值 {
 			JSONObject value = ((JSONArray) object).optJSONObject(item.getInteger());
 			return new JSON值(value);
 		}
+
 		return null;
 	}
 
@@ -362,6 +388,7 @@ public final class JSON值 {
 			JSONArray value = ((JSONArray) object).optJSONArray(item.getInteger());
 			return new JSON值(value);
 		}
+
 		return null;
 	}
 
@@ -378,6 +405,7 @@ public final class JSON值 {
 		} else if (object instanceof JSONArray) {
 			return ((JSONArray) object).optString(item.getInteger());
 		}
+
 		return "";
 	}
 
@@ -394,6 +422,7 @@ public final class JSON值 {
 		} else if (object instanceof JSONArray) {
 			return ((JSONArray) object).optDouble(item.getInteger());
 		}
+
 		return 0;
 	}
 
@@ -410,6 +439,7 @@ public final class JSON值 {
 		} else if (object instanceof JSONArray) {
 			return ((JSONArray) object).optLong(item.getInteger());
 		}
+
 		return 0;
 	}
 
@@ -426,6 +456,7 @@ public final class JSON值 {
 		} else if (object instanceof JSONArray) {
 			return ((JSONArray) object).optInt(item.getInteger());
 		}
+
 		return 0;
 	}
 
@@ -442,6 +473,7 @@ public final class JSON值 {
 		} else if (object instanceof JSONArray) {
 			return ((JSONArray) object).optBoolean(item.getInteger());
 		}
+
 		return false;
 	}
 
@@ -467,6 +499,7 @@ public final class JSON值 {
 				//e.printStackTrace();
 			}
 		}
+
 		return false;
 	}
 
@@ -492,6 +525,7 @@ public final class JSON值 {
 				//e.printStackTrace();
 			}
 		}
+
 		return false;
 	}
 
@@ -515,6 +549,7 @@ public final class JSON值 {
 		} catch (JSONException e) {
 			//e.printStackTrace();
 		}
+
 		return false;
 	}
 
@@ -538,6 +573,7 @@ public final class JSON值 {
 		} catch (JSONException e) {
 			//e.printStackTrace();
 		}
+
 		return false;
 	}
 
@@ -561,6 +597,7 @@ public final class JSON值 {
 		} catch (JSONException e) {
 			//e.printStackTrace();
 		}
+
 		return false;
 	}
 
@@ -584,6 +621,7 @@ public final class JSON值 {
 		} catch (JSONException e) {
 			//e.printStackTrace();
 		}
+
 		return false;
 	}
 
@@ -607,6 +645,7 @@ public final class JSON值 {
 		} catch (JSONException e) {
 			//e.printStackTrace();
 		}
+
 		return false;
 	}
 
@@ -629,6 +668,7 @@ public final class JSON值 {
 		} catch (JSONException e) {
 			//e.printStackTrace();
 		}
+
 		return false;
 	}
 
@@ -644,6 +684,7 @@ public final class JSON值 {
 			((JSONArray) object).put(value.getObject());
 			return true;
 		}
+
 		return false;
 	}
 
@@ -659,6 +700,7 @@ public final class JSON值 {
 			((JSONArray) object).put(value.getObject());
 			return true;
 		}
+
 		return false;
 	}
 
@@ -674,6 +716,7 @@ public final class JSON值 {
 			((JSONArray) object).put(value);
 			return true;
 		}
+
 		return false;
 	}
 
@@ -693,6 +736,7 @@ public final class JSON值 {
 		} catch (JSONException e) {
 			//e.printStackTrace();
 		}
+
 		return false;
 	}
 
@@ -708,6 +752,7 @@ public final class JSON值 {
 			((JSONArray) object).put(value);
 			return true;
 		}
+
 		return false;
 	}
 
@@ -723,6 +768,7 @@ public final class JSON值 {
 			((JSONArray) object).put(value);
 			return true;
 		}
+
 		return false;
 	}
 
@@ -738,6 +784,7 @@ public final class JSON值 {
 			((JSONArray) object).put(value);
 			return true;
 		}
+
 		return false;
 	}
 
@@ -752,6 +799,7 @@ public final class JSON值 {
 			((JSONArray) object).put(JSONObject.NULL);
 			return true;
 		}
+
 		return false;
 	}
 }

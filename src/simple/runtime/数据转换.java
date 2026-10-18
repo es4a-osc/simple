@@ -218,4 +218,164 @@ public final class 数据转换 {
 	public static Object[] 到对象数组(Variant value) {
 		return ConvHelpers.variant2objects(value);
 	}
+
+	/* 进制文本转换 */
+
+	/**
+	 * 将十六进制文本解析为有符号长整数。
+	 *
+	 * <p>允许正负号，不接受 0x 前缀、分隔符或首尾空白。
+	 * 超出长整数范围的文本不按无符号补码解释，例如 FFFFFFFFFFFFFFFF 返回 0。</p>
+	 *
+	 * @param text 十六进制数值文本。
+	 * @return 解析结果；空引用、空文本、非法内容或溢出返回 0。
+	 */
+	@SimpleFunction
+	public static long 十六进制到长整数(String text) {
+		try {
+			return Long.parseLong(text, 16);
+		} catch (Exception exception) {
+			return 0;
+		}
+	}
+
+	/**
+	 * 将整数转换为不带前缀的二进制文本。
+	 *
+	 * @param value 待转换的 32 位整数。
+	 * @return 不补前导零的二进制文本；0 返回 0，负数返回 32 位补码。
+	 */
+	@SimpleFunction
+	public static String 整数到二进制(int value) {
+		return Integer.toBinaryString(value);
+	}
+
+	/**
+	 * 将二进制文本解析为有符号长整数。
+	 *
+	 * <p>允许正负号，不接受 0b 前缀、分隔符或首尾空白。
+	 * 最高位为 1 的文本仍按正数解析，不自动作为有符号补码。</p>
+	 *
+	 * @param text 二进制数值文本。
+	 * @return 解析结果；空引用、空文本、非法内容或溢出返回 0。
+	 */
+	@SimpleFunction
+	public static long 二进制到长整数(String text) {
+		try {
+			return Long.parseLong(text, 2);
+		} catch (Exception exception) {
+			return 0;
+		}
+	}
+
+	/* 数值与字节集：整数小端，长整数和双精度小数大端 */
+
+	/**
+	 * 将整数按小端字节序转换为四字节数组，低位字节在前。
+	 *
+	 * @param value 待转换的 32 位整数。
+	 * @return 固定四字节数组，例如十六进制 12345678 转为 78 56 34 12。
+	 */
+	@SimpleFunction
+	public static byte[] 整数到字节集(int value) {
+		return new byte[] {
+			(byte) value,
+			(byte) (value >> 8),
+			(byte) (value >> 16),
+			(byte) (value >>> 24)
+		};
+	}
+
+	/**
+	 * 将前四个字节按小端字节序还原为整数。
+	 *
+	 * @param data 小端字节数组，多余字节不参与转换。
+	 * @return 32 位有符号整数；空引用或不足四字节返回 0。
+	 */
+	@SimpleFunction
+	public static int 字节集到整数(byte[] data) {
+		if (data == null || data.length < 4) {
+			return 0;
+		}
+
+		return (data[0] & 0xFF)
+			| ((data[1] & 0xFF) << 8)
+			| ((data[2] & 0xFF) << 16)
+			| ((data[3] & 0xFF) << 24);
+	}
+
+	/**
+	 * 将长整数按大端字节序转换为八字节数组，高位字节在前。
+	 *
+	 * @param value 待转换的 64 位长整数。
+	 * @return 固定八字节数组；与整数到字节集的小端顺序不同。
+	 */
+	@SimpleFunction
+	public static byte[] 长整数到字节集(long value) {
+		byte[] result = new byte[8];
+
+		// 从最高八位开始提取，固定保留全部八个字节。
+		for (int index = 0; index < result.length; index++) {
+			result[index] = (byte) (value >>> (56 - index * 8));
+		}
+
+		return result;
+	}
+
+	/**
+	 * 将前八个字节按大端字节序还原为长整数。
+	 *
+	 * @param data 大端字节数组，多余字节不参与转换。
+	 * @return 64 位有符号长整数；空引用或不足八字节返回 0。
+	 */
+	@SimpleFunction
+	public static long 字节集到长整数(byte[] data) {
+		if (data == null || data.length < 8) {
+			return 0;
+		}
+
+		long result = 0;
+
+		for (int index = 0; index < 8; index++) {
+			result = (result << 8) | (data[index] & 0xFFL);
+		}
+
+		return result;
+	}
+
+	/**
+	 * 将双精度小数的 IEEE 754 位模式按大端字节序转换为八字节数组。
+	 *
+	 * <p>转换的是数值的二进制表示，不是十进制文本的字符编码。
+	 * 保留正负零和无穷；NaN 使用 Double.doubleToLongBits 的规范位模式。</p>
+	 *
+	 * @param value 待转换的双精度小数。
+	 * @return 固定八字节数组，高位字节在前。
+	 */
+	@SimpleFunction
+	public static byte[] 双精度小数到字节集(double value) {
+		return 长整数到字节集(Double.doubleToLongBits(value));
+	}
+
+	/**
+	 * 将前八个大端字节按 IEEE 754 位模式还原为双精度小数。
+	 *
+	 * @param data 大端字节数组，多余字节不参与转换。
+	 * @return 双精度小数；允许正负零、无穷及 NaN，空引用或不足八字节返回 0。
+	 */
+	@SimpleFunction
+	public static double 字节集到双精度小数(byte[] data) {
+		return Double.longBitsToDouble(字节集到长整数(data));
+	}
+
+	/**
+	 * 将单个有符号字节解释为 0 至 255 的无符号整数。
+	 *
+	 * @param value 待转换的单个字节。
+	 * @return 0 至 255 的整数，例如字节 -1 返回 255；不改变现有到整数的有符号转换。
+	 */
+	@SimpleFunction
+	public static int 字节到无符号整数(byte value) {
+		return value & 0xFF;
+	}
 }

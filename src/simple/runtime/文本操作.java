@@ -22,10 +22,18 @@ import simple.runtime.helpers.ConvHelpers;
 import simple.runtime.parameters.StringReferenceParameter;
 import simple.runtime.variants.Variant;
 
+import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
- * 实现各种与字符串相关的运行时函数。
+ * 提供文本查找、截取、传址修改及标记间内容提取。
+ *
+ * <p>索引从 0 开始，长度按 UTF-16 代码单元计算。传址接口直接修改传入变量；
+ * 空格修剪仅处理普通空格，不移除制表符或其它空白字符。</p>
  *
  * @author Herbert Czymontek
+ * @author 树先生 xhwsd@qq.com
  */
 @SimpleObject
 public final class 文本操作 {
@@ -33,265 +41,442 @@ public final class 文本操作 {
 	private 文本操作() {
 	}
 
-	/*
-	 * 检验索引；验证字符串索引参数是否在字符串边界内。
+	/* 长度与比较 */
+
+	/**
+	 * 返回文本中的 UTF-16 代码单元数，补充字符占两个单元。
+	 *
+	 * @param text 待计数文本。
+	 * @return 文本长度。
 	 */
-	private static void checkIndex(String function, int index, int max) {
-		if (index < 0 || index > max) {
-			throw new IllegalArgumentException("Index for " + function + "() out of range. " +
-					"Should be between 0 and " + max + ", but is " + index);
+	@SimpleFunction
+	public static int 取字符数(String text) {
+		return text.length();
+	}
+
+	/**
+	 * 返回文本按 UTF-8 编码后的字节数。
+	 *
+	 * @param text 待计数文本。
+	 * @return UTF-8 字节数。
+	 */
+	@SimpleFunction
+	public static int 取文本字节数(String text) {
+		return 取文本字节数(text, "UTF-8");
+	}
+
+	/**
+	 * 返回文本按指定字符集编码后的字节数。
+	 *
+	 * @param text 待计数文本。
+	 * @param encoding 字符集名称，例如 UTF-8 或 GBK。
+	 * @return 编码后的字节数。
+	 */
+	@SimpleFunction
+	public static int 取文本字节数(String text, String encoding) {
+		return 编码转换.文本到字节(text, encoding).length;
+	}
+
+	/**
+	 * 按 UTF-16 字典顺序比较两个文本。
+	 *
+	 * @param first 第一个文本。
+	 * @param second 第二个文本。
+	 * @return 相等为 0，第一个较小为负数，较大为正数。
+	 */
+	@SimpleFunction
+	public static int 文本比较(String first, String second) {
+		return first.compareTo(second);
+	}
+
+	/* 查找与截取 */
+
+	/**
+	 * 从文本开头向后查找字面内容。
+	 *
+	 * @param text 被查找文本。
+	 * @param find 要查找的原文。
+	 * @return 首次匹配的索引，未找到返回 -1。
+	 */
+	@SimpleFunction
+	public static int 寻找文本(String text, String find) {
+		return 寻找文本(text, find, 0);
+	}
+
+	/**
+	 * 从指定位置向后查找文本。
+	 *
+	 * @param text 被查找文本。
+	 * @param find 要查找的文本。
+	 * @param start 起始索引，允许等于文本长度。
+	 * @return 首次匹配的索引，未找到返回 -1。
+	 */
+	@SimpleFunction
+	public static int 寻找文本(String text, String find, int start) {
+		checkIndex(start, text.length());
+		return text.indexOf(find, start);
+	}
+
+	/**
+	 * 从文本末尾向前查找字面内容。
+	 *
+	 * @param text 被查找文本。
+	 * @param find 要查找的原文。
+	 * @return 最后匹配的索引，未找到返回 -1。
+	 */
+	@SimpleFunction
+	public static int 倒找文本(String text, String find) {
+		return 倒找文本(text, find, text.length());
+	}
+
+	/**
+	 * 从指定位置向前查找文本。
+	 *
+	 * @param text 被查找文本。
+	 * @param find 要查找的文本。
+	 * @param start 起始索引，允许等于文本长度。
+	 * @return 最后匹配的索引，未找到返回 -1。
+	 */
+	@SimpleFunction
+	public static int 倒找文本(String text, String find, int start) {
+		checkIndex(start, text.length());
+		return text.lastIndexOf(find, start);
+	}
+
+	/**
+	 * 从文本开头截取指定数量的 UTF-16 代码单元。
+	 *
+	 * @param text 原文本。
+	 * @param length 数量，不得为负，超出可用长度时截取到末尾。
+	 * @return 截取的文本。
+	 */
+	@SimpleFunction
+	public static String 取文本左边(String text, int length) {
+		return substring(text, 0, length);
+	}
+
+	/**
+	 * 从文本末尾截取指定数量的 UTF-16 代码单元。
+	 *
+	 * @param text 原文本。
+	 * @param length 数量，不得为负，超出可用长度时返回全文。
+	 * @return 截取的文本。
+	 */
+	@SimpleFunction
+	public static String 取文本右边(String text, int length) {
+		checkLength(length);
+		return substring(text, Math.max(0, text.length() - length), length);
+	}
+
+	/**
+	 * 从指定位置截取到文本末尾，索引仍从 0 开始。
+	 *
+	 * @param text 原文本。
+	 * @param start 起始索引，允许等于文本长度。
+	 * @return 截取的文本；起点位于末尾时为空文本。
+	 */
+	@SimpleFunction
+	public static String 取文本中间(String text, int start) {
+		return 取文本中间(text, start, Integer.MAX_VALUE);
+	}
+
+	/**
+	 * 从指定位置截取文本。
+	 *
+	 * @param text 原文本。
+	 * @param start 起始索引，允许等于文本长度。
+	 * @param length 数量，不得为负，超出剩余长度时截取到末尾。
+	 * @return 截取的文本。
+	 */
+	@SimpleFunction
+	public static String 取文本中间(String text, int start, int length) {
+		return substring(text, start, length);
+	}
+
+	/* 传址修改 */
+
+	/**
+	 * 按设备默认区域设置将传入变量转换为小写。
+	 *
+	 * @param text 待修改的文本变量。
+	 */
+	@SimpleFunction
+	public static void 到小写(StringReferenceParameter text) {
+		text.set(text.get().toLowerCase());
+	}
+
+	/**
+	 * 按设备默认区域设置将传入变量转换为大写。
+	 *
+	 * @param text 待修改的文本变量。
+	 */
+	@SimpleFunction
+	public static void 到大写(StringReferenceParameter text) {
+		text.set(text.get().toUpperCase());
+	}
+
+	/**
+	 * 删除传入变量首尾的普通空格。
+	 *
+	 * @param text 待修改的文本变量。
+	 */
+	@SimpleFunction
+	public static void 删首尾空(StringReferenceParameter text) {
+		删首空(text);
+		删尾空(text);
+	}
+
+	/**
+	 * 删除传入变量开头的普通空格。
+	 *
+	 * @param text 待修改的文本变量。
+	 */
+	@SimpleFunction
+	public static void 删首空(StringReferenceParameter text) {
+		String value = text.get();
+		int start = 0;
+
+		while (start < value.length() && value.charAt(start) == ' ') {
+			start++;
+		}
+
+		if (start > 0) {
+			text.set(value.substring(start));
 		}
 	}
 
-	/*
-	 * 检验长度；验证字符串长度参数是否为正数。
+	/**
+	 * 删除传入变量末尾的普通空格，全空格文本变为空文本。
+	 *
+	 * @param text 待修改的文本变量。
 	 */
-	private static void checkLength(String function, int len) {
-		if (len < 0) {
-			throw new IllegalArgumentException("Length for " + function + "() out of range. " +
-					"Should be greater than 0, but is " + len);
-		}
-	}
+	@SimpleFunction
+	public static void 删尾空(StringReferenceParameter text) {
+		String value = text.get();
+		int end = value.length();
 
-	/*
-	 * 取子字符串；提取子字符串的辅助方法。
-	 */
-	private static String mid(String function, String str, int start, int len) {
-		checkIndex(function, start, str.length());
-		checkLength(function, len);
-
-		int end = start + len;
-		if (end > str.length()) {
-			end = str.length();
+		while (end > 0 && value.charAt(end - 1) == ' ') {
+			end--;
 		}
 
-		return str.substring(start, end);
-	}
-
-	/**
-	 * 从给定文本寻找指定文本。
-	 *
-	 * @param str1  被寻找的文本
-	 * @param str2  要寻找的文本
-	 * @param start  寻找在开始索引{@code str1}
-	 * @return  在{@code str1}中找到{@code str2}的索引，
-	 *          如果在{@code str1}中找不到{@code str2}则为负值
-	 */
-	@SimpleFunction
-	public static int 寻找文本(String str1, String str2, int start) {
-		checkIndex("InStr", start, str1.length());
-
-		return str1.indexOf(str2, start);
-	}
-
-	/**
-	 * 从给定文本末尾倒序寻找指定文本。
-	 *
-	 * @param str1  被寻找的文本
-	 * @param str2  要寻找的文本
-	 * @param start  在{@code str1}中寻找开始索引
-	 * @return  在{@code str1}中找到{@code str2}的索引，
-	 *          如果在{@code str1}中找不到{@code str2}则为负值
-	 */
-	@SimpleFunction
-	public static int 倒找文本(String str1, String str2, int start) {
-		checkIndex("InStrRev", start, str1.length());
-
-		return str1.lastIndexOf(str2, start);
-	}
-
-	/**
-	 * 将给定文本全部转换为小写。
-	 *
-	 * @param str  要转换为小写的文本
-	 */
-	@SimpleFunction
-	public static void 到小写(StringReferenceParameter str) {
-		str.set(str.get().toLowerCase());
-	}
-
-	/**
-	 * 将给定的文本全部转换为大写。
-	 *
-	 * @param str  要转换为大写文本
-	 */
-	@SimpleFunction
-	public static void 到大写(StringReferenceParameter str) {
-		str.set(str.get().toUpperCase());
-	}
-
-	/**
-	 * 从给定文本的开头返回指定数的子文本。
-	 *
-	 * @param str  从中返回子文本的给定文本
-	 * @param len  要返回的文本数
-	 * @return  给定文本的子文本
-	 */
-	@SimpleFunction
-	public static String 取文本左边(String str, int len) {
-		return mid("Left", str, 0, len);
-	}
-
-	/**
-	 * 从给定文本的末尾返回指定数目的子文本。
-	 *
-	 * @param str  从中返回子文本的给定文本
-	 * @param len  要返回的文本数
-	 * @return  给定文本的子文本
-	 */
-	@SimpleFunction
-	public static String 取文本右边(String str, int len) {
-		int start = str.length() - len;
-		return mid("Right", str, start < 0 ? 0 : start, len);
-	}
-
-	/**
-	 * 从给定索引开始，返回给定文本中的指定文本数。
-	 *
-	 * @param str  返回子文本的给定文本
-	 * @param start  在{@code str}中开始索引
-	 * @param len  要返回的字符数
-	 * @return  给定文本的子文本
-	 */
-	@SimpleFunction
-	public static String 取文本中间(String str, int start, int len) {
-		return mid("Mid", str, start, len);
-	}
-
-	/**
-	 * 返回给定文本中的字符数。
-	 *
-	 * @param str  获得长度的文本
-	 * @return  给定文本的字符数
-	 */
-	@SimpleFunction
-	public static int 取字符数(String str) {
-		return str.length();
-	}
-
-	/**
-	 * 从给定文本中删除开头和末尾的空格。
-	 *
-	 * @param str  要修剪的文本
-	 */
-	@SimpleFunction
-	public static void 删首尾空(StringReferenceParameter str) {
-		删首空(str);
-		删尾空(str);
-	}
-
-	/**
-	 * 从给定文本中删除开头的空格。
-	 *
-	 * @param str  要修剪的文本
-	 */
-	@SimpleFunction
-	public static void 删首空(StringReferenceParameter str) {
-		char[] chars = str.get().toCharArray();
-		int count = 0;
-		for (int i = 0; i < chars.length && chars[i] == ' '; i++, count++) {
-		}
-
-		if (count > 0) {
-			str.set(new String(chars, count, chars.length - count));
+		if (end < value.length()) {
+			text.set(value.substring(0, end));
 		}
 	}
 
 	/**
-	 * 从给定文本中删除末尾的空格。
+	 * 从文本开头替换全部不重叠的字面匹配，直接修改传入变量。
 	 *
-	 * @param str  要修剪的文本
+	 * @param text 待修改的文本变量。
+	 * @param find 要查找的原文。
+	 * @param replacement 替换内容。
 	 */
 	@SimpleFunction
-	public static void 删尾空(StringReferenceParameter str) {
-		char[] chars = str.get().toCharArray();
-		int count = 0;
-		for (int i = chars.length - 1; i > 0 && chars[i] == ' '; i--, count++) {
-		}
-
-		if (count > 0) {
-			str.set(new String(chars, 0, chars.length - count));
-		}
+	public static void 子文本替换(StringReferenceParameter text, String find, String replacement) {
+		子文本替换(text, find, replacement, 0, -1);
 	}
 
 	/**
-	 * 将给定文本中指定子文本替换为指定文本。
+	 * 从指定位置替换全部不重叠的字面匹配，直接修改传入变量。
 	 *
-	 * @param str  要修改的文本
-	 * @param find  要查找的文本
-	 * @param replace  子文本替换的文本
-	 * @param start  {@code str}中的起始索引
-	 * @param count  执行替换的次数（-1 替换所有）
+	 * @param text 待修改的文本变量。
+	 * @param find 要查找的原文。
+	 * @param replacement 替换内容。
+	 * @param start 起始索引，之前的文本保持原样。
 	 */
 	@SimpleFunction
-	public static void 子文本替换(StringReferenceParameter str, String find, String replace,
-			int start, int count) {
-		String s = str.get();
+	public static void 子文本替换(StringReferenceParameter text, String find, String replacement, int start) {
+		子文本替换(text, find, replacement, start, -1);
+	}
 
-		checkIndex("Replace", start, s.length());
-		if (find == null || replace == null) {
-			// None of the following code minds find or replace being null, but we do
+	/**
+	 * 从指定位置替换原文本中不重叠的字面匹配，直接修改传入变量。
+	 *
+	 * <p>查找和替换内容中的正则符号均按原文处理；新写入内容不再次参与匹配。
+	 * 查找内容为空时匹配原文本各位置之间的边界。</p>
+	 *
+	 * @param text 待修改的文本变量。
+	 * @param find 要查找的原文。
+	 * @param replacement 替换内容。
+	 * @param start 起始索引，之前的文本保持原样。
+	 * @param count 替换次数，-1 表示全部，0 或其它负数不替换。
+	 */
+	@SimpleFunction
+	public static void 子文本替换(StringReferenceParameter text, String find, String replacement,
+		int start, int count) {
+		String value = text.get();
+
+		checkIndex(start, value.length());
+		if (find == null || replacement == null) {
 			throw new NullPointerException();
 		}
 
-		// Escape reg expr characters
-		find = "\\Q" + find + "\\E";
-
-		String s1 = s.substring(0, start);
-		String s2 = s.substring(start);
-
-		if (count == -1) {
-			s2 = s2.replaceAll(find, replace);
-		} else {
-			while (--count >= 0) {
-				s2 = s2.replaceFirst(find, replace);
-			}
+		if (count != -1 && count <= 0) {
+			return;
 		}
 
-		str.set(s1 + s2);
+		// 匹配原文本，并转义替换值，避免反斜杠、美元符号和新增内容影响后续替换。
+		Matcher matcher = Pattern.compile(Pattern.quote(find)).matcher(value.substring(start));
+		StringBuffer result = new StringBuffer();
+		String literal = Matcher.quoteReplacement(replacement);
+		int replaced = 0;
+
+		while ((count == -1 || replaced < count) && matcher.find()) {
+			matcher.appendReplacement(result, literal);
+			replaced++;
+		}
+
+		matcher.appendTail(result);
+		text.set(value.substring(0, start) + result);
 	}
 
 	/**
-	 * 按字典顺序比较两个给定的文本。
+	 * 将指定区间替换为新文本，直接修改传入变量。
 	 *
-	 * @param str1  第一个比较文本
-	 * @param str2  第二个比较文本
-	 * @return  如果文本相等则为0；
-	 *          如果{@code str2}在{@code str1}之后为负数；
-	 *          如果{@code str1}在{@code str2}之后为正数。
+	 * @param text 待修改的文本变量。
+	 * @param start 起始索引，允许等于文本长度。
+	 * @param length 原区间长度，不得为负，超出剩余长度时替换到末尾；0 表示插入。
+	 * @param replacement 新文本。
 	 */
 	@SimpleFunction
-	public static int 文本比较(String str1, String str2) {
-		return str1.compareTo(str2);
+	public static void 替换文本区间(StringReferenceParameter text, int start, int length, String replacement) {
+		String value = text.get();
+		checkIndex(start, value.length());
+		checkLength(length);
+		if (replacement == null) {
+			throw new NullPointerException();
+		}
+
+		int end = start + Math.min(length, value.length() - start);
+		text.set(value.substring(0, start) + replacement + value.substring(end));
 	}
 
 	/**
-	 * 反转给定的文本。
+	 * 翻转传入文本，保留有效代理对内部的先后关系。
 	 *
-	 * @param str  要反转的文本
+	 * @param text 待修改的文本变量。
 	 */
 	@SimpleFunction
-	public static void 翻转文本(StringReferenceParameter str) {
-		str.set(new StringBuffer(str.get()).reverse().toString());
+	public static void 翻转文本(StringReferenceParameter text) {
+		text.set(new StringBuilder(text.get()).reverse().toString());
 	}
 
-	/* 扩展 */
+	/* 标记提取与格式化 */
 
 	/**
-	 * 使用指定的格式文本和参数返回一个格式化文本。
+	 * 提取首对左右标记之间的文本，标记本身不包含在结果中。
 	 *
-	 * <p>详细信息请参考有关{@code String.format(String, Object...)}文档。
+	 * @param text 原文本。
+	 * @param left 左标记，不得为空。
+	 * @param right 右标记，不得为空。
+	 * @return 首个匹配内容，没有完整标记对时返回空文本。
+	 */
+	@SimpleFunction
+	public static String 取标记间文本(String text, String left, String right) {
+		checkMarkers(left, right);
+		int start = text.indexOf(left);
+		if (start < 0) {
+			return "";
+		}
+
+		start += left.length();
+		int end = text.indexOf(right, start);
+		return end < 0 ? "" : text.substring(start, end);
+	}
+
+	/**
+	 * 按原文顺序提取不重叠标记对之间的全部文本，不处理嵌套标记。
 	 *
-	 * @param format 格式文本
-	 * @param args 格式文本中由格式说明符引用的参数，可以是数组
-	 * @return 一个格式化文本
+	 * @param text 原文本。
+	 * @param left 左标记，不得为空，按字面内容匹配。
+	 * @param right 右标记，不得为空，按字面内容匹配。
+	 * @return 匹配内容数组，保留空内容，没有完整标记对时返回空数组。
+	 */
+	@SimpleFunction
+	public static String[] 取全部标记间文本(String text, String left, String right) {
+		checkMarkers(left, right);
+		ArrayList<String> result = new ArrayList<String>();
+		int position = 0;
+
+		while (position < text.length()) {
+			int start = text.indexOf(left, position);
+			if (start < 0) {
+				break;
+			}
+
+			start += left.length();
+			int end = text.indexOf(right, start);
+			if (end < 0) {
+				break;
+			}
+
+			result.add(text.substring(start, end));
+			position = end + right.length();
+		}
+
+		return result.toArray(new String[result.size()]);
+	}
+
+	/**
+	 * 使用 Java 格式说明符和参数生成文本，区域设置沿用设备默认值。
+	 *
+	 * @param format 格式文本。
+	 * @param args 参数或参数数组。
+	 * @return 格式化结果。
 	 */
 	@SimpleFunction
 	public static String 格式化文本(String format, Variant args) {
-		/*
-		JAVA字符串格式化-String.format()的使用：
-		https://www.cnblogs.com/Dhouse/p/7776780.html
-		*/
 		return String.format(format, ConvHelpers.variant2objects(args));
+	}
+
+	/* 内部边界检查 */
+
+	/**
+	 * 检查起始位置，允许使用文本末尾的位置。
+	 *
+	 * @param index 待检查索引。
+	 * @param maximum 文本长度。
+	 */
+	private static void checkIndex(int index, int maximum) {
+		if (index < 0 || index > maximum) {
+			throw new IllegalArgumentException("文本索引超出范围：" + index);
+		}
+	}
+
+	/**
+	 * 检查非负长度。
+	 *
+	 * @param length 待检查长度。
+	 */
+	private static void checkLength(int length) {
+		if (length < 0) {
+			throw new IllegalArgumentException("文本长度不得为负数。");
+		}
+	}
+
+	/**
+	 * 按剩余长度截取文本，避免起始位置与长度相加溢出。
+	 *
+	 * @param text 原文本。
+	 * @param start 起始位置。
+	 * @param length 截取长度。
+	 * @return 截取结果。
+	 */
+	private static String substring(String text, int start, int length) {
+		checkIndex(start, text.length());
+		checkLength(length);
+		return text.substring(start, start + Math.min(length, text.length() - start));
+	}
+
+	/**
+	 * 检查字面标记，空标记会使匹配规则不明确。
+	 *
+	 * @param left 左标记。
+	 * @param right 右标记。
+	 */
+	private static void checkMarkers(String left, String right) {
+		if (left == null || right == null || left.length() == 0 || right.length() == 0) {
+			throw new IllegalArgumentException("左右标记不能为空。");
+		}
 	}
 }

@@ -16,16 +16,16 @@
 
 package simple.runtime;
 
-import simple.runtime.annotations.SimpleDataElement;
-import simple.runtime.annotations.SimpleFunction;
-import simple.runtime.annotations.SimpleObject;
-
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
+
+import simple.runtime.annotations.SimpleDataElement;
+import simple.runtime.annotations.SimpleFunction;
+import simple.runtime.annotations.SimpleObject;
 
 /**
  * 实现各种与日期和时间相关的运行时功能。
@@ -67,7 +67,7 @@ public final class 日期时间操作 {
 	@SimpleDataElement
 	public static final int 星期_星期天 = Calendar.SUNDAY;
 
-	/* 月份 */
+	/* 月份：沿用 Calendar 的 0–11 编号，一月为 0。 */
 	@SimpleDataElement
 	public static final int 月份_一月 = Calendar.JANUARY;
 	@SimpleDataElement
@@ -93,7 +93,7 @@ public final class 日期时间操作 {
 	@SimpleDataElement
 	public static final int 月份_十二月 = Calendar.DECEMBER;
 
-	/*  时区。 提示：北京时间加上8个小时的时差就是格林平时。 */
+	/* 时区：北京时间为 UTC+08:00，换算为 GMT 时应减去 8 小时。 */
 	@SimpleDataElement
 	public static final String 时区_格林尼治 = "GMT";
 	@SimpleDataElement
@@ -112,11 +112,12 @@ public final class 日期时间操作 {
 	}                  // COV_NF_LINE
 
 	/**
-	 * 在给定日期添加时间间隔。
+	 * 在传入的日期对象上增减指定日历字段，不创建副本。
 	 *
-	 * @param date  要添加到的日期
-	 * @param intervalKind  间隔类型，可选值请参考{@link 时间#日期_年}等常量
-	 * @param interval  要添加的日期或时间量
+	 * @param date 需要修改的日期时间。
+	 * @param intervalKind 间隔类型，参见 {@link #日期_年}、{@link #日期_月}、{@link #日期_星期} 等常量。
+	 * @param interval 增量；正数增加，负数减少。
+	 * @throws IllegalArgumentException 间隔类型不受支持。
 	 */
 	@SimpleFunction
 	public static void 增减时间(Calendar date, int intervalKind, int interval) {
@@ -137,20 +138,14 @@ public final class 日期时间操作 {
 	}
 
 	/**
-	 * 从给定字符串创建日期。
+	 * 按预设格式依次解析设备默认时区的日期时间文本。
 	 *
-	 * <p>支持日期时间格式：<br>
-	 * {@code yyyy/MM/dd HH:mm:ss}，{@code yyyy/MM/dd/HH:mm:ss}，{@code yyyy/MM/dd/HH/mm/ss}，
-	 * {@code yyyy-MM-dd HH:mm:ss}，{@code yyyy-MM-dd-HH:mm:ss}，{@code yyyy-MM-dd-HH-mm-ss}，
-	 * {@code yyyy.MM.dd HH:mm:ss}，{@code yyyy.MM.dd.HH:mm:ss}，{@code yyyy.MM.dd.HH.mm.ss}，
-	 * {@code yyyy年MM月dd日 HH时mm分ss秒}，{@code yyyy年MM月dd日HH时mm分ss秒}，{@code yyyyMMddHHmmss}，
-	 * {@code yyyy/MM/dd}，{@code yyyy-MM-dd}，{@code yyyy.MM.dd}，{@code yyyy年MM月dd日}，{@code yyyyMMdd}。
+	 * <p>支持斜线、短横线、点、中文年月日及紧凑数字格式，完整列表见 {@link #DATE_FORMATS}。
+	 * 沿用宽松解析：越界日期可能被调整，成功解析后允许尾随文本，不适合作为严格日期校验器。</p>
 	 *
-	 * <p>其中{@code yyyy}为年（0000-9999），{@code MM}为月（01-12），{@code dd}为日（01-31）,
-	 * {@code HH}为时（00-23），{@code mm}为分（00-59）和{@code ss}为秒（00-59）。<br>
-	 *
-	 * @param value  日期时间文本
-	 * @return  日期
+	 * @param value 日期时间文本，例如 2026-10-16 12:30:45。
+	 * @return 设备默认时区的日期时间。
+	 * @throws IllegalArgumentException 所有预设格式均无法解析。
 	 */
 	@SimpleFunction
 	public static Calendar 日期值(String value) {
@@ -169,10 +164,10 @@ public final class 日期时间操作 {
 	}
 
 	/**
-	 * 返回给定日期时间的日。
+	 * 读取日期时间的日。
 	 *
-	 * @param date  取日的日期时间
-	 * @return  日（1-31）
+	 * @param date 日期时间。
+	 * @return 日，范围 1–31。
 	 */
 	@SimpleFunction
 	public static int 取日(Calendar date) {
@@ -180,13 +175,23 @@ public final class 日期时间操作 {
 	}
 
 	/**
-	 * 将给定的日期转换为字符串并进行格式化。
+	 * 按 yyyy-MM-dd HH:mm:ss 格式输出日期时间，沿用对象自身时区。
 	 *
+	 * @param date 要格式化的日期时间，保留对象自身时区。
+	 * @return 日期时间文本。
+	 */
+	@SimpleFunction
+	public static String 格式化时间(Calendar date) {
+		return 格式化时间(date, "yyyy-MM-dd HH:mm:ss");
+	}
+
+	/**
+	 * 按给定格式和日期对象自身的时区生成文本。
+	 *
+	 * @param date 日期时间，不修改输入。
+	 * @param pattern SimpleDateFormat 格式，例如 yyyy-MM-dd HH:mm:ss；月份用 MM，分钟用 mm。
+	 * @return 格式化后的文本，文字名称随设备语言区域变化。
 	 * @see SimpleDateFormat
-	 *
-	 * @param date  欲格式化时间
-	 * @param pattern 描述日期时间格式，例如{@code yyyy/MM/dd HH:mm:ss}
-	 * @return  格式化后的文本
 	 */
 	@SimpleFunction
 	public static String 格式化时间(Calendar date, String pattern) {
@@ -197,10 +202,10 @@ public final class 日期时间操作 {
 	}
 
 	/**
-	 * 返回给定日期时间的小时。
+	 * 读取日期时间的小时。
 	 *
-	 * @param date  取小时的日期时间
-	 * @return  小时（0-23）
+	 * @param date 日期时间。
+	 * @return 小时，范围 0–23。
 	 */
 	@SimpleFunction
 	public static int 取小时(Calendar date) {
@@ -208,10 +213,10 @@ public final class 日期时间操作 {
 	}
 
 	/**
-	 * 返回给定日期时间的分钟。
+	 * 读取日期时间的分钟。
 	 *
-	 * @param date  取分钟的日期时间
-	 * @return  分钟（0-59）
+	 * @param date 日期时间。
+	 * @return 分钟，范围 0–59。
 	 */
 	@SimpleFunction
 	public static int 取分钟(Calendar date) {
@@ -219,10 +224,10 @@ public final class 日期时间操作 {
 	}
 
 	/**
-	 * 返回给定日期时间的月份。
+	 * 读取日期时间的月份编号。
 	 *
-	 * @param date  取日期时间的月
-	 * @return  月份（范围 1-12），可请参考{@link #月份_一月}等常量
+	 * @param date 日期时间。
+	 * @return 月份编号，范围 0–11；一月为 0，与 {@link #月份_一月} 等常量一致。
 	 */
 	@SimpleFunction
 	public static int 取月份(Calendar date) {
@@ -230,10 +235,10 @@ public final class 日期时间操作 {
 	}
 
 	/**
-	 * 返回给定日期的月份名称。
+	 * 读取日期时间的本地化月份名称。
 	 *
-	 * @param date  使用月份的日期
-	 * @return  月份名称
+	 * @param date 日期时间。
+	 * @return 月份名称，随设备语言区域变化。
 	 */
 	@SimpleFunction
 	public static String 取月份名(Calendar date) {
@@ -241,9 +246,9 @@ public final class 日期时间操作 {
 	}
 
 	/**
-	 * 取当前设备的日期时间。
+	 * 读取设备当前日期时间。
 	 *
-	 * @return  日期时间
+	 * @return 设备默认时区的日期时间。
 	 */
 	@SimpleFunction
 	public static Calendar 取现行时间() {
@@ -251,10 +256,10 @@ public final class 日期时间操作 {
 	}
 
 	/**
-	 * 返回给定日期时间的秒。
+	 * 读取日期时间的秒。
 	 *
-	 * @param date  取秒的日期时间
-	 * @return  秒（0-59）
+	 * @param date 日期时间。
+	 * @return 秒，范围 0–59。
 	 */
 	@SimpleFunction
 	public static int 取秒(Calendar date) {
@@ -262,9 +267,9 @@ public final class 日期时间操作 {
 	}
 
 	/**
-	 * 返回当前系统以毫秒为单位的时间戳（13位）。
+	 * 读取当前 Unix 毫秒时间戳，不是设备启动时长。
 	 *
-	 * @return  毫秒为单位的时间戳（13位）
+	 * @return 自 1970-01-01T00:00:00Z 起经过的毫秒数；不以文本位数定义单位。
 	 */
 	@SimpleFunction
 	public static long 取现行时间戳() {
@@ -272,10 +277,10 @@ public final class 日期时间操作 {
 	}
 
 	/**
-	 * 返回给定日期时间的星期。
+	 * 读取日期时间的星期编号。
 	 *
-	 * @param date  取日期时间的星期
-	 * @return  星期（1-7），可请参考{@link #星期_星期天}等常量
+	 * @param date 日期时间。
+	 * @return 星期编号，范围 1–7；星期天为 1、星期一为 2，参见星期常量。
 	 */
 	@SimpleFunction
 	public static int 取星期(Calendar date) {
@@ -283,10 +288,10 @@ public final class 日期时间操作 {
 	}
 
 	/**
-	 * 返回给定日期的星期名称。
+	 * 读取日期时间的本地化星期名称。
 	 *
-	 * @param date  使用星期的日期
-	 * @return  星期名称
+	 * @param date 日期时间。
+	 * @return 星期名称，随设备语言区域变化。
 	 */
 	@SimpleFunction
 	public static String 取星期名(Calendar date) {
@@ -294,25 +299,41 @@ public final class 日期时间操作 {
 	}
 
 	/**
-	 * 返返回给定日期时间的年。
+	 * 读取日期时间的年份。
 	 *
-	 * @param date  取日期时间的年
-	 * @return  年
+	 * @param date 日期时间。
+	 * @return 年份。
 	 */
 	@SimpleFunction
 	public static int 取年(Calendar date) {
 		return date.get(Calendar.YEAR);
 	}
 
-	/** 扩展 **/
+	/* 扩展 */
 
 	/**
-	 * 从给定日期时间文本创建一个指定时区的日期时间。
+	 * 按给定格式和设备默认时区解析日期时间，沿用宽松解析与允许尾随文本的行为。
 	 *
-	 * @param value 日期时间文本，例如{@code 2008/04/21 09:29:48}。
-	 * @param format 日期时间格式，例如{@code yyyy/MM/dd HH:mm:ss}。
-	 * @param timeZoneId 时区标识，无效将为{@link 日期时间操作#时区_格林尼治}。
-	 * @return 日期时间。
+	 * @param value 日期时间文本。
+	 * @param format SimpleDateFormat 日期时间格式。
+	 * @return 解析得到的日期时间。
+	 * @throws IllegalArgumentException 日期时间无法解析或格式无效。
+	 */
+	@SimpleFunction
+	public static Calendar 文本到时间(String value, String format) {
+		return 文本到时间(value, format, TimeZone.getDefault().getID());
+	}
+
+	/**
+	 * 按给定格式和时区解析日期时间文本。
+	 *
+	 * <p>沿用宽松解析及允许尾随文本的行为，不作为严格日期校验器。</p>
+	 *
+	 * @param value 日期时间文本，例如 2026-10-16 12:30:45。
+	 * @param format SimpleDateFormat 格式，例如 yyyy-MM-dd HH:mm:ss。
+	 * @param timeZoneId 时区标识；不识别的标识回退为 GMT。
+	 * @return 指定时区的日期时间。
+	 * @throws IllegalArgumentException 无法解析文本或格式模式无效。
 	 */
 	@SimpleFunction
 	public static Calendar 文本到时间(String value, String format, String timeZoneId) {
@@ -324,33 +345,39 @@ public final class 日期时间操作 {
 			return calendar;
 		} catch (ParseException e) {
 			// 注意这里仅捕获解析异常，其它异常直接抛出。
-			throw new IllegalArgumentException("[时间.文本到时间] 无法解析日期时间文本；日期时间文本=" + value
-					+ " 日期时间格式=" + format + " 时区标识=" + timeZoneId);
+			throw new IllegalArgumentException("无法解析日期时间文本");
 		}
 	}
 
 	/**
-	 * 计算两个时间相差值。
+	 * 按固定时长单位计算结束时间减去开始时间的差值，不修改输入。
+	 *
+	 * <p>沿用年按 365 天、月按 30 天、星期按 7 天、天按 24 小时的折算。
+	 * 结果不是日历年月差或跨过的日期边界数；不足一个单位的部分向零截断，结束时间较早时可返回负数。</p>
 	 *
 	 * @param beginDate 开始时间。
 	 * @param endDate 结束时间。
-	 * @param timeUnit 时间单位，可选值请参考{@link 日期时间操作#日期_年}等常量。
-	 * @return 两个日期时间相差值。
+	 * @param timeUnit 时间单位，参见 {@link #日期_年}、{@link #日期_月}、{@link #日期_星期} 等常量。
+	 * @return 结束时间减去开始时间后按指定单位折算的整数值。
+	 * @throws IllegalArgumentException 时间单位不受支持。
 	 */
+	@SimpleFunction
 	public static long 取时间间隔(Calendar beginDate, Calendar endDate, int timeUnit) {
-		// 将2个日期时间转为毫秒数
+		// 先计算实际经过的毫秒数，再沿用固定时长的整数折算。
 		long time = endDate.getTimeInMillis() - beginDate.getTimeInMillis();
 		switch (timeUnit) {
 			default:
-				throw new IllegalArgumentException("[时间.取时间间隔] 错误的时间单位；时间单位=" + timeUnit);
+				throw new IllegalArgumentException("错误的时间单位");
 			case 日期_年:
 				return time / 1000 / 60 / 60 / 24 / 365;
 			case 日期_月:
 				return time / 1000 / 60 / 60 / 24 / 30;
+			case 日期_星期:
+				return time / 1000 / 60 / 60 / 24 / 7;
 			case 日期_天:
 				return time / 1000 / 60 / 60 / 24;
 			case 日期_时:
-				return time / 1000 /60 / 60;
+				return time / 1000 / 60 / 60;
 			case 日期_分:
 				return time / 1000 / 60;
 			case 日期_秒:
@@ -359,10 +386,10 @@ public final class 日期时间操作 {
 	}
 
 	/**
-	 * 将时间戳转为设备时区日期时间。
+	 * 将 Unix 毫秒时间戳转换为设备默认时区的日期时间。
 	 *
-	 * @param timestamp 毫秒时间戳（13位）。
-	 * @return 日期时间。
+	 * @param timestamp 自 1970-01-01T00:00:00Z 起经过的毫秒数。
+	 * @return 设备默认时区的日期时间；数值为 0 时表示 Unix 纪元。
 	 */
 	@SimpleFunction
 	public static Calendar 时间戳到时间(long timestamp) {
@@ -372,10 +399,10 @@ public final class 日期时间操作 {
 	}
 
 	/**
-	 * 将指点日期时间转为时间戳。
+	 * 将指定日期时间转换为 Unix 毫秒时间戳。
 	 *
 	 * @param date 日期时间。
-	 * @return 时间戳。
+	 * @return 自 1970-01-01T00:00:00Z 起经过的毫秒数，不受显示时区影响。
 	 */
 	@SimpleFunction
 	public static long 到时间戳(Calendar date) {
@@ -383,9 +410,9 @@ public final class 日期时间操作 {
 	}
 
 	/**
-	 * 取当前设备的时区。
+	 * 读取设备默认时区标识。
 	 *
-	 * @return 时区标识。
+	 * @return 时区标识，例如 Asia/Shanghai。
 	 */
 	@SimpleFunction
 	public static String 取时区() {
@@ -393,10 +420,10 @@ public final class 日期时间操作 {
 	}
 
 	/**
-	 * 取指定时区当前设备的日期时间。
+	 * 读取当前时刻在指定时区下的日期时间。
 	 *
-	 * @param timeZoneId 时区标识，无效将为{@link 日期时间操作#时区_格林尼治}。
-	 * @return 日期时间。
+	 * @param timeZoneId 时区标识；不识别的标识回退为 GMT。
+	 * @return 指定时区的当前日期时间，不修改设备时区。
 	 */
 	@SimpleFunction
 	public static Calendar 取时区时间(String timeZoneId) {
@@ -405,7 +432,7 @@ public final class 日期时间操作 {
 	}
 
 	/**
-	 * 取指定日期时间的时区。
+	 * 读取日期对象自身的时区标识。
 	 *
 	 * @param date 日期时间。
 	 * @return 时区标识。
@@ -416,13 +443,80 @@ public final class 日期时间操作 {
 	}
 
 	/**
-	 * 取指定日期时间的时区。
+	 * 设置日期对象自身的显示时区，保持其时间戳不变。
 	 *
-	 * @param date 日期时间。
-	 * @return 时区标识。
+	 * @param date 需要修改的日期时间。
+	 * @param timeZoneId 时区标识；不识别的标识回退为 GMT。
 	 */
 	@SimpleFunction
 	public static void 置时间时区(Calendar date, String timeZoneId) {
 		date.setTimeZone(TimeZone.getTimeZone(timeZoneId));
+	}
+
+	/**
+	 * 按设备默认时区取得当前日期，以连字符分隔年月日。
+	 *
+	 * @return yyyy-MM-dd 格式的当前日期文本。
+	 */
+	@SimpleFunction
+	public static String 取现行日期文本() {
+		return 取现行日期文本("-");
+	}
+
+	/**
+	 * 按设备默认时区生成当前日期文本。
+	 *
+	 * @param separator 年、月、日之间的文本分隔符，例如 - 或 /；空文本表示不分隔。
+	 * @return 依次包含四位年份、两位月份和两位日的文本。
+	 */
+	@SimpleFunction
+	public static String 取现行日期文本(String separator) {
+		return 格式化时间(取现行时间(), "yyyy-MM-dd").replace("-", separator);
+	}
+
+	/**
+	 * 按设备默认时区取得当前时间，以冒号分隔时分秒。
+	 *
+	 * @return HH:mm:ss 格式的当前时间文本，使用 24 小时制。
+	 */
+	@SimpleFunction
+	public static String 取现行时间文本() {
+		return 取现行时间文本(":");
+	}
+
+	/**
+	 * 按设备默认时区生成当前时间文本。
+	 *
+	 * @param separator 时、分、秒之间的文本分隔符，例如 :；空文本表示不分隔。
+	 * @return 依次包含两位小时、两位分钟和两位秒的文本，使用 24 小时制。
+	 */
+	@SimpleFunction
+	public static String 取现行时间文本(String separator) {
+		return 格式化时间(取现行时间(), "HH:mm:ss").replace(":", separator);
+	}
+
+	/**
+	 * 将约定长度的时间戳文本转换为设备默认时区的日期时间文本。
+	 *
+	 * <p>仅此便捷接口按文本长度区分单位：10 位按秒，13 位按毫秒。
+	 * 需要处理其他长度或指定显示格式时，使用 时间戳到时间 与 格式化时间。</p>
+	 *
+	 * @param timestamp 10 位秒时间戳文本或 13 位毫秒时间戳文本。
+	 * @return yyyy-MM-dd HH:mm:ss 文本；空引用、空文本或其他长度返回空文本。
+	 * @throws NumberFormatException 长度为 10 或 13，但不能解析为长整数。
+	 */
+	@SimpleFunction
+	public static String 时间戳到时间文本(String timestamp) {
+		if (timestamp == null || (timestamp.length() != 10 && timestamp.length() != 13)) {
+			return "";
+		}
+
+		// 保留秒、毫秒文本的单位约定，实际格式化仍复用日期对象自身的时区。
+		long milliseconds = Long.parseLong(timestamp);
+		if (timestamp.length() == 10) {
+			milliseconds *= 1000;
+		}
+
+		return 格式化时间(时间戳到时间(milliseconds), "yyyy-MM-dd HH:mm:ss");
 	}
 }

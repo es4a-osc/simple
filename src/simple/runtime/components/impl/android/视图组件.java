@@ -90,6 +90,27 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 	}
 
 	/**
+	 * 统一设置组件四边的边距，沿用原方法的单位解析。
+	 *
+	 * @param spacing 四边统一的边距；支持现有像素单位表示。
+	 */
+	@Override
+	public void 置边距(Variant spacing) {
+		置边距(spacing, spacing, spacing, spacing);
+	}
+
+	/**
+	 * 按水平、垂直两个方向设置组件边距，左右相同且上下相同。
+	 *
+	 * @param horizontal 左右边距；支持现有像素单位表示。
+	 * @param vertical 上下边距；支持现有像素单位表示。
+	 */
+	@Override
+	public void 置边距(Variant horizontal, Variant vertical) {
+		置边距(horizontal, vertical, horizontal, vertical);
+	}
+
+	/**
 	 * 创建并初始化基础安卓视图。
 	 *
 	 * <p>由于该方法是由组件构造函数间接调用的，
@@ -668,6 +689,27 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 			像素转换.解析像素(rightMargin),
 			像素转换.解析像素(bottomMargin)
 		);
+	}
+
+	/**
+	 * 统一设置组件四边的填充，沿用原方法的单位解析。
+	 *
+	 * @param spacing 四边统一的填充；支持现有像素单位表示。
+	 */
+	@Override
+	public void 置填充(Variant spacing) {
+		置填充(spacing, spacing, spacing, spacing);
+	}
+
+	/**
+	 * 按水平、垂直两个方向设置组件填充，左右相同且上下相同。
+	 *
+	 * @param horizontal 左右填充；支持现有像素单位表示。
+	 * @param vertical 上下填充；支持现有像素单位表示。
+	 */
+	@Override
+	public void 置填充(Variant horizontal, Variant vertical) {
+		置填充(horizontal, vertical, horizontal, vertical);
 	}
 
 	@Override

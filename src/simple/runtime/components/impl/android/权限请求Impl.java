@@ -88,14 +88,17 @@ public final class 权限请求Impl extends 组件Impl implements 权限请求 {
 			} else if (permissions.length > 0) {
 				// 检验应用使用权限是否授权
 				ArrayList<String> list = new ArrayList<String>();
+
 				for (String permission : permissions) {
 					if (是否授权(permission) == false) {
 						list.add(permission);
 					}
 				}
+
 				return list.toArray(new String[0]);
 			}
 		}
+
 		return new String[0];
 	}
 
@@ -106,7 +109,18 @@ public final class 权限请求Impl extends 组件Impl implements 权限请求 {
 			// 添加于API23：ContextWrapper.checkSelfPermission(String)
 			return MainActivity.getContext().checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED;
 		}
+
 		return true;
+	}
+
+	/**
+	 * 请求清单中尚未授权的权限，请求标记为空文本；结果通过原有事件返回。
+	 *
+	 * @return 发起请求返回真，否则返回假。
+	 */
+	@Override
+	public boolean 请求权限() {
+		return 请求权限("");
 	}
 
 	@Override
@@ -116,11 +130,13 @@ public final class 权限请求Impl extends 组件Impl implements 权限请求 {
 			String[] permissions = 取所需权限();
 			if (permissions != null && permissions.length > 0) {
 				requestMarks.add(requestMark);
+
 				// 添加于API23：Activity.requestPermissions(String[], int)
 				MainActivity.getContext().requestPermissions(permissions, hashCode());
 				return true;
 			}
 		}
+
 		return false;
 	}
 
@@ -129,10 +145,12 @@ public final class 权限请求Impl extends 组件Impl implements 权限请求 {
 	public boolean 请求权限(String[] permissions, String requestMark) {
 		if (需要请求()) {
 			requestMarks.add(requestMark);
+
 			// 添加于API23：Activity.requestPermissions(String[], int)
 			MainActivity.getContext().requestPermissions(permissions, hashCode());
 			return true;
 		}
+
 		return false;
 	}
 
@@ -143,6 +161,7 @@ public final class 权限请求Impl extends 组件Impl implements 权限请求 {
 			// 添加于API23：Activity.shouldShowRequestPermissionRationale(String)
 			return MainActivity.getContext().shouldShowRequestPermissionRationale(permission);
 		}
+
 		return false;
 	}
 
@@ -153,5 +172,5 @@ public final class 权限请求Impl extends 组件Impl implements 权限请求 {
     	Uri uri = Uri.fromParts("package", MainActivity.getContext().getPackageName(), null);
     	intent.setData(uri);
     	MainActivity.getContext().startActivityForResult(intent, 123456789);
-	}	
+	}
 }

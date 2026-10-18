@@ -190,6 +190,7 @@ public final class 语音处理器Impl extends 组件Impl implements 语音处�
 		}
 
 		StringBuilder text = new StringBuilder();
+
 		for (String result : results) {
 			if (result == null) {
 				continue;

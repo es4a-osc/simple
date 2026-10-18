@@ -37,6 +37,30 @@
 	断言真(1234567890 匹配 NUMBER_PATTERN)
 	断言假(12345 匹配 NUMBER_PATTERN)
 
+	' 关键字成员与匹配运算符共存，实际运行正则查找、分组及替换。
+	变量 表达式 为 simple.runtime.collections.正则表达式
+	表达式 = 创建 simple.runtime.collections.正则表达式
+	表达式.编译("([A-Za-z]+)=([0-9]+)", 0)
+	表达式.匹配("apple=12, pear=7")
+	断言真(表达式.匹配下一个())
+	断言真(表达式.取子匹配文本(1) = "apple")
+	断言真(表达式.取子匹配文本(2) = "12")
+	断言真(表达式.取开始位置() = 0)
+	断言真(表达式.取结束位置() = 8)
+
+	' 批量查找使用独立匹配器，当前分组和下一个匹配位置保持不变。
+	变量 全部匹配 为 文本型()
+	全部匹配 = 表达式.取全部匹配("banana=9, orange=10")
+	断言真(取数组成员数(全部匹配) = 2)
+	断言真(全部匹配(0) = "banana=9")
+	断言真(全部匹配(1) = "orange=10")
+	断言真(表达式.取子匹配文本(1) = "apple")
+
+	断言真(表达式.匹配下一个())
+	断言真(表达式.取子匹配文本(1) = "pear")
+	断言假(表达式.匹配下一个())
+	断言真(表达式.替换("$1=hidden") = "apple=hidden, pear=hidden")
+
 	' Like with strings
 	断言真(LikeTest(FOOF, FOOF_PATTERN))
 	断言假(LikeTest(GOOF, FOOF_PATTERN))
@@ -45,6 +69,7 @@
 函数 LikeTest(string 为 文本型, pattern 为 文本型) 为 逻辑型
 	LikeTest = string 匹配 pattern
 结束 函数
+
 
 $属性
 	$资源 $对象

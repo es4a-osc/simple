@@ -278,13 +278,13 @@ public final class Toolchain {
 	 * @param outputFile 要生成的APK文件
 	 * @param resourcesFile AAPT2生成的{@code .ap_}资源包
 	 * @param dexFile dx生成的{@code classes.dex}文件
-	 * @param libraryDirectories 扩展库依赖JAR目录
+	 * @param dependencyFiles 已选定的扩展库依赖JAR
 	 * @param nativeDirectories 扩展库原生库目录
 	 * @param err 错误输出
 	 * @return 执行成功返回{@code true}，否则返回{@code false}
 	 */
 	public static boolean buildApplication(File outputFile, File resourcesFile,
-			File dexFile, List<File> libraryDirectories,
+			File dexFile, List<File> dependencyFiles,
 			List<File> nativeDirectories, PrintStream err) {
 		List<String> commandline = new ArrayList<String>();
 		// 第一个参数指定要生成的APK文件。
@@ -297,10 +297,10 @@ public final class Toolchain {
 		// -f <文件>：加入dx生成的classes.dex。
 		commandline.add("-f");
 		commandline.add(dexFile.getAbsolutePath());
-		// -rj <目录>：加入依赖JAR中的非class资源。
-		for (File libraryDirectory : libraryDirectories) {
+		// -rj <JAR>：只加入选定依赖的非class资源，不再扫描原始libs目录。
+		for (File dependency : dependencyFiles) {
 			commandline.add("-rj");
-			commandline.add(libraryDirectory.getAbsolutePath());
+			commandline.add(dependency.getAbsolutePath());
 		}
 		// -nf <目录>：加入按ABI组织的原生SO文件。
 		for (File nativeDirectory : nativeDirectories) {
