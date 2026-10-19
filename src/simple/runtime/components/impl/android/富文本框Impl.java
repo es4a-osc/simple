@@ -25,6 +25,7 @@ import android.widget.EditText;
 import simple.runtime.components.富文本框;
 import simple.runtime.components.组件容器;
 import simple.runtime.components.impl.android.util.ImageUtil;
+import simple.runtime.components.impl.android.util.RichTextRanges;
 import simple.runtime.errors.文件未存在错误;
 import simple.runtime.events.EventDispatcher;
 

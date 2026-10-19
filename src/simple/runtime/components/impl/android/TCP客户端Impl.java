@@ -15,6 +15,8 @@ import java.net.Socket;
 
 /**
  * Android TCP客户端实现。
+ *
+ * @author 树先生 xhwsd@qq.com
  */
 public class TCP客户端Impl extends 组件Impl implements TCP客户端 {
 

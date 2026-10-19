@@ -220,6 +220,9 @@ public final class 日期时间操作 {
 		"yyyy/MM/dd", "yyyy-MM-dd", "yyyy.MM.dd", "yyyy年MM月dd日", "yyyyMMdd",
 	};
 
+	/**
+	 * 静态方法集，不创建实例。
+	 */
 	private 日期时间操作() {  // COV_NF_LINE
 	}                  // COV_NF_LINE
 

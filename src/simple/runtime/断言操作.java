@@ -30,6 +30,9 @@ import simple.runtime.variants.Variant;
 @SimpleObject
 public class 断言操作 {
 
+	/**
+	 * 静态方法集，不创建实例。
+	 */
 	private 断言操作() {
 	}
 

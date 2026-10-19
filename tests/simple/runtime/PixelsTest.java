@@ -26,20 +26,20 @@ import simple.runtime.variants.ShortVariant;
 import simple.runtime.variants.StringVariant;
 
 /**
- * Tests for {@link 像素转换#解析像素(simple.runtime.variants.Variant)}.
+ * Tests for {@link 像素转换#解析为像素(simple.runtime.variants.Variant)}.
  */
 public final class PixelsTest extends TestCase {
 
 	public void testIntegralVariants() {
-		assertEquals(0, 像素转换.解析像素(ByteVariant.getByteVariant((byte) 0)));
-		assertEquals(Short.MAX_VALUE, 像素转换.解析像素(ShortVariant.getShortVariant(Short.MAX_VALUE)));
-		assertEquals(Integer.MIN_VALUE, 像素转换.解析像素(IntegerVariant.getIntegerVariant(Integer.MIN_VALUE)));
-		assertEquals(Integer.MAX_VALUE, 像素转换.解析像素(LongVariant.getLongVariant(Integer.MAX_VALUE)));
+		assertEquals(0, 像素转换.解析为像素(ByteVariant.getByteVariant((byte) 0)));
+		assertEquals(Short.MAX_VALUE, 像素转换.解析为像素(ShortVariant.getShortVariant(Short.MAX_VALUE)));
+		assertEquals(Integer.MIN_VALUE, 像素转换.解析为像素(IntegerVariant.getIntegerVariant(Integer.MIN_VALUE)));
+		assertEquals(Integer.MAX_VALUE, 像素转换.解析为像素(LongVariant.getLongVariant(Integer.MAX_VALUE)));
 	}
 
 	public void testAbsolutePixelText() {
-		assertEquals(10, 像素转换.解析像素(StringVariant.getStringVariant("10")));
-		assertEquals(-12, 像素转换.解析像素(StringVariant.getStringVariant(" -12PX ")));
+		assertEquals(10, 像素转换.解析为像素(StringVariant.getStringVariant("10")));
+		assertEquals(-12, 像素转换.解析为像素(StringVariant.getStringVariant(" -12PX ")));
 	}
 
 	public void testRejectsOutOfRangeLong() {
@@ -53,7 +53,7 @@ public final class PixelsTest extends TestCase {
 
 	private static void assertConversionError(simple.runtime.variants.Variant value) {
 		try {
-			像素转换.解析像素(value);
+			像素转换.解析为像素(value);
 			fail();
 		} catch (转换错误 expected) {
 		}

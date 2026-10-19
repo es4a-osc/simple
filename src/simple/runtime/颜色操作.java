@@ -14,6 +14,12 @@ import simple.runtime.annotations.SimpleObject;
 public final class 颜色操作 {
 
 	/**
+	 * 静态方法集，不创建实例。
+	 */
+	private 颜色操作() {
+	}
+
+	/**
 	 * 将 #RRGGBB 或 #AARRGGBB 文本解析为 ARGB 颜色值。
 	 *
 	 * <p>六位格式默认完全不透明；八位格式保留指定的透明度，十六进制字母不区分大小写。</p>

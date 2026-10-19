@@ -1,4 +1,4 @@
-package simple.runtime.components.impl.android;
+package simple.runtime.components.impl.android.util;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +12,7 @@ import simple.runtime.errors.索引超出界限错误;
  *
  * @author 树先生 xhwsd@qq.com
  */
-final class DataTableModel {
+public final class DataTableModel {
 
 	private String[] headers;
 	private int columns;
@@ -25,7 +25,7 @@ final class DataTableModel {
 	 *
 	 * @param values 输入值数组
 	 */
-	void setHeaders(String[] values) {
+	public void setHeaders(String[] values) {
 		String[] copy = copyValues(values);
 		if (!rows.isEmpty() && copy.length != columns) {
 			throw new IllegalArgumentException("已有数据时，表头列数必须与数据列数一致");
@@ -40,7 +40,7 @@ final class DataTableModel {
 	 *
 	 * @return 表头副本；未设置时为 {@code null}
 	 */
-	String[] getHeaders() {
+	public String[] getHeaders() {
 		return headers == null ? null : headers.clone();
 	}
 
@@ -50,7 +50,7 @@ final class DataTableModel {
 	 * @param values 输入值数组
 	 * @param color ARGB 颜色值
 	 */
-	void addRow(String[] values, int color) {
+	public void addRow(String[] values, int color) {
 		String[] copy = copyValues(values);
 		if (columns != 0 && copy.length != columns) {
 			throw new IllegalArgumentException("数据列数必须与表格列数一致");
@@ -65,7 +65,7 @@ final class DataTableModel {
 	 *
 	 * @param row 行索引，从 0 开始
 	 */
-	void removeRow(int row) {
+	public void removeRow(int row) {
 		checkRow(row);
 		rows.remove(row);
 	}
@@ -73,7 +73,7 @@ final class DataTableModel {
 	/**
 	 * 清空当前保存的内容与关联状态。
 	 */
-	void clear() {
+	public void clear() {
 		rows.clear();
 		headers = null;
 		columns = 0;
@@ -84,7 +84,7 @@ final class DataTableModel {
 	 *
 	 * @return 数据行数，不包含表头
 	 */
-	int getRowCount() {
+	public int getRowCount() {
 		return rows.size();
 	}
 
@@ -93,7 +93,7 @@ final class DataTableModel {
 	 *
 	 * @return 列数
 	 */
-	int getColumnCount() {
+	public int getColumnCount() {
 		return columns;
 	}
 
@@ -106,7 +106,7 @@ final class DataTableModel {
 	 * @param column 列索引，从 0 开始
 	 * @return 指定单元格的文本
 	 */
-	String getCell(int row, int column) {
+	public String getCell(int row, int column) {
 		checkCell(row, column);
 		return rows.get(row).values[column];
 	}
@@ -118,7 +118,7 @@ final class DataTableModel {
 	 * @param column 列索引，从 0 开始
 	 * @param value 新的单元格文本；空引用按空文本保存。
 	 */
-	void setCell(int row, int column, String value) {
+	public void setCell(int row, int column, String value) {
 		checkCell(row, column);
 		rows.get(row).values[column] = value == null ? "" : value;
 	}
@@ -129,7 +129,7 @@ final class DataTableModel {
 	 * @param row 行索引，从 0 开始
 	 * @return 指定行的 ARGB 背景色
 	 */
-	int getRowColor(int row) {
+	public int getRowColor(int row) {
 		checkRow(row);
 		return rows.get(row).color;
 	}
@@ -140,7 +140,7 @@ final class DataTableModel {
 	 * @param row 行索引，从 0 开始
 	 * @param color ARGB 颜色值
 	 */
-	void setRowColor(int row, int color) {
+	public void setRowColor(int row, int color) {
 		checkRow(row);
 		rows.get(row).color = color;
 	}
@@ -151,7 +151,7 @@ final class DataTableModel {
 	 * @param row 行索引，从 0 开始
 	 * @return 指定行的附加标记
 	 */
-	String getRowTag(int row) {
+	public String getRowTag(int row) {
 		checkRow(row);
 		return rows.get(row).tag;
 	}
@@ -162,7 +162,7 @@ final class DataTableModel {
 	 * @param row 行索引，从 0 开始
 	 * @param tag 附加标记或 NFC 标签
 	 */
-	void setRowTag(int row, String tag) {
+	public void setRowTag(int row, String tag) {
 		checkRow(row);
 		rows.get(row).tag = tag == null ? "" : tag;
 	}

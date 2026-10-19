@@ -19,6 +19,8 @@ import java.util.List;
 
 /**
  * Android TCP服务端实现。
+ *
+ * @author 树先生 xhwsd@qq.com
  */
 public class TCP服务端Impl extends 组件Impl implements TCP服务端 {
 

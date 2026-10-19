@@ -32,6 +32,9 @@ public abstract class 应用操作 {
 
 	private static ApplicationFunctions applicationFunctions;
 
+	/**
+	 * 静态方法集，不创建实例。
+	 */
 	private 应用操作() {
 	}
 

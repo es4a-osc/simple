@@ -18,6 +18,12 @@ import java.util.ArrayList;
 public final class 事件操作 {
 
 	/**
+	 * 静态方法集，不创建实例。
+	 */
+	private 事件操作() {
+	}
+
+	/**
 	 * 取当前发生事件的对象。
 	 *
 	 * @return 返回事件对象

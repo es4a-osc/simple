@@ -156,10 +156,10 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 	public void 宽度(Variant value) {
 		布局 layout = getComponentContainer().getLayout();
 		if (layout instanceof 绝对布局Impl) {
-			width = 像素转换.解析像素(value);
+			width = 像素转换.解析为像素(value);
 			((绝对布局Impl) layout).placeComponent(this);
 		} else {
-			ViewUtil.setWidth(getView(), 像素转换.解析像素(value));
+			ViewUtil.setWidth(getView(), 像素转换.解析为像素(value));
 		}
 	}
 
@@ -174,10 +174,10 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 	public void 高度(Variant value) {
 		布局 layout = getComponentContainer().getLayout();
 		if (layout instanceof 绝对布局Impl) {
-			height = 像素转换.解析像素(value);
+			height = 像素转换.解析为像素(value);
 			((绝对布局Impl) layout).placeComponent(this);
 		} else {
-			ViewUtil.setHeight(getView(), 像素转换.解析像素(value));
+			ViewUtil.setHeight(getView(), 像素转换.解析为像素(value));
 		}
 	}
 
@@ -190,7 +190,7 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 
 	@Override
 	public void 左边距(Variant leftMargin) {
-		ViewUtil.setLeftMargin(getView(), 像素转换.解析像素(leftMargin));
+		ViewUtil.setLeftMargin(getView(), 像素转换.解析为像素(leftMargin));
 	}
 
 	@Override
@@ -200,7 +200,7 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 
 	@Override
 	public void 顶边距(Variant topMargin) {
-		ViewUtil.setTopMargin(getView(), 像素转换.解析像素(topMargin));
+		ViewUtil.setTopMargin(getView(), 像素转换.解析为像素(topMargin));
 	}
 
 	@Override
@@ -210,7 +210,7 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 
 	@Override
 	public void 右边距(Variant rightMargin) {
-		ViewUtil.setRightMargin(getView(), 像素转换.解析像素(rightMargin));
+		ViewUtil.setRightMargin(getView(), 像素转换.解析为像素(rightMargin));
 	}
 
 	@Override
@@ -220,7 +220,7 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 
 	@Override
 	public void 底边距(Variant bottomMargin) {
-		ViewUtil.setBottomMargin(getView(), 像素转换.解析像素(bottomMargin));
+		ViewUtil.setBottomMargin(getView(), 像素转换.解析为像素(bottomMargin));
 	}
 
 	/* 填充 */
@@ -232,7 +232,7 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 
 	@Override
 	public void 左填充(Variant leftPadding) {
-		ViewUtil.setLeftPadding(getView(), 像素转换.解析像素(leftPadding));
+		ViewUtil.setLeftPadding(getView(), 像素转换.解析为像素(leftPadding));
 	}
 
 	@Override
@@ -242,7 +242,7 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 
 	@Override
 	public void 顶填充(Variant topPadding) {
-		ViewUtil.setTopPadding(getView(), 像素转换.解析像素(topPadding));
+		ViewUtil.setTopPadding(getView(), 像素转换.解析为像素(topPadding));
 	}
 
 	@Override
@@ -252,7 +252,7 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 
 	@Override
 	public void 右填充(Variant rightPadding) {
-		ViewUtil.setRightPadding(getView(), 像素转换.解析像素(rightPadding));
+		ViewUtil.setRightPadding(getView(), 像素转换.解析为像素(rightPadding));
 	}
 
 	@Override
@@ -262,7 +262,7 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 
 	@Override
 	public void 底填充(Variant bottomPadding) {
-		ViewUtil.setBottomPadding(getView(), 像素转换.解析像素(bottomPadding));
+		ViewUtil.setBottomPadding(getView(), 像素转换.解析为像素(bottomPadding));
 	}
 
 	/* 背景 */
@@ -659,7 +659,7 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 
 	@Override
 	public void 左边(Variant left) {
-		this.left = 像素转换.解析像素(left);
+		this.left = 像素转换.解析为像素(left);
 
 		布局 layout = getComponentContainer().getLayout();
 		if (layout instanceof 绝对布局Impl) {
@@ -674,7 +674,7 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 
 	@Override
 	public void 顶边(Variant top) {
-		this.top = 像素转换.解析像素(top);
+		this.top = 像素转换.解析为像素(top);
 
 		布局 layout = getComponentContainer().getLayout();
 		if (layout instanceof 绝对布局Impl) {
@@ -688,10 +688,10 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 	public void 置边距(Variant leftMargin, Variant topMargin, Variant rightMargin, Variant bottomMargin) {
 		ViewUtil.setMargin(
 			getView(),
-			像素转换.解析像素(leftMargin),
-			像素转换.解析像素(topMargin),
-			像素转换.解析像素(rightMargin),
-			像素转换.解析像素(bottomMargin)
+			像素转换.解析为像素(leftMargin),
+			像素转换.解析为像素(topMargin),
+			像素转换.解析为像素(rightMargin),
+			像素转换.解析为像素(bottomMargin)
 		);
 	}
 
@@ -720,10 +720,10 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 	public void 置填充(Variant leftPadding, Variant topPadding, Variant rightPadding, Variant bottomPadding) {
 		ViewUtil.setPadding(
 			getView(),
-			像素转换.解析像素(leftPadding),
-			像素转换.解析像素(topPadding),
-			像素转换.解析像素(rightPadding),
-			像素转换.解析像素(bottomPadding)
+			像素转换.解析为像素(leftPadding),
+			像素转换.解析为像素(topPadding),
+			像素转换.解析为像素(rightPadding),
+			像素转换.解析为像素(bottomPadding)
 		);
 	}
 
@@ -773,10 +773,10 @@ public abstract class 视图组件 extends 组件Impl implements 可视组件 {
 
 	@Override
 	public void 移动(Variant left, Variant top, Variant width, Variant height) {
-		this.left = 像素转换.解析像素(left);
-		this.top = 像素转换.解析像素(top);
-		this.width = 像素转换.解析像素(width);
-		this.height = 像素转换.解析像素(height);
+		this.left = 像素转换.解析为像素(left);
+		this.top = 像素转换.解析为像素(top);
+		this.width = 像素转换.解析为像素(width);
+		this.height = 像素转换.解析为像素(height);
 
 		布局 layout = getComponentContainer().getLayout();
 		if (layout instanceof 绝对布局Impl) {

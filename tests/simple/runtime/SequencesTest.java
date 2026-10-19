@@ -197,7 +197,7 @@ public final class SequencesTest extends TestCase {
 		Variant wrapped = ArrayVariant.getArrayVariant(source);
 		数组操作.复制数组成员(wrapped, 0, wrapped, 1, 3);
 		assertTrue(Arrays.equals(new int[]{1, 1, 2, 3}, source));
-		assertTrue(Arrays.equals(new byte[]{1, 2}, 数组操作.合并字节数组(new byte[]{1}, new byte[]{2})));
+		assertTrue(Arrays.equals(new byte[]{1, 2}, 字节集操作.合并字节集(new byte[]{1}, new byte[]{2})));
 		assertTrue(Arrays.equals(new String[]{"a", "b"}, 数组操作.合并文本数组(new String[]{"a"}, new String[]{"b"})));
 	}
 
@@ -221,10 +221,10 @@ public final class SequencesTest extends TestCase {
 	/** 文本过滤去重且有序，分隔符中的正则转义按字面匹配。 */
 	public void testTextArrayOperations() {
 		assertTrue(Arrays.equals(new String[]{"foo", "foobar"}, 数组操作.过滤数组文本(new String[]{"foo", "foobar", "foo"}, "foo", true)));
-		assertTrue(Arrays.equals(new String[]{"a", "", ""}, 数组操作.分割文本("a||", "|")));
-		assertTrue(Arrays.equals(new String[]{"a", "b"}, 数组操作.分割文本("a\\Eb", "\\E")));
-		assertTrue(Arrays.equals(new String[]{"a", "b|c"}, 数组操作.分割文本("a|b|c", "|", 2)));
-		assertEquals("a|b", 数组操作.连接数组文本(new String[]{"a", "b"}, "|"));
+		assertTrue(Arrays.equals(new String[]{"a", "", ""}, 文本操作.分割文本("a||", "|")));
+		assertTrue(Arrays.equals(new String[]{"a", "b"}, 文本操作.分割文本("a\\Eb", "\\E")));
+		assertTrue(Arrays.equals(new String[]{"a", "b|c"}, 文本操作.分割文本("a|b|c", "|", 2)));
+		assertEquals("a|b", 文本操作.连接数组文本(new String[]{"a", "b"}, "|"));
 	}
 
 	/** 截取返回独立数组，支持空内容和超长数量。 */
@@ -249,6 +249,9 @@ public final class SequencesTest extends TestCase {
 		result[0] = 9;
 		assertEquals(1, source[0]);
 		assertTrue(Arrays.equals(new byte[]{9, 2}, result));
+		assertTrue(Arrays.equals(new byte[]{1}, 字节集操作.合并字节集(new byte[0], source)));
+		assertNotSame(source, 字节集操作.合并字节集(source, new byte[0]));
+		assertEquals(0, 字节集操作.合并字节集(new byte[0], new byte[0]).length);
 	}
 
 	/** 首尾、连续分隔符和末尾不完整匹配均有明确结果。 */
@@ -290,6 +293,8 @@ public final class SequencesTest extends TestCase {
 	/** 无效字节参数应抛出可转换为 Simple 错误的参数异常。 */
 	public void testByteInvalidArguments() {
 		invalid(() -> 字节集操作.取字节集长度(null));
+		invalid(() -> 字节集操作.合并字节集(null, new byte[0]));
+		invalid(() -> 字节集操作.合并字节集(new byte[0], null));
 		invalid(() -> 字节集操作.取字节集左边(new byte[]{1}, -1));
 		invalid(() -> 字节集操作.取字节集中间(new byte[]{1}, 2, 0));
 		invalid(() -> 字节集操作.分割字节集(new byte[]{1}, new byte[0]));

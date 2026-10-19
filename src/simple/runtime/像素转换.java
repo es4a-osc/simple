@@ -49,6 +49,9 @@ public final class 像素转换 {
 	@SimpleDataElement
 	public static final int 像素_缩放 = TypedValue.COMPLEX_UNIT_SP;
 
+	/**
+	 * 静态方法集，不创建实例。
+	 */
 	private 像素转换() {
 	}
 
@@ -57,7 +60,7 @@ public final class 像素转换 {
 	 *
 	 * @param value 像素值
 	 * @param unit 类型，可选值请参考{@link 像素转换#像素_绝对}等
-	 * @return  绝对像素（px）值
+	 * @return 绝对像素（px）值
 	 */
 	@SimpleFunction
 	public static int 转绝对像素(float value, int unit) {
@@ -68,8 +71,8 @@ public final class 像素转换 {
 	/**
 	 * 将相对像素（dip）值转换为绝对像素（px）值
 	 *
-	 * @param dipValue  相对像素（dp）
-	 * @return  绝对像素（px）值
+	 * @param dipValue 相对像素（dp）
+	 * @return 绝对像素（px）值
 	 */
 	@SimpleFunction
 	public static int 到绝对像素(float dipValue) {
@@ -97,7 +100,7 @@ public final class 像素转换 {
 	 * 将绝对像素（px）值转换为缩放像素（sp）值。
 	 *
 	 * @param pxValue 绝对像素（px）值
-	 * @return  缩放像素（sp）值
+	 * @return 缩放像素（sp）值
 	 */
 	@SimpleFunction
 	public static int 到缩放像素(float pxValue) {
@@ -119,7 +122,7 @@ public final class 像素转换 {
 	 * @throws 转换错误 值不是整数或文本，或者文本中的数值、单位无效
 	 */
 	@SimpleFunction
-	public static int 解析像素(Variant value) {
+	public static int 解析为像素(Variant value) {
 		// Simple数字字面量会选择能容纳当前值的最小整数类型，因此必须接受所有整数变体。
 		if (value instanceof ByteVariant || value instanceof ShortVariant || value instanceof IntegerVariant) {
 			return value.getInteger();

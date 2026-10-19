@@ -1,4 +1,4 @@
-package simple.runtime.components.impl.android;
+package simple.runtime.components.impl.android.util;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +10,7 @@ import simple.runtime.errors.索引超出界限错误;
  *
  * @author 树先生 xhwsd@qq.com
  */
-final class RichTextRanges {
+public final class RichTextRanges {
 
 	private RichTextRanges() {
 	}
@@ -24,7 +24,7 @@ final class RichTextRanges {
 	 * @param start 区间起始位置，包含该位置
 	 * @param end 区间结束位置，不包含该位置
 	 */
-	static void check(int length, int start, int end) {
+	public static void check(int length, int start, int end) {
 		if (start < 0 || end < start || end > length) {
 			throw new 索引超出界限错误();
 		}
@@ -39,7 +39,7 @@ final class RichTextRanges {
 	 * @param end 区间结束位置，不包含该位置
 	 * @return 需要保留的样式区间
 	 */
-	static int[][] remaining(int spanStart, int spanEnd, int start, int end) {
+	public static int[][] remaining(int spanStart, int spanEnd, int start, int end) {
 		if (start == end || spanEnd <= start || spanStart >= end) {
 			return new int[][]{{spanStart, spanEnd}};
 		}
@@ -64,7 +64,7 @@ final class RichTextRanges {
 	 * @param end 区间结束位置，不包含该位置
 	 * @return 覆盖所选文本的完整段落区间；每项为起止索引，空选择返回空数组。
 	 */
-	static int[][] paragraphs(CharSequence text, int start, int end) {
+	public static int[][] paragraphs(CharSequence text, int start, int end) {
 		check(text.length(), start, end);
 		List<int[]> result = new ArrayList<int[]>();
 		if (start == end) {

@@ -27,7 +27,6 @@ import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * 提供数组计数、复制、合并、成员增删及文本数组处理。
@@ -41,6 +40,9 @@ import java.util.regex.Pattern;
 @SimpleObject
 public final class 数组操作 {
 
+	/**
+	 * 静态方法集，不创建实例。
+	 */
 	private 数组操作() {
 	}
 
@@ -94,21 +96,6 @@ public final class 数组操作 {
 	}
 
 	/* 合并与成员增删 */
-
-	/**
-	 * 按先后顺序合并两个字节数组，不修改输入数组。
-	 *
-	 * @param first 第一个字节数组。
-	 * @param second 第二个字节数组。
-	 * @return 独立的新数组。
-	 */
-	@SimpleFunction
-	public static byte[] 合并字节数组(byte[] first, byte[] second) {
-		byte[] result = new byte[combinedLength(first.length, second.length)];
-		System.arraycopy(first, 0, result, 0, first.length);
-		System.arraycopy(second, 0, result, first.length, second.length);
-		return result;
-	}
 
 	/**
 	 * 按先后顺序合并两个文本数组，不修改输入数组。
@@ -256,65 +243,6 @@ public final class 数组操作 {
 		}
 
 		return result.toArray(new String[result.size()]);
-	}
-
-	/**
-	 * 使用指定分隔文本连接数组成员。
-	 *
-	 * @param array 文本数组。
-	 * @param separator 成员间的分隔文本，不得为空引用，允许空文本。
-	 * @return 连接结果，空数组返回空文本；空引用成员沿用 Java 文本转换规则。
-	 */
-	@SimpleFunction
-	public static String 连接数组文本(String[] array, String separator) {
-		if (separator == null) {
-			throw new NullPointerException();
-		}
-
-		StringBuilder result = new StringBuilder();
-
-		for (int index = 0; index < array.length; index++) {
-			if (index > 0) {
-				result.append(separator);
-			}
-
-			result.append(array[index]);
-		}
-
-		return result.toString();
-	}
-
-	/**
-	 * 使用字面分隔文本分割全部内容，保留末尾空成员。
-	 *
-	 * @param text 原文本。
-	 * @param separator 字面分隔文本；空文本按 UTF-16 边界分割。
-	 * @return 分割结果。
-	 */
-	@SimpleFunction
-	public static String[] 分割文本(String text, String separator) {
-		return 分割文本(text, separator, Integer.MAX_VALUE);
-	}
-
-	/**
-	 * 使用字面分隔文本分割内容，并限制返回成员数。
-	 *
-	 * @param text 原文本。
-	 * @param separator 字面分隔文本，不是正则表达式。
-	 * @param count 最大成员数，必须大于 0；达到上限后剩余内容作为最后一项。
-	 * @return 分割结果，保留末尾空成员；空分隔文本沿用 Java 的 UTF-16 边界规则。
-	 */
-	@SimpleFunction
-	public static String[] 分割文本(String text, String separator, int count) {
-		if (separator == null) {
-			throw new NullPointerException();
-		}
-
-		if (count <= 0) {
-			throw new IllegalArgumentException("分割文本的最大成员数必须大于 0。");
-		}
-
-		return text.split(Pattern.quote(separator), count);
 	}
 
 	/* 内部辅助 */

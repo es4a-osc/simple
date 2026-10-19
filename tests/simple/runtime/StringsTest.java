@@ -26,6 +26,7 @@ import simple.runtime.variants.IntegerVariant;
 import simple.runtime.variants.StringVariant;
 import simple.runtime.variants.Variant;
 
+import java.util.List;
 import java.util.Locale;
 
 import junit.framework.TestCase;
@@ -532,7 +533,7 @@ public class StringsTest extends TestCase {
 	}
 
 	/**
-	 * Tests {@link 文本操作#格式化文本(String, String)}。
+	 * Tests {@link 文本操作#格式化文本(String, Variant)}。
 	 */
 	public void testStrFormat() {
 		// 当输入的字符串为 null 检查抛出 NullPointerException
@@ -568,5 +569,171 @@ public class StringsTest extends TestCase {
 		assertEquals(文本操作.格式化文本("文本型=%s", stringVariant),
 				String.format(Locale.CHINA, "文本型=%s", "文本"));
 
+	}
+
+	/**
+	 * Tests {@link 文本操作#代码(String)}.
+	 */
+	public void testAsc() {
+		// Check that if the argument is null that a NullPointerException will be thrown.
+		// Note that if the function is called from Simple code that the compiler will generate
+		// exception handlers to convert NullPointerExceptions into the equivalent runtime error
+		try {
+			文本操作.代码(null);
+			fail();
+		} catch (NullPointerException expected) {
+		}
+
+		// Empty string
+		try {
+			文本操作.代码("");
+			fail();
+		} catch (IllegalArgumentException expected) {
+		}
+
+		// Other strings
+		assertEquals(48, 文本操作.代码("0"));
+		assertEquals(48, 文本操作.代码("0123"));
+	}
+
+	/**
+	 * Tests {@link 文本操作#字符(int)}.
+	 */
+	public void testChr() {
+		assertEquals("0", 文本操作.字符(48));
+	}
+
+	/**
+	 * Tests {@link 文本操作#分割文本(String, String, int)}.
+	 */
+	public void testSplit() {
+		// Check that if the array argument is null that a NullPointerException will be thrown.
+		try {
+			文本操作.分割文本(null, "", 1);
+			fail();
+		} catch (NullPointerException expected) {
+		}
+
+		// Check that if the string argument is null that a NullPointerException will be thrown.
+		try {
+			文本操作.分割文本("", null, 1);
+			fail();
+		} catch (NullPointerException expected) {
+		}
+
+		// Check that if the count argument less or equal to 0 that an  IllegalArgumentException will
+		// be thrown.
+		try {
+			文本操作.分割文本("", "", Integer.MIN_VALUE);
+			fail();
+		} catch (IllegalArgumentException expected) {
+		}
+
+		try {
+			文本操作.分割文本("", "", 0);
+			fail();
+		} catch (IllegalArgumentException expected) {
+		}
+
+		// Some regular splitting
+		String[] result = 文本操作.分割文本("", "", 1);
+		assertEquals(1, result.length);
+		assertEquals("", result[0]);
+
+		result = 文本操作.分割文本("", "", Integer.MAX_VALUE);
+		assertEquals(1, result.length);
+		assertEquals("", result[0]);
+
+		result = 文本操作.分割文本("", "foo", 1);
+		assertEquals(1, result.length);
+		assertEquals("", result[0]);
+
+		result = 文本操作.分割文本("", "foo", Integer.MAX_VALUE);
+		assertEquals(1, result.length);
+		assertEquals("", result[0]);
+
+		result = 文本操作.分割文本("foo", "", 1);
+		assertEquals(1, result.length);
+		assertEquals("foo", result[0]);
+
+		result = 文本操作.分割文本("foo", "", 3);
+		assertEquals(3, result.length);
+		// JDK1.7及以下版本运行结果为 ["","f", "oo"]
+		// assertContentsInOrder(java.util.Arrays.asList(result), "", "f", "oo");
+		// JDK1.8及以上版本运行结果为 ["f", "o", "o"]
+		assertContentsInOrder(java.util.Arrays.asList(result), "f", "o", "o");
+
+		result = 文本操作.分割文本("foo", "", Integer.MAX_VALUE);
+		// JDK1.7及以下版本运行结果为 ["","f", "o", "o", ""]
+		//assertEquals(5, result.length);
+		// JDK1.8及以上版本运行结果为 ["f", "o", "o", ""]
+		assertEquals(4, result.length);
+		// JDK1.7及以下版本运行结果为 ["","f", "o", "o", ""]
+		//assertContentsInOrder(java.util.Arrays.asList(result), "", "f", "o", "o", "");
+		// JDK1.8及以上版本运行结果为 ["f", "o", "o", ""]
+		assertContentsInOrder(java.util.Arrays.asList(result), "f", "o", "o", "");
+
+		result = 文本操作.分割文本("foobarfoobarfoo", "foo", 1);
+		assertEquals(1, result.length);
+		assertEquals("foobarfoobarfoo", result[0]);
+
+		result = 文本操作.分割文本("foobarfoobarfoo", "foo", 3);
+		assertEquals(3, result.length);
+		assertContentsInOrder(java.util.Arrays.asList(result), "", "bar", "barfoo");
+
+		result = 文本操作.分割文本("foobarfoobarfoo", "foo", Integer.MAX_VALUE);
+		assertEquals(4, result.length);
+		assertContentsInOrder(java.util.Arrays.asList(result), "", "bar", "bar", "");
+
+		result = 文本操作.分割文本("barfoobarfoobar", "foo", 1);
+		assertEquals(1, result.length);
+		assertEquals("barfoobarfoobar", result[0]);
+
+		result = 文本操作.分割文本("barfoobarfoobar", "foo", 2);
+		assertEquals(2, result.length);
+		assertContentsInOrder(java.util.Arrays.asList(result), "bar", "barfoobar");
+
+		result = 文本操作.分割文本("barfoobarfoobar", "foo", Integer.MAX_VALUE);
+		assertEquals(3, result.length);
+		assertContentsInOrder(java.util.Arrays.asList(result), "bar", "bar", "bar");
+	}
+
+	/**
+	 * Tests {@link 文本操作#连接数组文本(String[], String)}.
+	 */
+	public void testJoin() {
+		// Check that if the array argument is null that a NullPointerException will be thrown.
+		try {
+			文本操作.连接数组文本(null, "");
+			fail();
+		} catch (NullPointerException expected) {
+		}
+
+		// Check that if the string argument is null that a NullPointerException will be thrown.
+		try {
+			文本操作.连接数组文本(new String[0], null);
+			fail();
+		} catch (NullPointerException expected) {
+		}
+
+		// Some regular joining
+		assertEquals("foo", 文本操作.连接数组文本(new String[] { "foo" }, ", "));
+		assertEquals("foo, bar", 文本操作.连接数组文本(new String[] { "foo", "bar" }, ", "));
+	}
+
+	/**
+	 * 按顺序核对分割文本得到的全部成员。
+	 *
+	 * @param <T> 成员类型。
+	 * @param list 实际成员列表。
+	 * @param contents 期望成员。
+	 */
+	@SuppressWarnings("unchecked")
+	private <T> void assertContentsInOrder(List<T> list, T... contents) {
+		assertEquals(list.size(), contents.length);
+
+		for (int i = 0; i < contents.length; i++) {
+			assertEquals(list.get(i), contents[i]);
+		}
 	}
 }

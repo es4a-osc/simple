@@ -36,7 +36,7 @@ public final class BigNumbersTest extends TestCase {
 	public void testScalePreserved() {
 		assertEquals("3.50", 大数运算.大数相加("1.20", "2.3"));
 		assertEquals("2.400", 大数运算.大数相乘("1.20", "2.0"));
-		assertEquals("0.00", 大数运算.科学转普通计数("-0.00"));
+		assertEquals("0.00", 文本操作.科学转普通计数("-0.00"));
 	}
 
 	/**
@@ -90,23 +90,9 @@ public final class BigNumbersTest extends TestCase {
 	 * 科学计数可用于所有运算，文本展开不带指数。
 	 */
 	public void testScientificNotation() {
-		assertEquals("123000", 大数运算.科学转普通计数("1.23E+5"));
-		assertEquals("0.001", 大数运算.科学转普通计数("1E-3"));
+		assertEquals("123000", 文本操作.科学转普通计数("1.23E+5"));
+		assertEquals("0.001", 文本操作.科学转普通计数("1E-3"));
 		assertEquals("1000.001", 大数运算.大数相加("1E+3", "1E-3"));
-	}
-
-	/**
-	 * 非法文本不被修剪或当成零。
-	 */
-	public void testInvalidNumberText() {
-		for (String value : new String[] {"", " 1", "1 ", "1,000", "NaN", "Infinity", "abc"}) {
-			try {
-				大数运算.科学转普通计数(value);
-				fail("应拒绝数值文本：" + value);
-			} catch (NumberFormatException expected) {
-				// 不把解析失败变成成功结果。
-			}
-		}
 	}
 
 	/**

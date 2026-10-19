@@ -1,4 +1,4 @@
-package simple.runtime.components.impl.android;
+package simple.runtime.components.impl.android.util;
 
 import junit.framework.TestCase;
 

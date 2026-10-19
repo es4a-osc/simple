@@ -16,6 +16,12 @@ import android.os.Looper;
 public final class 线程操作 {
 
 	/**
+	 * 静态方法集，不创建实例。
+	 */
+	private 线程操作() {
+	}
+
+	/**
 	 * 创建新线程对象。
 	 *
 	 * @param unit 单元对象实例。

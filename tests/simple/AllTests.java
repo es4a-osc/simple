@@ -17,13 +17,19 @@
 package simple;
 
 import simple.compiler.CompilerSmokeTest;
+import simple.compiler.PopupMenuComponentTest;
+import simple.runtime.components.impl.android.util.PopupMenuModelTest;
+import simple.runtime.components.impl.android.util.HttpTransportTest;
+import simple.compiler.CanvasComponentTest;
+import simple.compiler.BatteryMonitorComponentTest;
+import simple.runtime.components.impl.android.util.BatterySnapshotTest;
 import simple.compiler.ClipboardOperationsTest;
 import simple.compiler.StorageSpaceTest;
 import simple.compiler.DateTimePickerTest;
 import simple.compiler.DataTableComponentTest;
 import simple.compiler.RichTextComponentTest;
-import simple.runtime.components.impl.android.RichTextRangesTest;
-import simple.runtime.components.impl.android.DataTableModelTest;
+import simple.runtime.components.impl.android.util.RichTextRangesTest;
+import simple.runtime.components.impl.android.util.DataTableModelTest;
 import simple.compiler.ContactsPermissionsTest;
 import simple.compiler.LibraryDependenciesTest;
 import simple.compiler.KeywordMemberTest;
@@ -36,9 +42,12 @@ import simple.runtime.FilesPathTest;
 import simple.runtime.FilesTest;
 import simple.runtime.MathTest;
 import simple.runtime.PixelsTest;
-import simple.runtime.ProgramOperationsTest;
+import simple.runtime.OtherOperationsTest;
+import simple.runtime.ObjectOperationsTest;
+import simple.runtime.RadixConversionsTest;
 import simple.runtime.SequencesTest;
 import simple.runtime.StringsTest;
+import simple.runtime.TextFormattingTest;
 import simple.compiler.util.ResourceTest;
 
 import junit.framework.TestSuite;
@@ -57,6 +66,11 @@ public class AllTests {
 		TestSuite suite = new TestSuite("Simple Tests");
 		// compiler
 		suite.addTestSuite(CompilerSmokeTest.class);
+		suite.addTestSuite(PopupMenuComponentTest.class);
+		suite.addTestSuite(PopupMenuModelTest.class);
+		suite.addTestSuite(CanvasComponentTest.class);
+		suite.addTestSuite(BatteryMonitorComponentTest.class);
+		suite.addTestSuite(BatterySnapshotTest.class);
 		suite.addTestSuite(ClipboardOperationsTest.class);
 		suite.addTestSuite(StorageSpaceTest.class);
 		suite.addTestSuite(DateTimePickerTest.class);
@@ -77,14 +91,18 @@ public class AllTests {
 		// simple.runtime
 		suite.addTestSuite(ArraysTest.class);
 		suite.addTestSuite(ConversionsTest.class);
+		suite.addTestSuite(RadixConversionsTest.class);
 		suite.addTestSuite(DatesTest.class);
 		suite.addTestSuite(FilesTest.class);
 		suite.addTestSuite(FilesPathTest.class);
 		suite.addTestSuite(MathTest.class);
 		suite.addTestSuite(PixelsTest.class);
-		suite.addTestSuite(ProgramOperationsTest.class);
+		suite.addTestSuite(OtherOperationsTest.class);
+		suite.addTestSuite(ObjectOperationsTest.class);
 		suite.addTestSuite(StringsTest.class);
+		suite.addTestSuite(TextFormattingTest.class);
 		suite.addTestSuite(SequencesTest.class);
+		suite.addTestSuite(HttpTransportTest.class);
 		return suite;
 	}
 }

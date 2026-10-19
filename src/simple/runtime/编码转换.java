@@ -21,6 +21,12 @@ import java.nio.charset.Charset;
 @SimpleObject
 public final class 编码转换 {
 
+	/**
+	 * 静态方法集，不创建实例。
+	 */
+	private 编码转换() {
+	}
+
 	/* Unicode 转义 */
 
 	/**

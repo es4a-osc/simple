@@ -29,6 +29,12 @@ public final class 加密操作 {
 	private static final char[] HEX = "0123456789ABCDEF".toCharArray();
 	private static final String AUTHCODE_PREFIX_CHARS = "abcdefghjklmnopqrstuvwxyz0123456789";
 
+	/**
+	 * 静态方法集，不创建实例。
+	 */
+	private 加密操作() {
+	}
+
 	/* 消息摘要 */
 
 	/**

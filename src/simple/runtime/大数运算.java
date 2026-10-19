@@ -22,6 +22,9 @@ import simple.runtime.annotations.SimpleObject;
 @SimpleObject
 public final class 大数运算 {
 
+	/**
+	 * 静态方法集，不创建实例。
+	 */
 	private 大数运算() {
 	}
 
@@ -111,19 +114,5 @@ public final class 大数运算 {
 	@SimpleFunction
 	public static String 大数求余(String first, String second) {
 		return new BigDecimal(first).remainder(new BigDecimal(second)).toPlainString();
-	}
-
-	/* 文本表示 */
-
-	/**
-	 * 将科学计数或普通十进制文本展开为不带指数的普通十进制文本。
-	 *
-	 * @param value 数值文本，例如 1.23E+5 或 1E-3。
-	 * @return 不使用科学计数的文本，分别如 123000 和 0.001；不主动删除小数末尾零。
-	 * @throws NumberFormatException 文本不是有效十进制数。
-	 */
-	@SimpleFunction
-	public static String 科学转普通计数(String value) {
-		return new BigDecimal(value).toPlainString();
 	}
 }

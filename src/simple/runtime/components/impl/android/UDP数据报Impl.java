@@ -13,6 +13,8 @@ import java.net.InetAddress;
 
 /**
  * Android UDP数据报实现。
+ *
+ * @author 树先生 xhwsd@qq.com
  */
 public class UDP数据报Impl extends 组件Impl implements UDP数据报 {
 

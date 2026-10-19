@@ -19,6 +19,9 @@ import simple.runtime.annotations.SimpleObject;
 @SimpleObject
 public final class 剪贴板操作 {
 
+	/**
+	 * 静态方法集，不创建实例。
+	 */
 	private 剪贴板操作() {
 	}
 

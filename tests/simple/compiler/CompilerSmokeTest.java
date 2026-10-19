@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Locale;
 
 import junit.framework.TestCase;
 import simple.classfiles.ClassFile;
@@ -82,5 +83,39 @@ public class CompilerSmokeTest extends TestCase {
 		} catch (InvocationTargetException e) {
 			throw e.getCause();
 		}
+	}
+
+	/**
+	 * 在固定格式区域执行真实 Simple 数值格式化调用，并恢复区域设置。
+	 *
+	 * @throws Throwable 编译、加载或 Simple 调用验证失败。
+	 */
+	public void testNumberFormattingCalls() throws Throwable {
+		List<ClassFile> classes = Compiler.compileForUnitTesting(
+				new Project(new File("tests/simple/compiler/SmokeTest/project.properties")));
+		assertNotNull(classes);
+		ClassLoader loader = new InjectionClassLoader(classes, getClass().getClassLoader());
+		Method entry = loader.loadClass("simple.smoketest.SmokeTest")
+				.getMethod("RunNumberFormattingTests");
+
+		Locale original = Locale.getDefault(Locale.Category.FORMAT);
+		try {
+			Locale.setDefault(Locale.Category.FORMAT, Locale.US);
+			entry.invoke(null);
+		} catch (InvocationTargetException exception) {
+			throw exception.getCause();
+		} finally {
+			Locale.setDefault(Locale.Category.FORMAT, original);
+		}
+	}
+
+	/**
+	 * 编译真实转换与运算示例，验证新增函数在项目中的类型检查和调用生成。
+	 *
+	 * @throws IOException 示例工程或源码读取失败。
+	 */
+	public void testArithmeticExampleCompiles() throws IOException {
+		assertNotNull(Compiler.compileForUnitTesting(
+				new Project(new File("examples/转换与运算/project.properties"))));
 	}
 }

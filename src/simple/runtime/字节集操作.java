@@ -18,6 +18,9 @@ import java.util.Arrays;
 @SimpleObject
 public final class 字节集操作 {
 
+	/**
+	 * 静态方法集，不创建实例。
+	 */
 	private 字节集操作() {
 	}
 
@@ -46,7 +49,15 @@ public final class 字节集操作 {
 	public static byte[] 合并字节集(byte[] first, byte[] second) {
 		requireData(first);
 		requireData(second);
-		return 数组操作.合并字节数组(first, second);
+		// 保留合并长度的溢出检查，避免分配错误长度的数组。
+		if (first.length > Integer.MAX_VALUE - second.length) {
+			throw new IllegalArgumentException("合并后的数组过长。");
+		}
+
+		byte[] result = new byte[first.length + second.length];
+		System.arraycopy(first, 0, result, 0, first.length);
+		System.arraycopy(second, 0, result, first.length, second.length);
+		return result;
 	}
 
 	/* 截取 */

@@ -38,6 +38,9 @@ public final class 对话框操作 {
 	// 当前 Toast 对象
 	private static Toast toast;
 
+	/**
+	 * 静态方法集，不创建实例。
+	 */
 	private 对话框操作() {
 	}
 

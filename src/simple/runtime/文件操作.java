@@ -118,6 +118,9 @@ public final class 文件操作 {
 
 	private static File rootDirectory;
 
+	/**
+	 * 静态方法集，不创建实例。
+	 */
 	private 文件操作() {  // COV_NF_LINE
 	}                  // COV_NF_LINE
 

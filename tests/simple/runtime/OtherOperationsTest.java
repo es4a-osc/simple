@@ -13,7 +13,7 @@ import simple.runtime.annotations.SimpleFunction;
  *
  * @author 树先生 xhwsd@qq.com
  */
-public final class ProgramOperationsTest extends TestCase {
+public final class OtherOperationsTest extends TestCase {
 
 	/**
 	 * 标识生成以无参数静态函数导出，并返回文本。
@@ -21,7 +21,7 @@ public final class ProgramOperationsTest extends TestCase {
 	 * @throws Exception 导出方法缺失。
 	 */
 	public void testGuidExportedContract() throws Exception {
-		Method method = 程序操作.class.getMethod("生成GUID");
+		Method method = 其它操作.class.getMethod("生成GUID");
 		assertTrue(method.isAnnotationPresent(SimpleFunction.class));
 		assertTrue(Modifier.isStatic(method.getModifiers()));
 		assertEquals(String.class, method.getReturnType());
@@ -32,7 +32,7 @@ public final class ProgramOperationsTest extends TestCase {
 	 */
 	public void testGuidFormatAndVersion() {
 		for (int index = 0; index < 1000; index++) {
-			String text = 程序操作.生成GUID();
+			String text = 其它操作.生成GUID();
 			assertTrue(text, text.matches("[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"));
 
 			UUID identifier = UUID.fromString(text);

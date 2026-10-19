@@ -14,48 +14,6 @@ import simple.runtime.variants.StringVariant;
 public final class BinaryConversionsTest extends TestCase {
 
 	/**
-	 * 十六进制解析支持带符号数值及长整数边界。
-	 */
-	public void testHexadecimalNumbers() {
-		assertEquals(255L, 数据转换.十六进制到长整数("fF"));
-		assertEquals(-255L, 数据转换.十六进制到长整数("-FF"));
-		assertEquals(255L, 数据转换.十六进制到长整数("+FF"));
-		assertEquals(Long.MAX_VALUE, 数据转换.十六进制到长整数("7FFFFFFFFFFFFFFF"));
-		assertEquals(Long.MIN_VALUE, 数据转换.十六进制到长整数("-8000000000000000"));
-	}
-
-	/**
-	 * 数值解析失败仍返回零，不自动去除前缀或空白。
-	 */
-	public void testInvalidHexadecimalNumbers() {
-		for (String text : new String[] {null, "", "0xFF", " FF", "FF ", "G", "FFFFFFFFFFFFFFFF"}) {
-			assertEquals(0L, 数据转换.十六进制到长整数(text));
-		}
-	}
-
-	/**
-	 * 二进制输出按 32 位整数补码，解析按带符号数值处理。
-	 */
-	public void testBinaryNumberRepresentation() {
-		assertEquals("0", 数据转换.整数到二进制(0));
-		assertEquals("1010", 数据转换.整数到二进制(10));
-		assertEquals("11111111111111111111111111111111", 数据转换.整数到二进制(-1));
-		assertEquals(4294967295L, 数据转换.二进制到长整数(数据转换.整数到二进制(-1)));
-		assertEquals(-10L, 数据转换.二进制到长整数("-1010"));
-		assertEquals(10L, 数据转换.二进制到长整数("+1010"));
-	}
-
-	/**
-	 * 二进制输入的格式和范围不合法时返回零。
-	 */
-	public void testInvalidBinaryNumbers() {
-		for (String text : new String[] {null, "", "0b10", " 10", "10 ", "102",
-				"1000000000000000000000000000000000000000000000000000000000000000"}) {
-			assertEquals(0L, 数据转换.二进制到长整数(text));
-		}
-	}
-
-	/**
 	 * 整数转换使用四字节小端，不混同长整数的大端布局。
 	 */
 	public void testIntegerLittleEndian() {
@@ -133,7 +91,7 @@ public final class BinaryConversionsTest extends TestCase {
 	 */
 	public void testUnsignedByteRange() {
 		for (int value = 0; value < 256; value++) {
-			assertEquals(value, 数据转换.字节到无符号整数((byte) value));
+			assertEquals(value, 数据转换.取字节无符号值((byte) value));
 		}
 		assertEquals(-1, 数据转换.到整数(simple.runtime.variants.ByteVariant.getByteVariant((byte) -1)));
 	}
@@ -182,6 +140,6 @@ public final class BinaryConversionsTest extends TestCase {
 	public void testExistingTextConversionPreserved() {
 		assertEquals(1, 数据转换.到整数(StringVariant.getStringVariant("1.5")));
 		assertEquals(0, 数据转换.到整数(StringVariant.getStringVariant("bad")));
-		assertEquals("2A", 数据转换.十六进制(simple.runtime.variants.IntegerVariant.getIntegerVariant(42)));
+		assertEquals("2A", 进制转换.十六进制(simple.runtime.variants.IntegerVariant.getIntegerVariant(42)));
 	}
 }

@@ -15,6 +15,12 @@ import android.content.res.Resources.NotFoundException;
 public final class 资源操作 {
 
 	/**
+	 * 静态方法集，不创建实例。
+	 */
+	private 资源操作() {
+	}
+
+	/**
 	 * 取指定资源路径的资源标识。
 	 *
 	 * @param path 资源路径，格式为{@code @defType/name}。

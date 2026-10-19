@@ -15,6 +15,12 @@ import java.io.IOException;
 public final class 资产操作 {
 
 	/**
+	 * 静态方法集，不创建实例。
+	 */
+	private 资产操作() {
+	}
+
+	/**
 	 * 检验指定资产文件名是否存在。
 	 *
 	 * @param fileName 资产文件名，格式为{@code 文件名}。

@@ -1,6 +1,6 @@
 package simple.runtime.collections;
 
-import simple.runtime.程序操作;
+import simple.runtime.对象操作;
 import simple.runtime.日志输出;
 import simple.runtime.annotations.SimpleObject;
 import simple.runtime.annotations.SimpleProperty;
@@ -84,7 +84,7 @@ public class 线程 {
 
 			@Override
 			public void run() {
-				程序操作.调用方法(unit, name, args);
+				对象操作.调用方法(unit, name, args);
 			}
 		};
 	}

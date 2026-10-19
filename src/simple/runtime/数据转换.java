@@ -16,66 +16,27 @@
 
 package simple.runtime;
 
+
 import simple.runtime.annotations.SimpleFunction;
 import simple.runtime.annotations.SimpleObject;
 import simple.runtime.errors.转换错误;
 import simple.runtime.helpers.ConvHelpers;
 import simple.runtime.variants.Variant;
 
-import java.util.Locale;
-
 /**
  * 实现各种与转换相关的运行时函数。
  *
  * @author Herbert Czymontek
+ * @author 树先生 xhwsd@qq.com
  */
 @SimpleObject
 public final class 数据转换 {
 
+	/**
+	 * 静态方法集，不创建实例。
+	 */
 	private 数据转换() {
 	}
-
-	/**
-	 * 返回给定字符串第一个字符的unicode值。
-	 *
-	 * @param str  用于转换第一个字符的字符串
-	 * @return  {@code str}第一个字符的unicode值
-	 */
-	@SimpleFunction
-	public static int 代码(String str) {
-		try {
-			return str.charAt(0);
-		} catch (IndexOutOfBoundsException e) {
-			// 将在运行时转换为Simple的运行时错误
-			throw new IllegalArgumentException("String length for Asc() must be 1 or greater");
-		}
-	}
-
-	/**
-	 * 返回给定unicode值的字符串。
-	 *
-	 * @param value  要转换为字符串的unicode值
-	 * @return  由给定的unicode值组成的字符串
-	 */
-	@SimpleFunction
-	public static String 字符(int value) {
-		return Character.toString((char)value);
-	}
-
-	/**
-	 * 返回包含给定值的十六进制值的字符串。
-	 *
-	 * <p>如果给定值不是整数，那么将使用其整数部分。
-	 *
-	 * @param v  值
-	 * @return  字符串，为{@code v}的十六进制值
-	 */
-	@SimpleFunction
-	public static String 十六进制(Variant v) {
-		return Long.toHexString(v.getLong()).toUpperCase(Locale.ENGLISH);
-	}
-
-	/* 扩展 */
 
 	/**
 	 * 将值转为逻辑值。
@@ -219,55 +180,6 @@ public final class 数据转换 {
 		return ConvHelpers.variant2objects(value);
 	}
 
-	/* 进制文本转换 */
-
-	/**
-	 * 将十六进制文本解析为有符号长整数。
-	 *
-	 * <p>允许正负号，不接受 0x 前缀、分隔符或首尾空白。
-	 * 超出长整数范围的文本不按无符号补码解释，例如 FFFFFFFFFFFFFFFF 返回 0。</p>
-	 *
-	 * @param text 十六进制数值文本。
-	 * @return 解析结果；空引用、空文本、非法内容或溢出返回 0。
-	 */
-	@SimpleFunction
-	public static long 十六进制到长整数(String text) {
-		try {
-			return Long.parseLong(text, 16);
-		} catch (Exception exception) {
-			return 0;
-		}
-	}
-
-	/**
-	 * 将整数转换为不带前缀的二进制文本。
-	 *
-	 * @param value 待转换的 32 位整数。
-	 * @return 不补前导零的二进制文本；0 返回 0，负数返回 32 位补码。
-	 */
-	@SimpleFunction
-	public static String 整数到二进制(int value) {
-		return Integer.toBinaryString(value);
-	}
-
-	/**
-	 * 将二进制文本解析为有符号长整数。
-	 *
-	 * <p>允许正负号，不接受 0b 前缀、分隔符或首尾空白。
-	 * 最高位为 1 的文本仍按正数解析，不自动作为有符号补码。</p>
-	 *
-	 * @param text 二进制数值文本。
-	 * @return 解析结果；空引用、空文本、非法内容或溢出返回 0。
-	 */
-	@SimpleFunction
-	public static long 二进制到长整数(String text) {
-		try {
-			return Long.parseLong(text, 2);
-		} catch (Exception exception) {
-			return 0;
-		}
-	}
-
 	/* 数值与字节集：整数小端，长整数和双精度小数大端 */
 
 	/**
@@ -369,13 +281,13 @@ public final class 数据转换 {
 	}
 
 	/**
-	 * 将单个有符号字节解释为 0 至 255 的无符号整数。
+	 * 取得单个字节按无符号方式解释后的数值，返回普通整数型。
 	 *
 	 * @param value 待转换的单个字节。
 	 * @return 0 至 255 的整数，例如字节 -1 返回 255；不改变现有到整数的有符号转换。
 	 */
 	@SimpleFunction
-	public static int 字节到无符号整数(byte value) {
+	public static int 取字节无符号值(byte value) {
 		return value & 0xFF;
 	}
 }

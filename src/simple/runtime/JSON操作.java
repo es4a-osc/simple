@@ -13,6 +13,12 @@ import simple.runtime.collections.JSON值;
 public final class JSON操作 {
 
 	/**
+	 * 静态方法集，不创建实例。
+	 */
+	private JSON操作() {
+	}
+
+	/**
 	 * 创建新JSON值空。
 	 *
 	 * @return JSON值空实例。

@@ -38,6 +38,9 @@ public final class 日志输出 {
 
 	private static LogFunctions logFunctions;
 
+	/**
+	 * 静态方法集，不创建实例。
+	 */
 	private 日志输出() {
 	}
 
