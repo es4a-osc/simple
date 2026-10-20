@@ -91,13 +91,8 @@
 	<path id="simplecompiler.classpath">
         <pathelement location="${build.simplecompiler}"/>
         <pathelement location="${env.ANDROID_HOME}/tools/lib/apkbuilder.jar"/>
-        <pathelement location="${env.ANDROID_HOME}/platforms/android-26/tools/lib/dx.jar"/>
-		<!-- 
-		  - 注意：早期（android-3）的 dx.jar 是自带 junit 的
-		  - junit 的 junit.framework.TestSuite.addTestSuite 方法修改
-		  - <= android-15 使用 <= junit-3.8.2.jar
-		  - >= android-16 使用 >= junit-4.0.jar
-		  -->
+        <pathelement location="${env.ANDROID_HOME}/platforms/android-26/tools/lib/d8.jar"/>
+
         <pathelement location="${third_party}/junit-4.12.jar"/>
     </path>
 
@@ -199,7 +194,9 @@
             </instr>
         </emma>
 
-    	<junit printsummary="on" haltonfailure="yes">
+		<!-- JUnit 的属性与状态临时文件统一放入构建目录。 -->
+		<mkdir dir="${build}/tests/tmp"/>
+		<junit printsummary="on" haltonfailure="yes" tempdir="${build}/tests/tmp">
             <classpath>
                 <path refid="tests.run.classpath"/>
     	        <pathelement location="${build.instrumented}"/>

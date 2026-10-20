@@ -27,15 +27,16 @@ import simple.runtime.parameters.BooleanReferenceParameter;
 import simple.runtime.variants.IntegerVariant;
 import simple.runtime.variants.Variant;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ScrollView;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * 窗口组件的实现。
@@ -47,6 +48,10 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 
 	// 标题属性支持
 	private String title;
+
+	// 各窗口独立保存背景路径和图片，避免活动窗口之间相互覆盖。
+	private String backgroundImage = "";
+	private Drawable backgroundDrawable;
 
 	// 窗口的滚动视图
 	private ScrollView scroller;
@@ -167,15 +172,41 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 	/* 组件属性 */
 
 	@Override
+	public String 背景图片() {
+		return backgroundImage;
+	}
+
+	@Override
 	public void 背景图片(String imagePath) {
-		try {
+		MainActivity context = MainActivity.getContext();
+
+		// 图片读取成功后才更新窗口自身状态；切换时复用已载入的图片。
+		if (!imagePath.equals(backgroundImage)) {
+			Drawable drawable = null;
 			if (imagePath.length() != 0) {
-				Activity context = MainActivity.getContext();
-				context.getWindow().setBackgroundDrawable(Drawable.createFromStream(
-						context.getAssets().open(imagePath), imagePath));
+				try (InputStream stream = context.getAssets().open(imagePath)) {
+					drawable = Drawable.createFromStream(stream, imagePath);
+				} catch (IOException ioe) {
+					throw new 文件未存在错误(imagePath);
+				}
 			}
-		} catch (IOException ioe) {
-			throw new 文件未存在错误(imagePath);
+			backgroundImage = imagePath;
+			backgroundDrawable = drawable;
+		}
+
+		// 未显示的窗口仅保存背景，不能覆盖活动窗口的背景。
+		if (context.isActiveForm(this)) {
+			Drawable drawable = backgroundDrawable;
+			if (backgroundImage.length() == 0) {
+				// 清空或切换到无背景图片的窗口时，恢复当前主题的默认背景。
+				TypedArray attributes = context.obtainStyledAttributes(new int[]{android.R.attr.windowBackground});
+				try {
+					drawable = attributes.getDrawable(0);
+				} finally {
+					attributes.recycle();
+				}
+			}
+			context.getWindow().setBackgroundDrawable(drawable);
 		}
 	}
 
@@ -225,7 +256,12 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 	@Override
 	public void 标题(String newTitle) {
 		title = newTitle;
-		MainActivity.getContext().setTitle(title);
+
+		// 未显示的窗口仅保存自身标题，不改写当前界面。
+		MainActivity context = MainActivity.getContext();
+		if (context.isActiveForm(this)) {
+			context.setTitle(title);
+		}
 	}
 
 	@Override

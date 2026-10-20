@@ -22,6 +22,7 @@ import simple.runtime.components.impl.android.util.PopupMenuModelTest;
 import simple.runtime.components.impl.android.util.HttpTransportTest;
 import simple.compiler.CanvasComponentTest;
 import simple.compiler.BatteryMonitorComponentTest;
+import simple.compiler.FingerprintComponentTest;
 import simple.runtime.components.impl.android.util.BatterySnapshotTest;
 import simple.compiler.ClipboardOperationsTest;
 import simple.compiler.StorageSpaceTest;
@@ -49,6 +50,8 @@ import simple.runtime.SequencesTest;
 import simple.runtime.StringsTest;
 import simple.runtime.TextFormattingTest;
 import simple.compiler.util.ResourceTest;
+import simple.compiler.util.DexToolchainTest;
+import simple.compiler.util.SigningToolchainTest;
 
 import junit.framework.TestSuite;
 import junit.framework.Test;
@@ -70,6 +73,7 @@ public class AllTests {
 		suite.addTestSuite(PopupMenuModelTest.class);
 		suite.addTestSuite(CanvasComponentTest.class);
 		suite.addTestSuite(BatteryMonitorComponentTest.class);
+		suite.addTestSuite(FingerprintComponentTest.class);
 		suite.addTestSuite(BatterySnapshotTest.class);
 		suite.addTestSuite(ClipboardOperationsTest.class);
 		suite.addTestSuite(StorageSpaceTest.class);
@@ -87,6 +91,8 @@ public class AllTests {
 		suite.addTestSuite(ScannerTest.class);
 		// simple.util
 		suite.addTestSuite(ResourceTest.class);
+		suite.addTestSuite(DexToolchainTest.class);
+		suite.addTestSuite(SigningToolchainTest.class);
 
 		// simple.runtime
 		suite.addTestSuite(ArraysTest.class);

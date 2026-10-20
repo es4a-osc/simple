@@ -76,6 +76,7 @@ public final class Compiler {
 	private static final String KEY_PASSWORD = System.getenv("KEY_PASSWORD");
 
 	// 运行时
+	private static final int ANDROID_MIN_SDK_VERSION = 14;
 	private static final String ANDROID_RUNTIME = ANDROID_HOME + "/platforms/android-26/android.jar";
 	private static final String SIMPLE_ANDROID_RUNTIME = SIMPLE_HOME + "/SimpleAndroidRuntime.jar";
 
@@ -471,7 +472,7 @@ public final class Compiler {
 			out.write("    <uses-sdk " +
 					// 指定应用运行所需最低API级别
 					// API14对应版本为Android 4.0
-					"android:minSdkVersion=\"14\" " +
+					"android:minSdkVersion=\"" + ANDROID_MIN_SDK_VERSION + "\" " +
 					// 指定应用的目标API级别，该属性添加于API4
 					// 根据《移动应用软件高API等级预置与分发自律公约》自2019年5月1日起，
 					// 新上架应用应基于Android 8.0（API等级26）及以上开发。
@@ -878,31 +879,42 @@ public final class Compiler {
 				compiler.error(Scanner.NO_POSITION, failure.getMessage());
 				return false;
 			}
-			if (!Toolchain.generateDex(dexFile, dexInputFiles, System.out, System.err)) {
+			if (!Toolchain.generateDex(dexFile, dexInputFiles, new File(ANDROID_RUNTIME),
+					ANDROID_MIN_SDK_VERSION, System.out, System.err)) {
 				internalError();
 				return false;
 			}
 
 			// 将最终资源包和classes.dex组装为尚未签名的APK。
 			File apkFile = new File(deployDir, project.getProjectName() + ".apk");
+			File unsignedApkFile = new File(buildDir, "application-unsigned.apk");
+			File alignedApkFile = new File(buildDir, "application-aligned.apk");
+			File signedApkFile = new File(buildDir, "application-signed.apk");
 			compiler.out.println("正在生成应用：" + apkFile.getName());
-			if (!Toolchain.buildApplication(apkFile, apFile, dexFile,
+			if (!Toolchain.buildApplication(unsignedApkFile, apFile, dexFile,
 					dependencyFiles, nativeDirectories, System.err)) {
+				internalError();
+				return false;
+			}
+
+			// V2 签名保护 APK 的整体结构，所有对齐操作必须先于签名完成。
+			out.println("正在对齐应用：" + apkFile.getName());
+			if (!Toolchain.alignApplication(unsignedApkFile, alignedApkFile, System.err)) {
 				internalError();
 				return false;
 			}
 
 			// 项目同时配置密钥库和KEY_PASSWORD时执行发布签名，否则使用自动生成的调试密钥。
 			String signingKeystoreLocation;
-			String signingStorePassword;
+			String signingPasswordSource;
 			String signingAlias;
 			String signingStoreType;
 			String keyLocation = project.getKeystoreLocation();
 			if (keyLocation != null && !keyLocation.isEmpty() && KEY_PASSWORD != null && !KEY_PASSWORD.isEmpty()) {
-				// 调用 jarsigner.exe 使用发布密钥签名应用。
+				// 继续使用项目原有的密钥和证书，从继承环境中读取发布口令。
 				out.println("正在发布签名：" + apkFile.getName() + " -" + project.getKeystoreAlias());
 				signingKeystoreLocation = keyLocation;
-				signingStorePassword = KEY_PASSWORD;
+				signingPasswordSource = "env:KEY_PASSWORD";
 				signingAlias = project.getKeystoreAlias();
 				signingStoreType = null;
 			} else {
@@ -916,17 +928,32 @@ public final class Compiler {
 					}
 				}
 
-				// 调用 jarsigner.exe 使用调试密钥签名应用。
+				// 沿用已有调试密钥，不因更换签名工具而生成新证书。
 				out.println("正在调试签名：" + apkFile.getName() + " -AndroidDebugKey");
 				signingKeystoreLocation = keystore.getAbsolutePath();
-				signingStorePassword = "android";
+				signingPasswordSource = "pass:android";
 				signingAlias = "AndroidDebugKey";
 				signingStoreType = "PKCS12";
 			}
 
-			// 对已组装的APK执行最终签名，签名完成后才算Android构建结束。
-			if (!Toolchain.signApplication(signingKeystoreLocation, signingStorePassword, apkFile, signingAlias, signingStoreType, System.err)) {
+			// 先在构建目录签名和校验，全部成功后才替换最终交付 APK。
+			if (!Toolchain.signApplication(signingKeystoreLocation, signingPasswordSource,
+					alignedApkFile, signedApkFile, signingAlias, signingStoreType, System.err)) {
 				internalError();
+				return false;
+			}
+
+			out.println("正在校验签名：" + apkFile.getName());
+			if (!Toolchain.verifyApplication(signedApkFile, out, System.err)) {
+				internalError();
+				return false;
+			}
+
+			try {
+				java.nio.file.Files.copy(signedApkFile.toPath(), apkFile.toPath(),
+						java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+			} catch (IOException failure) {
+				compiler.error(Scanner.NO_POSITION, "无法写入已签名应用：" + apkFile + "（" + failure.getMessage() + "）");
 				return false;
 			}
 			break;

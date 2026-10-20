@@ -965,9 +965,10 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 		窗口Impl formImpl = (窗口Impl) form;
 		setContent(formImpl.getView());
 
-		// 刷新标题
-		form.标题(form.标题());
+		// 先更新活动窗口，再应用其标题和背景，避免属性设置器忽略本次切换。
 		activeForm = formImpl;
+		form.标题(form.标题());
+		form.背景图片(form.背景图片());
 
 		// 触发切换完毕事件
 		activeForm.切换完毕();

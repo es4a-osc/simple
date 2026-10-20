@@ -1,15 +1,25 @@
 package simple.compiler.util;
 
 import com.android.apkbuilder.ApkBuilder;
-import com.android.dx.command.dexer.DxContext;
-import com.android.dx.command.dexer.Main.Arguments;
-import com.android.dx.dex.code.PositionList;
+import com.android.tools.r8.CompilationMode;
+import com.android.tools.r8.D8;
+import com.android.tools.r8.D8Command;
+import com.android.tools.r8.DexIndexedConsumer;
+import com.android.tools.r8.Diagnostic;
+import com.android.tools.r8.DiagnosticsHandler;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import simple.util.Execution;
 
@@ -30,8 +40,12 @@ public final class Toolchain {
 			JAVA_HOME + "/bin/javac" + EXECUTABLE_EXTENSION;
 	private static final String KEYTOOL_BINARY =
 			JAVA_HOME + "/bin/keytool" + EXECUTABLE_EXTENSION;
-	private static final String JARSIGNER_BINARY =
-			JAVA_HOME + "/bin/jarsigner" + EXECUTABLE_EXTENSION;
+	private static final String JAVA_BINARY =
+			JAVA_HOME + "/bin/java" + EXECUTABLE_EXTENSION;
+	private static final String ZIPALIGN_BINARY =
+			ANDROID_HOME + "/platforms/android-26/tools/zipalign" + EXECUTABLE_EXTENSION;
+	private static final String APKSIGNER_JAR =
+			ANDROID_HOME + "/platforms/android-26/tools/lib/apksigner.jar";
 
 	private Toolchain() {
 	}
@@ -238,36 +252,106 @@ public final class Toolchain {
 	}
 
 	/**
-	 * 调用{@code dx.jar}把项目类和Simple Android运行库转换为{@code classes.dex}。
+	 * 使用 D8 转换项目类、运行库及依赖，生成单个 {@code classes.dex}。
+	 *
+	 * <p>开启 Java 8 特性转换并保留调试信息。只在转换成功且仅生成一个 DEX 时写入文件，
+	 * 不通过拆分 DEX 绕过方法数限制；最低 API 必须与应用清单一致。
 	 *
 	 * @param outputFile 要生成的{@code classes.dex}文件
-	 * @param classesDirectory 项目编译后的Java类目录
 	 * @param inputFiles 项目类目录、Simple运行库、扩展库及其依赖
+	 * @param platformFile 编译平台的 {@code android.jar}，只用于解析系统类型，不打入应用
+	 * @param minApiLevel 应用最低支持的 Android API 等级
 	 * @param out 标准输出
 	 * @param err 错误输出
 	 * @return 执行成功返回{@code true}，否则返回{@code false}
 	 */
-	public static boolean generateDex(File outputFile, List<File> inputFiles,
+	public static boolean generateDex(File outputFile, List<File> inputFiles, File platformFile, int minApiLevel,
 			PrintStream out, PrintStream err) {
 		try {
-			DxContext context = new DxContext(out, err);
-			Arguments arguments = new Arguments();
-			// outName：指定生成的classes.dex文件。
-			arguments.outName = outputFile.getAbsolutePath();
-			// jarOutput：输出普通.dex文件，不生成.jar文件。
-			arguments.jarOutput = false;
-			// localInfo：保留局部变量调试信息。
-			arguments.localInfo = true;
-			// positionInfo：保留源码行号信息。
-			arguments.positionInfo = PositionList.LINES;
-			// fileNames：转换项目类目录、Simple运行库及当前项目实际使用的扩展库。
-			arguments.fileNames = new String[inputFiles.size()];
-			for (int i = 0; i < inputFiles.size(); i++) {
-				arguments.fileNames[i] = inputFiles.get(i).getAbsolutePath();
+			// 保留输入来源，便于从编译日志定位出错的类或依赖。
+			DiagnosticsHandler diagnostics = new DiagnosticsHandler() {
+				@Override
+				public void error(Diagnostic diagnostic) {
+					err.println("D8 错误：" + diagnostic.getOrigin() + ": " + diagnostic.getDiagnosticMessage());
+				}
+
+				@Override
+				public void warning(Diagnostic diagnostic) {
+					// 屏蔽警告，尽可能不污染输出
+					// err.println("D8 警告：" + diagnostic.getOrigin() + ": " + diagnostic.getDiagnosticMessage());
+				}
+
+				@Override
+				public void info(Diagnostic diagnostic) {
+					// 屏蔽信息，尽可能不污染输出
+					// out.println("D8：" + diagnostic.getDiagnosticMessage());
+				}
+			};
+
+			// 先接收转换结果；D8 整体成功前不覆盖已有文件。
+			final AtomicReference<byte[]> dex = new AtomicReference<byte[]>();
+
+			// 最低 API 与应用清单保持一致，转换 Java 8 特性并保留调试信息。
+			D8Command.Builder command = D8Command.builder(diagnostics);
+			command.setMode(CompilationMode.DEBUG);
+			command.setMinApiLevel(minApiLevel);
+			command.setDisableDesugaring(false);
+			command.addLibraryFiles(platformFile.toPath());
+			command.setProgramConsumer(new DexIndexedConsumer() {
+				@Override
+				public void accept(int index, byte[] data, Set<String> descriptors, DiagnosticsHandler handler) {
+					if (index != 0) {
+						throw new IllegalStateException("当前编译器只支持单个 classes.dex，不能输出多个 DEX。");
+					}
+
+					dex.set(data);
+				}
+
+				@Override
+				public void finished(DiagnosticsHandler handler) {
+					// 等待 D8.run 成功返回后再统一写入。
+				}
+			});
+
+			// 项目类与依赖共同参与转换；平台 android.jar 仅用于解析系统类型。
+			for (File input : inputFiles) {
+				Path path = input.toPath();
+
+				if (input.isDirectory()) {
+					// D8 不接受类目录；只枚举 class，避免把目录中的资源当作程序输入。
+					final List<Path> classes = new ArrayList<Path>();
+					Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+						@Override
+						public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
+							if (Files.isRegularFile(file) && file.getFileName().toString().endsWith(".class")) {
+								classes.add(file);
+							}
+							return FileVisitResult.CONTINUE;
+						}
+					});
+
+					// 固定输入顺序，不依赖文件系统的目录枚举顺序。
+					Collections.sort(classes);
+					for (Path file : classes) {
+						command.addProgramFiles(file);
+					}
+				} else {
+					command.addProgramFiles(path);
+				}
 			}
-			return new com.android.dx.command.dexer.Main(context).runDx(arguments) == 0;
-		} catch (Throwable throwable) {
-			throwable.printStackTrace(err);
+
+			D8.run(command.build());
+
+			// 无有效输出时报告失败，避免后续打包沿用旧的 classes.dex。
+			if (dex.get() == null) {
+				err.println("D8 未生成 classes.dex。");
+				return false;
+			}
+
+			Files.write(outputFile.toPath(), dex.get());
+			return true;
+		} catch (Exception failure) {
+			failure.printStackTrace(err);
 			return false;
 		}
 	}
@@ -277,7 +361,7 @@ public final class Toolchain {
 	 *
 	 * @param outputFile 要生成的APK文件
 	 * @param resourcesFile AAPT2生成的{@code .ap_}资源包
-	 * @param dexFile dx生成的{@code classes.dex}文件
+	 * @param dexFile D8生成的{@code classes.dex}文件
 	 * @param dependencyFiles 已选定的扩展库依赖JAR
 	 * @param nativeDirectories 扩展库原生库目录
 	 * @param err 错误输出
@@ -294,7 +378,7 @@ public final class Toolchain {
 		// -z <文件>：加入AAPT2生成的资源包。
 		commandline.add("-z");
 		commandline.add(resourcesFile.getAbsolutePath());
-		// -f <文件>：加入dx生成的classes.dex。
+		// -f <文件>：加入D8生成的classes.dex。
 		commandline.add("-f");
 		commandline.add(dexFile.getAbsolutePath());
 		// -rj <JAR>：只加入选定依赖的非class资源，不再扫描原始libs目录。
@@ -350,32 +434,85 @@ public final class Toolchain {
 	}
 
 	/**
-	 * 调用 {@code jarsigner} 为应用签名，直接更新原应用文件，不另外生成文件。
+	 * 在签名前对齐未压缩条目和原生库，输出独立的 APK 文件。
+	 *
+	 * @param inputFile 未签名 APK 文件
+	 * @param outputFile 对齐后的 APK 文件，不得与输入文件相同
+	 * @param err 错误输出
+	 * @return 执行成功返回 {@code true}，否则返回 {@code false}
+	 */
+	public static boolean alignApplication(File inputFile, File outputFile, PrintStream err) {
+		String[] commandline = {
+			ZIPALIGN_BINARY, "-f", "-p", "4",
+			inputFile.getAbsolutePath(), outputFile.getAbsolutePath()
+		};
+		return Execution.execute(null, commandline, null, err);
+	}
+
+	/**
+	 * 使用 {@code apksigner.jar} 为已对齐的 APK 生成 V1 和 V2 签名。
+	 *
+	 * <p>签名算法依据 APK 清单中的最低 API 选择，不提高应用的系统要求。
+	 * 发布口令通过 {@code env:KEY_PASSWORD} 从继承环境中读取，避免出现在命令行中。
 	 *
 	 * @param keystoreLocation 密钥库位置
-	 * @param storePassword 密钥库口令
-	 * @param applicationFile 待签名应用
+	 * @param passwordSource apksigner 口令来源，调试签名为 {@code pass:android}，
+	 *        发布签名为 {@code env:KEY_PASSWORD}；密钥库和私钥使用相同口令
+	 * @param inputFile 已对齐的未签名 APK 文件
+	 * @param outputFile 签名后的 APK 文件
 	 * @param alias 密钥别名
 	 * @param storeType 密钥库格式；发布签名沿用JDK默认格式时为{@code null}
 	 * @param err 错误输出
 	 * @return 执行成功返回 {@code true}，否则返回 {@code false}
 	 */
 	public static boolean signApplication(String keystoreLocation,
-			String storePassword, File applicationFile, String alias,
+			String passwordSource, File inputFile, File outputFile, String alias,
 			String storeType, PrintStream err) {
 		List<String> commandline = new ArrayList<String>();
-		commandline.add(JARSIGNER_BINARY);
-		commandline.add("-keystore");
+		commandline.add(JAVA_BINARY);
+		commandline.add("-jar");
+		commandline.add(APKSIGNER_JAR);
+		commandline.add("sign");
+
+		// 显式保留旧系统所需的 V1，同时为新系统生成 V2。
+		commandline.add("--v1-signing-enabled");
+		commandline.add("true");
+		commandline.add("--v2-signing-enabled");
+		commandline.add("true");
+
+		commandline.add("--ks");
 		commandline.add(keystoreLocation);
-		commandline.add("-storepass");
-		commandline.add(storePassword);
+		commandline.add("--ks-key-alias");
+		commandline.add(alias);
+		commandline.add("--ks-pass");
+		commandline.add(passwordSource);
+		// 不允许后台构建停在交互式私钥口令提示上。
+		commandline.add("--key-pass");
+		commandline.add(passwordSource);
 		if (storeType != null) {
-			commandline.add("-storetype");
+			commandline.add("--ks-type");
 			commandline.add(storeType);
 		}
-		// jarsigner直接更新指定APK，最后一个参数是密钥别名。
-		commandline.add(applicationFile.getAbsolutePath());
-		commandline.add(alias);
+
+		commandline.add("--out");
+		commandline.add(outputFile.getAbsolutePath());
+		commandline.add(inputFile.getAbsolutePath());
 		return Execution.execute(null, commandline.toArray(new String[0]), null, err);
+	}
+
+	/**
+	 * 按 APK 清单声明的最低 API 校验签名，校验过程不修改文件。
+	 *
+	 * @param applicationFile 已签名的 APK 文件
+	 * @param out 标准输出
+	 * @param err 错误输出
+	 * @return 所声明版本范围内的签名校验通过时返回 {@code true}，否则返回 {@code false}
+	 */
+	public static boolean verifyApplication(File applicationFile, PrintStream out, PrintStream err) {
+		String[] commandline = {
+			JAVA_BINARY, "-jar", APKSIGNER_JAR, "verify",
+			applicationFile.getAbsolutePath()
+		};
+		return Execution.execute(null, commandline, out, err);
 	}
 }

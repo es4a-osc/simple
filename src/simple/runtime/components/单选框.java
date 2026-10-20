@@ -89,4 +89,13 @@ public interface 单选框 extends 文本组件 {
 		initializer = "False"
 	)
 	void 选中(boolean value);
+
+	/* 属性初始值重写 */
+
+	@Override
+	@SimpleProperty(
+		type = SimpleProperty.PROPERTY_TYPE_TEXTJUSTIFICATION,
+		initializer = 组件.对齐_垂直居中 + ""
+	)
+	void 内容对齐(int justification);
 }
