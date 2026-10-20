@@ -13,22 +13,21 @@ import simple.runtime.annotations.UsesPermissions;
  */
 @SimpleObject
 @SimpleComponent
-@UsesPermissions(
-	permissionNames =
-		// 允许应用程序访问 Wi-Fi 网络状态。
-		"android.permission.ACCESS_WIFI_STATE," +
-		// 允许应用程序访问网络连接状态。
-		"android.permission.ACCESS_NETWORK_STATE," +
-		// 允许应用程序改变 Wi-Fi 连接状态。
-		"android.permission.CHANGE_WIFI_STATE," +
-		// 允许应用程序改变网络连接状态。
-		"android.permission.CHANGE_NETWORK_STATE," +
-		// 允许应用程序使用唤醒锁，防止处理器休眠或屏幕变暗。
-		"android.permission.WAKE_LOCK," +
-		// 允许应用程序访问精确的位置。
-		"android.permission.ACCESS_FINE_LOCATION," +
-		// 允许应用程序访问大致的位置。
-		"android.permission.ACCESS_COARSE_LOCATION"
+@UsesPermissions(permissionNames =
+	// 允许应用程序访问 Wi-Fi 网络状态。
+	"android.permission.ACCESS_WIFI_STATE," +
+	// 允许应用程序访问网络连接状态。
+	"android.permission.ACCESS_NETWORK_STATE," +
+	// 允许应用程序改变 Wi-Fi 连接状态。
+	"android.permission.CHANGE_WIFI_STATE," +
+	// 允许应用程序改变网络连接状态。
+	"android.permission.CHANGE_NETWORK_STATE," +
+	// 允许应用程序使用唤醒锁，防止处理器休眠或屏幕变暗。
+	"android.permission.WAKE_LOCK," +
+	// 允许应用程序访问精确的位置。
+	"android.permission.ACCESS_FINE_LOCATION," +
+	// 允许应用程序访问大致的位置。
+	"android.permission.ACCESS_COARSE_LOCATION"
 )
 public interface WIFI管理器 extends 组件 {
 

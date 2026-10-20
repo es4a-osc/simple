@@ -32,20 +32,19 @@ import simple.runtime.collections.集合;
  */
 @SimpleComponent
 @SimpleObject
-@UsesPermissions(
-	permissionNames =
-		// 直接拨打电话；仅打开拨号界面不需要此权限。
-		"android.permission.CALL_PHONE," +
-		// 控制设备振动。
-		"android.permission.VIBRATE," +
-		// 查询、监听通话状态，并兼容旧系统的本机号码读取。
-		"android.permission.READ_PHONE_STATE," +
-		// 读取 SIM 卡提供的本机号码，号码可能为空。
-		"android.permission.READ_PHONE_NUMBERS," +
-		// 读取通话记录和来电号码，受系统及安装来源限制。
-		"android.permission.READ_CALL_LOG," +
-		// 删除指定通话记录，受系统及安装来源限制。
-		"android.permission.WRITE_CALL_LOG"
+@UsesPermissions(permissionNames =
+	// 直接拨打电话；仅打开拨号界面不需要此权限。
+	"android.permission.CALL_PHONE," +
+	// 控制设备振动。
+	"android.permission.VIBRATE," +
+	// 查询、监听通话状态，并兼容旧系统的本机号码读取。
+	"android.permission.READ_PHONE_STATE," +
+	// 读取 SIM 卡提供的本机号码，号码可能为空。
+	"android.permission.READ_PHONE_NUMBERS," +
+	// 读取通话记录和来电号码，受系统及安装来源限制。
+	"android.permission.READ_CALL_LOG," +
+	// 删除指定通话记录，受系统及安装来源限制。
+	"android.permission.WRITE_CALL_LOG"
 )
 public interface 电话 extends 组件 {
 

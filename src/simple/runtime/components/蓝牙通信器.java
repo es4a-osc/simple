@@ -14,16 +14,15 @@ import simple.runtime.collections.集合;
  */
 @SimpleObject
 @SimpleComponent
-@UsesPermissions(
-	permissionNames =
-		// 允许应用程序连接已配对的蓝牙设备。
-		"android.permission.BLUETOOTH," +
-		// 允许应用程序发现并配对蓝牙设备。
-		"android.permission.BLUETOOTH_ADMIN," +
-		// 允许应用程序访问精确的位置。
-		"android.permission.ACCESS_FINE_LOCATION," +
-		// 允许应用程序访问大致的位置。
-		"android.permission.ACCESS_COARSE_LOCATION"
+@UsesPermissions(permissionNames =
+	// 允许应用程序连接已配对的蓝牙设备。
+	"android.permission.BLUETOOTH," +
+	// 允许应用程序发现并配对蓝牙设备。
+	"android.permission.BLUETOOTH_ADMIN," +
+	// 允许应用程序访问精确的位置。
+	"android.permission.ACCESS_FINE_LOCATION," +
+	// 允许应用程序访问大致的位置。
+	"android.permission.ACCESS_COARSE_LOCATION"
 )
 public interface 蓝牙通信器 extends 组件 {
 

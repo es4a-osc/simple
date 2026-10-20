@@ -13,18 +13,17 @@ import simple.runtime.annotations.UsesPermissions;
  */
 @SimpleObject
 @SimpleComponent
-@UsesPermissions(
-	permissionNames =
-		// 允许应用程序录制音频。
-		"android.permission.RECORD_AUDIO," +
-		// 允许应用程序访问摄像头。
-		"android.permission.CAMERA," +
-		// 声明应用程序访问闪光灯的权限。
-		"android.permission.FLASHLIGHT," +
-		// 允许应用程序读取外部存储。
-		"android.permission.READ_EXTERNAL_STORAGE," +
-		// 允许应用程序写入外部存储。
-		"android.permission.WRITE_EXTERNAL_STORAGE"
+@UsesPermissions(permissionNames =
+	// 允许应用程序录制音频。
+	"android.permission.RECORD_AUDIO," +
+	// 允许应用程序访问摄像头。
+	"android.permission.CAMERA," +
+	// 声明应用程序访问闪光灯的权限。
+	"android.permission.FLASHLIGHT," +
+	// 允许应用程序读取外部存储。
+	"android.permission.READ_EXTERNAL_STORAGE," +
+	// 允许应用程序写入外部存储。
+	"android.permission.WRITE_EXTERNAL_STORAGE"
 )
 public interface 摄像框 extends 可视组件 {
 

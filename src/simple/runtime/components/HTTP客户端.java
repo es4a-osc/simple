@@ -19,8 +19,8 @@ import simple.runtime.collections.哈希表;
  */
 @SimpleObject
 @SimpleComponent
-@UsesPermissions(
-	permissionNames = "android.permission.INTERNET"
+@UsesPermissions(permissionNames =
+	"android.permission.INTERNET"
 )
 public interface HTTP客户端 extends 组件 {
 

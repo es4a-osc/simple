@@ -18,8 +18,8 @@ import simple.runtime.annotations.UsesPermissions;
  */
 @SimpleComponent
 @SimpleObject
-@UsesPermissions(
-	permissionNames = "android.permission.USE_FINGERPRINT"
+@UsesPermissions(permissionNames =
+	"android.permission.USE_FINGERPRINT"
 )
 public interface 指纹验证 extends 组件 {
 

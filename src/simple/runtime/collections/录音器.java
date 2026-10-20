@@ -17,12 +17,11 @@ import java.io.IOException;
  * @author 树先生 xhwsd@qq.com
  */
 @SimpleObject
-@UsesPermissions(
-	permissionNames =
-		// 录制音频。
-		"android.permission.RECORD_AUDIO," +
-		// 兼容写入旧版系统的共享存储路径；应用私有路径不需要此权限。
-		"android.permission.WRITE_EXTERNAL_STORAGE"
+@UsesPermissions(permissionNames =
+	// 录制音频。
+	"android.permission.RECORD_AUDIO," +
+	// 兼容写入旧版系统的共享存储路径；应用私有路径不需要此权限。
+	"android.permission.WRITE_EXTERNAL_STORAGE"
 )
 public final class 录音器 {
 

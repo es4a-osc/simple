@@ -29,16 +29,15 @@ import simple.runtime.annotations.UsesPermissions;
  */
 @SimpleObject
 @SimpleComponent
-@UsesPermissions(
-	permissionNames =
-		// 允许请求精确位置；部分蓝牙扫描和无线网络信息也受此权限约束。
-		"android.permission.ACCESS_FINE_LOCATION," +
-		// 允许请求大致位置。
-		"android.permission.ACCESS_COARSE_LOCATION," +
-		// 保留旧版模拟位置权限声明，是否可用仍受系统策略限制。
-		"android.permission.ACCESS_MOCK_LOCATION," +
-		// 允许调用定位提供者的附加命令。
-		"android.permission.ACCESS_LOCATION_EXTRA_COMMANDS"
+@UsesPermissions(permissionNames =
+	// 允许请求精确位置；部分蓝牙扫描和无线网络信息也受此权限约束。
+	"android.permission.ACCESS_FINE_LOCATION," +
+	// 允许请求大致位置。
+	"android.permission.ACCESS_COARSE_LOCATION," +
+	// 保留旧版模拟位置权限声明，是否可用仍受系统策略限制。
+	"android.permission.ACCESS_MOCK_LOCATION," +
+	// 允许调用定位提供者的附加命令。
+	"android.permission.ACCESS_LOCATION_EXTRA_COMMANDS"
 )
 public interface 位置传感器  extends 传感器组件 {
 

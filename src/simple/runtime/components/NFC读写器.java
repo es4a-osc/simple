@@ -13,10 +13,9 @@ import simple.runtime.annotations.UsesPermissions;
  */
 @SimpleObject
 @SimpleComponent
-@UsesPermissions(
-	permissionNames =
-		// 允许应用程序通过 NFC 进行读写操作。
-		"android.permission.NFC"
+@UsesPermissions(permissionNames =
+	// 允许应用程序通过 NFC 进行读写操作。
+	"android.permission.NFC"
 )
 public interface NFC读写器 extends 组件 {
 

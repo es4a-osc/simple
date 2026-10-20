@@ -18,14 +18,13 @@ import simple.runtime.parameters.StringReferenceParameter;
  */
 @SimpleComponent
 @SimpleObject
-@UsesPermissions(
-	permissionNames =
-		// 允许应用程序打开网络套接字。
-		"android.permission.INTERNET," +
-		// 允许应用程序访问精确的位置。
-		"android.permission.ACCESS_FINE_LOCATION," +
-		// 允许应用程序访问大致的位置。
-		"android.permission.ACCESS_COARSE_LOCATION"
+@UsesPermissions(permissionNames =
+	// 允许应用程序打开网络套接字。
+	"android.permission.INTERNET," +
+	// 允许应用程序访问精确的位置。
+	"android.permission.ACCESS_FINE_LOCATION," +
+	// 允许应用程序访问大致的位置。
+	"android.permission.ACCESS_COARSE_LOCATION"
 )
 public interface 网页浏览框 extends 可视组件 {
 

@@ -17,10 +17,9 @@ import simple.runtime.annotations.UsesPermissions;
  */
 @SimpleObject
 @SimpleComponent
-@UsesPermissions(
-	permissionNames =
-		// 允许应用修改系统音频设置；普通权限，无需运行时请求。
-		"android.permission.MODIFY_AUDIO_SETTINGS"
+@UsesPermissions(permissionNames =
+	// 允许应用修改系统音频设置；普通权限，无需运行时请求。
+	"android.permission.MODIFY_AUDIO_SETTINGS"
 )
 public interface 音量管理器 extends 组件 {
 

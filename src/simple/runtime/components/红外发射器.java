@@ -14,17 +14,15 @@ import simple.runtime.annotations.UsesPermissions;
  */
 @SimpleObject
 @SimpleComponent
-@UsesPermissions(
-	permissionNames =
-		// 允许应用使用设备内置的红外发射器。
-		"android.permission.TRANSMIT_IR"
+@UsesPermissions(permissionNames =
+	// 允许应用使用设备内置的红外发射器。
+	"android.permission.TRANSMIT_IR"
 )
-@ManifestNodes(
-	rootXml =
-		"<uses-feature" +
-		" android:name=\"android.hardware.consumerir\"" +
-		" android:required=\"false\"" +
-		" />"
+@ManifestNodes(rootXml =
+	"<uses-feature" +
+	" android:name=\"android.hardware.consumerir\"" +
+	" android:required=\"false\"" +
+	" />"
 )
 public interface 红外发射器 extends 组件 {
 
