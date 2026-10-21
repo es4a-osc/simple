@@ -77,7 +77,8 @@ public final class Compiler {
 
 	// 运行时
 	private static final int ANDROID_MIN_SDK_VERSION = 14;
-	private static final String ANDROID_RUNTIME = ANDROID_HOME + "/platforms/android-26/android.jar";
+	private static final String ANDROID_RUNTIME =
+			ANDROID_HOME + "/platforms/android-" + Toolchain.ANDROID_API_LEVEL + "/android.jar";
 	private static final String SIMPLE_ANDROID_RUNTIME = SIMPLE_HOME + "/SimpleAndroidRuntime.jar";
 
 	// 签名APK文件的密钥库
@@ -676,7 +677,9 @@ public final class Compiler {
 		// 创建本次构建独立使用的编译器实例，并记录总耗时起点。
 		long start = System.currentTimeMillis();
 		final Compiler compiler = new Compiler(platform, out, err);
-		if (compiler.errorCount > 0) return false;
+		if (compiler.errorCount > 0) {
+			return false;
+		}
 
 		// 读取并解析项目中的全部Simple单元，先建立语法树和符号声明。
 		for (Project.SourceDescriptor arg : project.getSources()) {
@@ -803,6 +806,9 @@ public final class Compiler {
 			List<File> dexInputFiles = new ArrayList<File>();
 			List<File> dependencyFiles = compiler.runtimeLoader.getDependenciesForLibraries(libraryDirectories);
 			dexInputFiles.addAll(dependencyFiles);
+
+			// Java 资源与 DEX 共用已选依赖；后续只追加项目实际使用的扩展库实现。
+			List<File> resourceJars = new ArrayList<File>(dependencyFiles);
 			List<File> nativeDirectories = new ArrayList<File>();
 			File libraryResourceBuildDirectory = Files.createDirectory(resourceBuildDirectory, "libraries");
 
@@ -814,6 +820,7 @@ public final class Compiler {
 					return false;
 				}
 				dexInputFiles.add(classesFile);
+				resourceJars.add(classesFile);
 
 				File resourceDirectory = new File(libraryDirectory, "res").getAbsoluteFile();
 				if (hasFiles(resourceDirectory)) {
@@ -874,7 +881,7 @@ public final class Compiler {
 			dexInputFiles.add(0, new File(SIMPLE_ANDROID_RUNTIME).getAbsoluteFile());
 			dexInputFiles.add(0, classesDir.getAbsoluteFile());
 			try {
-				LibraryDependencies.validateClasses(dexInputFiles);
+				Dependencies.validateClasses(dexInputFiles);
 			} catch (IOException failure) {
 				compiler.error(Scanner.NO_POSITION, failure.getMessage());
 				return false;
@@ -892,7 +899,7 @@ public final class Compiler {
 			File signedApkFile = new File(buildDir, "application-signed.apk");
 			compiler.out.println("正在生成应用：" + apkFile.getName());
 			if (!Toolchain.buildApplication(unsignedApkFile, apFile, dexFile,
-					dependencyFiles, nativeDirectories, System.err)) {
+					resourceJars, nativeDirectories, System.err)) {
 				internalError();
 				return false;
 			}

@@ -20,6 +20,7 @@ import simple.runtime.collections.哈希表;
 @SimpleObject
 @SimpleComponent
 @UsesPermissions(permissionNames =
+	// 允许建立 HTTP/HTTPS 网络连接。
 	"android.permission.INTERNET"
 )
 public interface HTTP客户端 extends 组件 {

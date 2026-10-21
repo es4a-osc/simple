@@ -19,7 +19,6 @@ package simple.runtime;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
-import simple.runtime.数据转换;
 import simple.runtime.helpers.ConvHelpers;
 import simple.runtime.variants.DateVariant;
 import simple.runtime.variants.Variant;

@@ -16,11 +16,11 @@ import simple.runtime.annotations.UsesPermissions;
 @SimpleComponent
 @SimpleObject
 @UsesPermissions(permissionNames =
-	// 允许程序访问网络连接，可能产生GPRS流量
+	// 允许播放网络音频。
 	"android.permission.INTERNET," +
-	// 允许程序挂载、反挂载外部文件系统
+	// 兼容旧版系统的共享存储写入；应用私有目录不需要此权限。
 	"android.permission.WRITE_EXTERNAL_STORAGE," +
-	// 允许程序写入外部存储,如SD卡上写文件
+	// 保留旧版可移动存储挂载、卸载声明；普通第三方应用无法获得此权限。
 	"android.permission.MOUNT_UNMOUNT_FILESYSTEMS"
 )
 public interface 音频播放器 extends 组件 {

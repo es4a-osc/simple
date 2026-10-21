@@ -32,7 +32,7 @@ import simple.compiler.RichTextComponentTest;
 import simple.runtime.components.impl.android.util.RichTextRangesTest;
 import simple.runtime.components.impl.android.util.DataTableModelTest;
 import simple.compiler.ContactsPermissionsTest;
-import simple.compiler.LibraryDependenciesTest;
+import simple.compiler.DependenciesTest;
 import simple.compiler.KeywordMemberTest;
 import simple.compiler.parser.ParserTest;
 import simple.compiler.scanner.ScannerTest;
@@ -51,6 +51,8 @@ import simple.runtime.StringsTest;
 import simple.runtime.TextFormattingTest;
 import simple.compiler.util.ResourceTest;
 import simple.compiler.util.DexToolchainTest;
+import simple.compiler.util.JarResourcesTest;
+import simple.compiler.util.ApkBuilderTest;
 import simple.compiler.util.SigningToolchainTest;
 
 import junit.framework.TestSuite;
@@ -65,6 +67,11 @@ import junit.framework.Test;
  */
 public class AllTests {
 
+	/**
+	 * 组织编译器与运行库回归用例，供统一测试入口执行。
+	 *
+	 * @return 包含全部已登记用例的测试套件。
+	 */
 	public static Test suite() {
 		TestSuite suite = new TestSuite("Simple Tests");
 		// compiler
@@ -83,7 +90,7 @@ public class AllTests {
 		suite.addTestSuite(RichTextRangesTest.class);
 		suite.addTestSuite(DataTableModelTest.class);
 		suite.addTestSuite(ContactsPermissionsTest.class);
-		suite.addTestSuite(LibraryDependenciesTest.class);
+		suite.addTestSuite(DependenciesTest.class);
 		suite.addTestSuite(KeywordMemberTest.class);
 		// simple.compiler.parser
 		suite.addTestSuite(ParserTest.class);
@@ -92,6 +99,8 @@ public class AllTests {
 		// simple.util
 		suite.addTestSuite(ResourceTest.class);
 		suite.addTestSuite(DexToolchainTest.class);
+		suite.addTestSuite(JarResourcesTest.class);
+		suite.addTestSuite(ApkBuilderTest.class);
 		suite.addTestSuite(SigningToolchainTest.class);
 
 		// simple.runtime

@@ -88,10 +88,12 @@
 
     </path>
 
+	<!-- 允许在隔离验证时指定 D8 候选制品，不覆盖 SDK 中的工具。 -->
+	<property name="d8.jar" location="${env.ANDROID_HOME}/platforms/android-26/tools/lib/d8.jar"/>
+
 	<path id="simplecompiler.classpath">
         <pathelement location="${build.simplecompiler}"/>
-        <pathelement location="${env.ANDROID_HOME}/tools/lib/apkbuilder.jar"/>
-        <pathelement location="${env.ANDROID_HOME}/platforms/android-26/tools/lib/d8.jar"/>
+        <pathelement location="${d8.jar}"/>
 
         <pathelement location="${third_party}/junit-4.12.jar"/>
     </path>

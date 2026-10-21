@@ -16,8 +16,6 @@
 
 package simple.runtime;
 
-
-import simple.runtime.文本操作;
 import simple.runtime.parameters.StringReferenceParameter;
 import simple.runtime.variants.ArrayVariant;
 import simple.runtime.variants.BooleanVariant;

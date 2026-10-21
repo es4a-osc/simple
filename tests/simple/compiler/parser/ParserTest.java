@@ -19,7 +19,6 @@ package simple.compiler.parser;
 import junit.framework.TestCase;
 import simple.compiler.Compiler;
 import simple.compiler.Compiler.Platform;
-import simple.compiler.parser.Parser;
 import simple.compiler.scanner.Scanner;
 
 /**

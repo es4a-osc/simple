@@ -32,7 +32,7 @@ import java.util.Map;
  */
 @SimpleObject
 @UsesPermissions(permissionNames =
-	// 允许程序打开网络套接字
+	// 允许建立 HTTP/HTTPS 网络连接。
 	"android.permission.INTERNET"
 )
 public final class HTTP请求 {

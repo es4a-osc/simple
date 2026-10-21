@@ -49,8 +49,11 @@ import simple.compiler.types.StringType;
 import simple.compiler.types.Type;
 import simple.compiler.types.VariantType;
 import simple.util.Preconditions;
+import simple.compiler.util.ClassFiles;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -82,6 +85,7 @@ import java.util.logging.Logger;
  * 否则Simple编译器将不会从类文件中拾取任何符号。
  *
  * @author Herbert Czymontek
+ * @author 树先生 xhwsd@qq.com
  */
 public final class RuntimeLoader {
 
@@ -159,7 +163,7 @@ public final class RuntimeLoader {
 	private final List<File> extensionLibraryDirectories;
 
 	// 本次加载和项目打包共用的依赖选择结果。
-	private LibraryDependencies dependencies;
+	private Dependencies dependencies;
 
 	// 类名到来源文件的映射，用于按项目实际引用收集扩展库
 	private final Map<String, File> classOriginFiles;
@@ -292,9 +296,12 @@ public final class RuntimeLoader {
 		return originFile == null ? null : originLibraryDirectories.get(originFile);
 	}
 
-	/*
-	 * 发现固定结构的扩展库，并把全部类路径先加入类加载器。
-	 * 先完成类路径装配、后分析classes.jar，可保证类库之间的加载顺序不影响依赖解析。
+	/**
+	 * 发现扩展库并统一选择依赖，检查重复类后装配完整类路径。
+	 *
+	 * <p>先装配全部路径、后分析 classes.jar，避免类库枚举顺序影响依赖解析。
+	 *
+	 * @throws IOException 依赖无法读取或所选输入中仍有重复类。
 	 */
 	private void loadExtensionLibraryURLs() throws IOException {
 		if (librariesRoot == null) {
@@ -315,6 +322,13 @@ public final class RuntimeLoader {
 			return;
 		}
 		Arrays.sort(directories, new Comparator<File>() {
+			/**
+			 * 按目录名稳定排序，不依赖文件系统返回顺序。
+			 *
+			 * @param left 左侧类库目录。
+			 * @param right 右侧类库目录。
+			 * @return 名称的排序比较结果。
+			 */
 			@Override
 			public int compare(File left, File right) {
 				int result = left.getName().compareToIgnoreCase(right.getName());
@@ -335,23 +349,30 @@ public final class RuntimeLoader {
 			originLibraryDirectories.put(classesFile, directory.getAbsoluteFile());
 		}
 
-		dependencies = new LibraryDependencies(extensionLibraryDirectories);
+		dependencies = new Dependencies(extensionLibraryDirectories);
 		List<File> inputs = new ArrayList<File>();
 		inputs.add(runtimeRoot);
 		for (File directory : extensionLibraryDirectories) {
 			inputs.add(new File(directory, "classes.jar"));
 		}
 		inputs.addAll(dependencies.getFiles());
-		LibraryDependencies.validateClasses(inputs);
+		Dependencies.validateClasses(inputs);
 
 		// 依赖先于类库实现装配，加载器和后续打包不能分别选择不同版本。
-		for (File dependency : dependencies.getFiles()) runtimeClassLoader.addURL(dependency.toURI().toURL());
+		for (File dependency : dependencies.getFiles()) {
+			runtimeClassLoader.addURL(dependency.toURI().toURL());
+		}
 		for (File directory : extensionLibraryDirectories) {
 			runtimeClassLoader.addURL(new File(directory, "classes.jar").toURI().toURL());
 		}
 	}
 
-	/** 返回项目所需依赖组在加载阶段已经选定的 JAR。 */
+	/**
+	 * 返回项目实际使用的类库在加载阶段已经选定的依赖 JAR。
+	 *
+	 * @param libraries 项目实际引用的扩展库目录。
+	 * @return 稳定有序的已选依赖；尚未装配扩展库时返回空列表。
+	 */
 	public List<File> getDependenciesForLibraries(List<File> libraries) {
 		return dependencies == null ? Collections.<File>emptyList() : dependencies.getFilesForLibraries(libraries);
 	}
@@ -658,8 +679,11 @@ public final class RuntimeLoader {
 		}
 	}
 
-	/*
-	 * 递归访问运行库目录或JAR，加载其中对Simple可见的类。
+	/**
+	 * 递归访问运行库目录或 JAR，仅分析基础普通类。
+	 *
+	 * @param file 当前目录、JAR 或类文件。
+	 * @param originRoot 用于计算类限定名的类路径根目录。
 	 */
 	private void visitClassDirectories(File file, File originRoot) {
 		if (file.isDirectory()) {
@@ -675,8 +699,17 @@ public final class RuntimeLoader {
 		} else if (file.getName().endsWith(".jar")) {
 			visitClassArchive(file);
 		} else {
-			String name = file.getName();
-			if (name.endsWith(CLASSFILE_EXTENSION)) {
+			String name = originRoot.toPath().relativize(file.toPath()).toString().replace(File.separatorChar, '/');
+			if (ClassFiles.isBaseClass(name)) {
+				try (InputStream input = new FileInputStream(file)) {
+					if (ClassFiles.isModule(input)) {
+						return;
+					}
+				} catch (IOException failure) {
+					compiler.error(Scanner.NO_POSITION, "读取类文件失败：%1\n%2", file.toString(), failure.getMessage());
+					return;
+				}
+
 				String path = file.getAbsolutePath();
 				String className = path.substring(originRoot.getAbsolutePath().length() + 1,
 						path.length() - CLASSFILE_EXTENSION.length()).replace(File.separatorChar, '.');
@@ -686,6 +719,11 @@ public final class RuntimeLoader {
 		}
 	}
 
+	/**
+	 * 直接枚举 JAR，在类加载前排除版本目录和模块描述，不解压或修改原包。
+	 *
+	 * @param archive 需要分析的运行库或扩展库 JAR。
+	 */
 	private void visitClassArchive(File archive) {
 		try {
 			JarFile jar = new JarFile(archive, false, JarFile.OPEN_READ);
@@ -694,7 +732,14 @@ public final class RuntimeLoader {
 				while (jarEntries.hasMoreElements()) {
 					JarEntry entry = jarEntries.nextElement();
 					String name = entry.getName();
-					if (name.endsWith(CLASSFILE_EXTENSION)) {
+					if (ClassFiles.isBaseClass(name)) {
+						// 先识别模块描述；它不参与 Simple 对象反射分析。
+						try (InputStream input = jar.getInputStream(entry)) {
+							if (ClassFiles.isModule(input)) {
+								continue;
+							}
+						}
+
 						// JAR条目始终使用斜杠作为路径分隔符。
 						String className = name.substring(0,
 								name.length() - CLASSFILE_EXTENSION.length()).replace('/', '.');

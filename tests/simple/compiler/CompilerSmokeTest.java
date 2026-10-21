@@ -25,8 +25,6 @@ import java.util.Locale;
 
 import junit.framework.TestCase;
 import simple.classfiles.ClassFile;
-import simple.compiler.Compiler;
-import simple.compiler.Project;
 
 /**
  * Smoke tests for the Simple compiler.

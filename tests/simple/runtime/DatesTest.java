@@ -16,8 +16,6 @@
 
 package simple.runtime;
 
-import simple.runtime.日期时间操作;
-
 import junit.framework.TestCase;
 
 import java.util.Calendar;

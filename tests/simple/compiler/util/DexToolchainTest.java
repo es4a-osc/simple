@@ -31,6 +31,11 @@ public final class DexToolchainTest extends TestCase {
 	private Path root;
 	private ByteArrayOutputStream diagnostics;
 
+	/**
+	 * 为每个 DEX 用例创建中文路径与独立诊断缓冲区。
+	 *
+	 * @throws Exception 生成目录创建失败。
+	 */
 	@Override
 	protected void setUp() throws Exception {
 		Path base = new File("build/tests/d8").toPath().toAbsolutePath();
@@ -87,6 +92,27 @@ public final class DexToolchainTest extends TestCase {
 		String content = new String(Files.readAllBytes(output), StandardCharsets.ISO_8859_1);
 		assertTrue(content.contains("Lprobe/JarSample;"));
 		assertFalse(content.contains("resource-only-marker"));
+	}
+
+	/**
+	 * D8 直接读取原 JAR 时只转换基础实现，不把多版本条目视为重复业务类。
+	 *
+	 * @throws Exception 测试类编译或归档读写失败。
+	 */
+	public void testVersionedJarClassesAreExcluded() throws Exception {
+		Path classes = compile("Versioned", "package probe; public class Versioned {}");
+		byte[] bytes = Files.readAllBytes(classes.resolve("probe/Versioned.class"));
+		Path archive = root.resolve("versioned.jar");
+		try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(archive))) {
+			// 两份字节代表同一个类；版本条目若进入转换，将产生重复类错误。
+			for (String name : new String[] {"probe/Versioned.class", "META-INF/versions/9/probe/Versioned.class"}) {
+				output.putNextEntry(new JarEntry(name));
+				output.write(bytes);
+				output.closeEntry();
+			}
+		}
+
+		assertTrue(messages(), dex(root.resolve("versioned.dex"), Collections.singletonList(archive.toFile())));
 	}
 
 	/**
@@ -226,6 +252,13 @@ public final class DexToolchainTest extends TestCase {
 		Path file = root.resolve(name);
 		final List<Path> entries = new ArrayList<Path>();
 		Files.walkFileTree(classes, new SimpleFileVisitor<Path>() {
+			/**
+			 * 收集测试类目录中的文件，供后续排序与归档。
+			 *
+			 * @param entry 当前遍历文件。
+			 * @param attributes 当前文件属性。
+			 * @return 继续遍历其它文件。
+			 */
 			@Override
 			public FileVisitResult visitFile(Path entry, BasicFileAttributes attributes) {
 				if (Files.isRegularFile(entry)) {
@@ -260,4 +293,5 @@ public final class DexToolchainTest extends TestCase {
 	private String messages() {
 		return new String(diagnostics.toByteArray(), StandardCharsets.UTF_8);
 	}
+
 }

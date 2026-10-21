@@ -19,9 +19,6 @@ package simple.compiler.scanner;
 import junit.framework.TestCase;
 import simple.compiler.Compiler;
 import simple.compiler.Compiler.Platform;
-import simple.compiler.scanner.Keywords;
-import simple.compiler.scanner.Scanner;
-import simple.compiler.scanner.TokenKind;
 
 /**
  * Tests for {@link Scanner}.

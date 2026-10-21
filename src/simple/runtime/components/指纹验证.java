@@ -19,6 +19,7 @@ import simple.runtime.annotations.UsesPermissions;
 @SimpleComponent
 @SimpleObject
 @UsesPermissions(permissionNames =
+	// 允许使用设备已录入的指纹进行本机验证。
 	"android.permission.USE_FINGERPRINT"
 )
 public interface 指纹验证 extends 组件 {

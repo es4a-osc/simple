@@ -1,6 +1,5 @@
 package simple.compiler.util;
 
-import com.android.apkbuilder.ApkBuilder;
 import com.android.tools.r8.CompilationMode;
 import com.android.tools.r8.D8;
 import com.android.tools.r8.D8Command;
@@ -9,12 +8,15 @@ import com.android.tools.r8.Diagnostic;
 import com.android.tools.r8.DiagnosticsHandler;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,13 +31,19 @@ import simple.util.Execution;
  * @author 树先生 xhwsd@qq.com
  */
 public final class Toolchain {
+
+	/**
+	 * 编译器使用的平台 API 等级，仅用于定位 android-N 目录。
+	 * 应用清单中的最低和目标 API 等级独立维护。
+	 */
+	public static final int ANDROID_API_LEVEL = 26;
+
 	// 外部工具路径统一由工具链根据构建环境解析，调用方不关心可执行文件位置。
 	private static final String EXECUTABLE_EXTENSION =
 			System.getProperty("os.name").startsWith("Windows") ? ".exe" : "";
 	private static final String JAVA_HOME = System.getenv("JAVA_HOME");
 	private static final String ANDROID_HOME = System.getenv("ANDROID_HOME");
-	private static final String AAPT2_BINARY =
-			ANDROID_HOME + "/platforms/android-26/tools/aapt2" + EXECUTABLE_EXTENSION;
+	private static final String AAPT2_BINARY = getAapt2Binary();
 	private static final String JAVAC_BINARY =
 			JAVA_HOME + "/bin/javac" + EXECUTABLE_EXTENSION;
 	private static final String KEYTOOL_BINARY =
@@ -43,11 +51,31 @@ public final class Toolchain {
 	private static final String JAVA_BINARY =
 			JAVA_HOME + "/bin/java" + EXECUTABLE_EXTENSION;
 	private static final String ZIPALIGN_BINARY =
-			ANDROID_HOME + "/platforms/android-26/tools/zipalign" + EXECUTABLE_EXTENSION;
+			ANDROID_HOME + "/platforms/android-" + ANDROID_API_LEVEL + "/tools/zipalign" + EXECUTABLE_EXTENSION;
 	private static final String APKSIGNER_JAR =
-			ANDROID_HOME + "/platforms/android-26/tools/lib/apksigner.jar";
+			ANDROID_HOME + "/platforms/android-" + ANDROID_API_LEVEL + "/tools/lib/apksigner.jar";
 
+	/**
+	 * 禁止实例化统一工具链入口。
+	 */
 	private Toolchain() {
+	}
+
+	/**
+	 * 优先选择已有的 AAPT2 UTF-8 副本，不存在时使用原版工具。
+	 *
+	 * @return 本次编译使用的 AAPT2 路径，保留当前平台的可执行文件后缀。
+	 */
+	private static String getAapt2Binary() {
+		// 只按副本是否存在选择；执行失败仍报告错误，不自动换工具重试。
+		File utf8 = new File(ANDROID_HOME + "/platforms/android-" + ANDROID_API_LEVEL + "/tools/aapt2_utf8"
+				+ EXECUTABLE_EXTENSION);
+		if (utf8.isFile()) {
+			return utf8.getPath();
+		}
+
+		// 未生成 UTF-8 副本的 SDK 继续使用原有 AAPT2。
+		return ANDROID_HOME + "/platforms/android-" + ANDROID_API_LEVEL + "/tools/aapt2" + EXECUTABLE_EXTENSION;
 	}
 
 	/**
@@ -76,7 +104,9 @@ public final class Toolchain {
 		commandline.add("-o");
 		commandline.add(outputFile.getAbsolutePath());
 		// Windows下指定构建目录为运行目录，避免跨盘执行时错误解析输出路径。
-		return Execution.execute(workingDirectory, commandline.toArray(new String[0]), out, err);
+		// AAPT2 输出 UTF-8，不能按 Windows 下 JVM 默认的 GBK 解码。
+		return Execution.execute(workingDirectory, commandline.toArray(new String[0]),
+				out, err, StandardCharsets.UTF_8);
 	}
 
 	/**
@@ -219,7 +249,9 @@ public final class Toolchain {
 			commandline.add(compiledResourcesFile.getAbsolutePath());
 		}
 		// Windows下指定构建目录为运行目录，避免跨盘执行时错误解析输出路径。
-		return Execution.execute(workingDirectory, commandline.toArray(new String[0]), out, err);
+		// 资源链接与编译阶段使用相同的 AAPT2 输出编码。
+		return Execution.execute(workingDirectory, commandline.toArray(new String[0]),
+				out, err, StandardCharsets.UTF_8);
 	}
 
 	/**
@@ -270,17 +302,31 @@ public final class Toolchain {
 		try {
 			// 保留输入来源，便于从编译日志定位出错的类或依赖。
 			DiagnosticsHandler diagnostics = new DiagnosticsHandler() {
+				/**
+				 * 输出转换错误，保留输入来源与工具诊断。
+				 *
+				 * @param diagnostic D8 报告的错误。
+				 */
 				@Override
 				public void error(Diagnostic diagnostic) {
 					err.println("D8 错误：" + diagnostic.getOrigin() + ": " + diagnostic.getDiagnosticMessage());
 				}
 
+				/**
+				 * 沿用现有常规构建的警告输出策略。
+				 *
+				 * @param diagnostic D8 报告的警告。
+				 */
 				@Override
 				public void warning(Diagnostic diagnostic) {
-					// 屏蔽警告，尽可能不污染输出
-					// err.println("D8 警告：" + diagnostic.getOrigin() + ": " + diagnostic.getDiagnosticMessage());
+					err.println("D8 警告：" + diagnostic.getOrigin() + ": " + diagnostic.getDiagnosticMessage());
 				}
 
+				/**
+				 * 沿用现有常规构建的信息输出策略。
+				 *
+				 * @param diagnostic D8 报告的信息。
+				 */
 				@Override
 				public void info(Diagnostic diagnostic) {
 					// 屏蔽信息，尽可能不污染输出
@@ -298,7 +344,17 @@ public final class Toolchain {
 			command.setDisableDesugaring(false);
 			command.addLibraryFiles(platformFile.toPath());
 			command.setProgramConsumer(new DexIndexedConsumer() {
+				/**
+				 * 暂存唯一的 DEX，沿用 D8 的字节数组回调，保持工具版本间的接口兼容。
+				 *
+				 * @param index DEX 索引。
+				 * @param data DEX 字节。
+				 * @param descriptors 本 DEX 的类描述符。
+				 * @param handler D8 诊断接收器。
+				 * @throws IllegalStateException 工具尝试输出多个 DEX。
+				 */
 				@Override
+				@SuppressWarnings("deprecation")
 				public void accept(int index, byte[] data, Set<String> descriptors, DiagnosticsHandler handler) {
 					if (index != 0) {
 						throw new IllegalStateException("当前编译器只支持单个 classes.dex，不能输出多个 DEX。");
@@ -307,6 +363,11 @@ public final class Toolchain {
 					dex.set(data);
 				}
 
+				/**
+				 * 接收输出结束通知，文件写入仍由外层确认转换成功后执行。
+				 *
+				 * @param handler D8 诊断接收器。
+				 */
 				@Override
 				public void finished(DiagnosticsHandler handler) {
 					// 等待 D8.run 成功返回后再统一写入。
@@ -315,16 +376,31 @@ public final class Toolchain {
 
 			// 项目类与依赖共同参与转换；平台 android.jar 仅用于解析系统类型。
 			for (File input : inputFiles) {
-				Path path = input.toPath();
+				final Path path = input.toPath();
 
 				if (input.isDirectory()) {
 					// D8 不接受类目录；只枚举 class，避免把目录中的资源当作程序输入。
 					final List<Path> classes = new ArrayList<Path>();
 					Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+						/**
+						 * 收集基础普通类，使目录输入与 JAR 输入遵循同一版本选择边界。
+						 *
+						 * @param file 当前文件。
+						 * @param attributes 文件属性。
+						 * @return 继续遍历其它文件。
+						 * @throws IOException 类头无法读取或格式无效。
+						 */
 						@Override
-						public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
-							if (Files.isRegularFile(file) && file.getFileName().toString().endsWith(".class")) {
-								classes.add(file);
+						public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) throws IOException {
+							String name = path.relativize(file).toString().replace(File.separatorChar, '/');
+							if (Files.isRegularFile(file) && ClassFiles.isBaseClass(name)) {
+								try (InputStream stream = Files.newInputStream(file)) {
+									if (!ClassFiles.isModule(stream)) {
+										classes.add(file);
+									}
+								} catch (IOException failure) {
+									throw new IOException(file + "：" + failure.getMessage(), failure);
+								}
 							}
 							return FileVisitResult.CONTINUE;
 						}
@@ -357,12 +433,12 @@ public final class Toolchain {
 	}
 
 	/**
-	 * 调用{@code apkbuilder.jar}把资源包和{@code classes.dex}组装为未签名APK。
+	 * 组装资源包与 {@code classes.dex}，补入所选 JAR 的 Java 资源，生成未签名 APK。
 	 *
 	 * @param outputFile 要生成的APK文件
 	 * @param resourcesFile AAPT2生成的{@code .ap_}资源包
 	 * @param dexFile D8生成的{@code classes.dex}文件
-	 * @param dependencyFiles 已选定的扩展库依赖JAR
+	 * @param dependencyFiles 实际引用的扩展库 classes.jar 及已选依赖 JAR
 	 * @param nativeDirectories 扩展库原生库目录
 	 * @param err 错误输出
 	 * @return 执行成功返回{@code true}，否则返回{@code false}
@@ -370,32 +446,12 @@ public final class Toolchain {
 	public static boolean buildApplication(File outputFile, File resourcesFile,
 			File dexFile, List<File> dependencyFiles,
 			List<File> nativeDirectories, PrintStream err) {
-		List<String> commandline = new ArrayList<String>();
-		// 第一个参数指定要生成的APK文件。
-		commandline.add(outputFile.getAbsolutePath());
-		// -u：创建未签名APK，签名由后续工具完成。
-		commandline.add("-u");
-		// -z <文件>：加入AAPT2生成的资源包。
-		commandline.add("-z");
-		commandline.add(resourcesFile.getAbsolutePath());
-		// -f <文件>：加入D8生成的classes.dex。
-		commandline.add("-f");
-		commandline.add(dexFile.getAbsolutePath());
-		// -rj <JAR>：只加入选定依赖的非class资源，不再扫描原始libs目录。
-		for (File dependency : dependencyFiles) {
-			commandline.add("-rj");
-			commandline.add(dependency.getAbsolutePath());
-		}
-		// -nf <目录>：加入按ABI组织的原生SO文件。
-		for (File nativeDirectory : nativeDirectories) {
-			commandline.add("-nf");
-			commandline.add(nativeDirectory.getAbsolutePath());
-		}
 		try {
-			ApkBuilder.main(commandline.toArray(new String[0]));
+			// 组装、Java 资源合并全部成功后，才发布新的未签名 APK。
+			ApkBuilder.build(outputFile, resourcesFile, dexFile, dependencyFiles, nativeDirectories);
 			return true;
-		} catch (Throwable throwable) {
-			throwable.printStackTrace(err);
+		} catch (Exception failure) {
+			failure.printStackTrace(err);
 			return false;
 		}
 	}

@@ -16,8 +16,6 @@
 
 package simple.runtime;
 
-
-import simple.runtime.文件操作;
 import simple.runtime.errors.文件已存在错误;
 import simple.runtime.errors.文件未存在错误;
 import simple.runtime.errors.文件读写错误;

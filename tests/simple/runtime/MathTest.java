@@ -16,8 +16,6 @@
 
 package simple.runtime;
 
-
-import simple.runtime.数值运算;
 import simple.runtime.errors.转换错误;
 import simple.runtime.variants.BooleanVariant;
 import simple.runtime.variants.DoubleVariant;

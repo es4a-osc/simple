@@ -16,7 +16,6 @@
 
 package simple.runtime;
 
-import simple.runtime.数组操作;
 import simple.runtime.variants.ArrayVariant;
 import simple.runtime.variants.Variant;
 
