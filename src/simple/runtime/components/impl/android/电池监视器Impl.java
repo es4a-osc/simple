@@ -49,12 +49,14 @@ public final class 电池监视器Impl extends 组件Impl implements 电池监�
 				}
 			}
 		};
+
 		destroyListener = new MainActivity.OnDestroyListener() {
 			@Override
 			public void onDestroy() {
 				release(false);
 			}
 		};
+
 		activity.addOnDestroyListener(destroyListener);
 	}
 

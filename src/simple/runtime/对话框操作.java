@@ -823,13 +823,11 @@ public final class 对话框操作 {
 	private static class WaitEnd {
 		// 结果
 		public Object result = null;
-
 		// 扩展
 		public Object expand = null;
 
-		// 处理器
-		private Handler handler = new Handler() {
-
+		// 处理器，显式绑定当前线程的消息循环，保持原有等待与退出逻辑。
+		private Handler handler = new Handler(Looper.myLooper()) {
 			@Override
 			public void handleMessage(Message mesg) {
 				// 收到任意消息抛出异常

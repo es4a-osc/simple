@@ -28,6 +28,11 @@ public final class SigningToolchainTest extends TestCase {
 	private ByteArrayOutputStream diagnostics;
 	private PrintStream log;
 
+	/**
+	 * 使用当前 SDK 平台准备独立目录、诊断输出和未签名测试应用。
+	 *
+	 * @throws Exception 临时文件创建、资源链接或诊断流初始化失败。
+	 */
 	@Override
 	protected void setUp() throws Exception {
 		Path base = new File("build/tests/signing").toPath().toAbsolutePath();
@@ -47,7 +52,7 @@ public final class SigningToolchainTest extends TestCase {
 
 		int exitCode = run(androidTool("aapt2"), "link", "-o", unsignedApk.getAbsolutePath(),
 			"--manifest", manifest.toString(), "-I",
-			new File(System.getenv("ANDROID_HOME"), "platforms/android-26/android.jar").getAbsolutePath());
+			new File(System.getenv("ANDROID_HOME"), "platforms/android-30/android.jar").getAbsolutePath());
 		assertEquals(messages(), 0, exitCode);
 	}
 
@@ -242,7 +247,7 @@ public final class SigningToolchainTest extends TestCase {
 	 */
 	private String androidTool(String name) {
 		return new File(System.getenv("ANDROID_HOME"),
-			"platforms/android-26/tools/" + name + executableExtension()).getAbsolutePath();
+			"platforms/android-30/tools/" + name + executableExtension()).getAbsolutePath();
 	}
 
 	/**
@@ -252,7 +257,7 @@ public final class SigningToolchainTest extends TestCase {
 	 */
 	private String apksigner() {
 		return new File(System.getenv("ANDROID_HOME"),
-			"platforms/android-26/tools/lib/apksigner.jar").getAbsolutePath();
+			"platforms/android-30/tools/lib/apksigner.jar").getAbsolutePath();
 	}
 
 	/**

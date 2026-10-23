@@ -37,7 +37,6 @@ public final class 弹出菜单Impl extends 组件Impl implements 弹出菜单 {
 		super(container);
 		activity = MainActivity.getContext();
 		destroyListener = new MainActivity.OnDestroyListener() {
-
 			@Override
 			public void onDestroy() {
 				dispose(false);
@@ -155,7 +154,9 @@ public final class 弹出菜单Impl extends 组件Impl implements 弹出菜单 {
 		if (popup != null) {
 			popup.dismiss();
 		}
+
 		requireAlive();
+
 		final PopupMenu current = new PopupMenu(activity, anchor);
 		if (menuRes.isEmpty()) {
 			addItems(current.getMenu(), 0);
@@ -169,7 +170,6 @@ public final class 弹出菜单Impl extends 组件Impl implements 弹出菜单 {
 		}
 
 		current.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-
 			@Override
 			public boolean onMenuItemClick(android.view.MenuItem item) {
 				if (!destroyed && popup == current) {
@@ -178,8 +178,8 @@ public final class 弹出菜单Impl extends 组件Impl implements 弹出菜单 {
 				return true;
 			}
 		});
-		current.setOnDismissListener(new PopupMenu.OnDismissListener() {
 
+		current.setOnDismissListener(new PopupMenu.OnDismissListener() {
 			@Override
 			public void onDismiss(PopupMenu menu) {
 				if (popup == current) {
@@ -237,6 +237,7 @@ public final class 弹出菜单Impl extends 组件Impl implements 弹出菜单 {
 		if (destroyed) {
 			return;
 		}
+
 		destroyed = true;
 		PopupMenu current = popup;
 		popup = null;
@@ -246,6 +247,7 @@ public final class 弹出菜单Impl extends 组件Impl implements 弹出菜单 {
 			current.dismiss();
 		}
 		model.clear();
+
 		if (unregister) {
 			activity.removeOnDestroyListener(destroyListener);
 		}

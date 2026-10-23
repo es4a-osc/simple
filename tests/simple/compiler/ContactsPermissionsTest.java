@@ -35,7 +35,7 @@ public final class ContactsPermissionsTest extends TestCase {
 	}
 
 	public void testLabelExampleDoesNotRequestContactsPermissions() throws Exception {
-		Set<?> permissions = permissions("examples/标签显示/project.properties");
+		Set<?> permissions = permissions("examples/标签/project.properties");
 		assertFalse(permissions.contains("android.permission.READ_CONTACTS"));
 		assertFalse(permissions.contains("android.permission.WRITE_CONTACTS"));
 	}

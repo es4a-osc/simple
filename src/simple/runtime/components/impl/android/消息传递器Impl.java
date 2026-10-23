@@ -7,6 +7,7 @@ import simple.runtime.events.EventDispatcher;
 import simple.runtime.variants.Variant;
 
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 
 /**
@@ -26,8 +27,7 @@ public final class 消息传递器Impl extends 组件Impl implements 消息传�
 	public 消息传递器Impl(组件容器 container) {
 		super(container);
 
-		handler = new Handler() {
-
+		handler = new Handler(Looper.myLooper()) {
 			@Override
 			public void handleMessage(Message msg) {
 				收到消息(msg.what, (Variant) msg.obj);

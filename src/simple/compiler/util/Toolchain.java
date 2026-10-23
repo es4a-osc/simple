@@ -1,5 +1,6 @@
 package simple.compiler.util;
 
+import com.android.tools.r8.ByteDataView;
 import com.android.tools.r8.CompilationMode;
 import com.android.tools.r8.D8;
 import com.android.tools.r8.D8Command;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
+import simple.compiler.Compiler;
 import simple.util.Execution;
 
 /**
@@ -32,28 +34,17 @@ import simple.util.Execution;
  */
 public final class Toolchain {
 
-	/**
-	 * 编译器使用的平台 API 等级，仅用于定位 android-N 目录。
-	 * 应用清单中的最低和目标 API 等级独立维护。
-	 */
-	public static final int ANDROID_API_LEVEL = 26;
-
 	// 外部工具路径统一由工具链根据构建环境解析，调用方不关心可执行文件位置。
-	private static final String EXECUTABLE_EXTENSION =
-			System.getProperty("os.name").startsWith("Windows") ? ".exe" : "";
+	private static final String EXECUTABLE_EXTENSION = System.getProperty("os.name").startsWith("Windows") ? ".exe" : "";
 	private static final String JAVA_HOME = System.getenv("JAVA_HOME");
 	private static final String ANDROID_HOME = System.getenv("ANDROID_HOME");
+
 	private static final String AAPT2_BINARY = getAapt2Binary();
-	private static final String JAVAC_BINARY =
-			JAVA_HOME + "/bin/javac" + EXECUTABLE_EXTENSION;
-	private static final String KEYTOOL_BINARY =
-			JAVA_HOME + "/bin/keytool" + EXECUTABLE_EXTENSION;
-	private static final String JAVA_BINARY =
-			JAVA_HOME + "/bin/java" + EXECUTABLE_EXTENSION;
-	private static final String ZIPALIGN_BINARY =
-			ANDROID_HOME + "/platforms/android-" + ANDROID_API_LEVEL + "/tools/zipalign" + EXECUTABLE_EXTENSION;
-	private static final String APKSIGNER_JAR =
-			ANDROID_HOME + "/platforms/android-" + ANDROID_API_LEVEL + "/tools/lib/apksigner.jar";
+	private static final String JAVAC_BINARY = JAVA_HOME + "/bin/javac" + EXECUTABLE_EXTENSION;
+	private static final String KEYTOOL_BINARY = JAVA_HOME + "/bin/keytool" + EXECUTABLE_EXTENSION;
+	private static final String JAVA_BINARY = JAVA_HOME + "/bin/java" + EXECUTABLE_EXTENSION;
+	private static final String ZIPALIGN_BINARY = ANDROID_HOME + "/platforms/android-" + Compiler.ANDROID_TARGET_SDK_VERSION + "/tools/zipalign" + EXECUTABLE_EXTENSION;
+	private static final String APKSIGNER_JAR = ANDROID_HOME + "/platforms/android-" + Compiler.ANDROID_TARGET_SDK_VERSION + "/tools/lib/apksigner.jar";
 
 	/**
 	 * 禁止实例化统一工具链入口。
@@ -68,14 +59,13 @@ public final class Toolchain {
 	 */
 	private static String getAapt2Binary() {
 		// 只按副本是否存在选择；执行失败仍报告错误，不自动换工具重试。
-		File utf8 = new File(ANDROID_HOME + "/platforms/android-" + ANDROID_API_LEVEL + "/tools/aapt2_utf8"
-				+ EXECUTABLE_EXTENSION);
+		File utf8 = new File(ANDROID_HOME + "/platforms/android-" + Compiler.ANDROID_TARGET_SDK_VERSION + "/tools/aapt2_utf8" + EXECUTABLE_EXTENSION);
 		if (utf8.isFile()) {
 			return utf8.getPath();
 		}
 
 		// 未生成 UTF-8 副本的 SDK 继续使用原有 AAPT2。
-		return ANDROID_HOME + "/platforms/android-" + ANDROID_API_LEVEL + "/tools/aapt2" + EXECUTABLE_EXTENSION;
+		return ANDROID_HOME + "/platforms/android-" + Compiler.ANDROID_TARGET_SDK_VERSION + "/tools/aapt2" + EXECUTABLE_EXTENSION;
 	}
 
 	/**
@@ -105,8 +95,7 @@ public final class Toolchain {
 		commandline.add(outputFile.getAbsolutePath());
 		// Windows下指定构建目录为运行目录，避免跨盘执行时错误解析输出路径。
 		// AAPT2 输出 UTF-8，不能按 Windows 下 JVM 默认的 GBK 解码。
-		return Execution.execute(workingDirectory, commandline.toArray(new String[0]),
-				out, err, StandardCharsets.UTF_8);
+		return Execution.execute(workingDirectory, commandline.toArray(new String[0]), out, err, StandardCharsets.UTF_8);
 	}
 
 	/**
@@ -286,7 +275,7 @@ public final class Toolchain {
 	/**
 	 * 使用 D8 转换项目类、运行库及依赖，生成单个 {@code classes.dex}。
 	 *
-	 * <p>开启 Java 8 特性转换并保留调试信息。只在转换成功且仅生成一个 DEX 时写入文件，
+	 * <p>按最低 API 转换受支持的 Java 语言特性并保留调试信息。只在转换成功且仅生成一个 DEX 时写入文件，
 	 * 不通过拆分 DEX 绕过方法数限制；最低 API 必须与应用清单一致。
 	 *
 	 * @param outputFile 要生成的{@code classes.dex}文件
@@ -337,7 +326,7 @@ public final class Toolchain {
 			// 先接收转换结果；D8 整体成功前不覆盖已有文件。
 			final AtomicReference<byte[]> dex = new AtomicReference<byte[]>();
 
-			// 最低 API 与应用清单保持一致，转换 Java 8 特性并保留调试信息。
+			// 最低 API 与应用清单保持一致，启用语言特性转换并保留调试信息。
 			D8Command.Builder command = D8Command.builder(diagnostics);
 			command.setMode(CompilationMode.DEBUG);
 			command.setMinApiLevel(minApiLevel);
@@ -345,22 +334,22 @@ public final class Toolchain {
 			command.addLibraryFiles(platformFile.toPath());
 			command.setProgramConsumer(new DexIndexedConsumer() {
 				/**
-				 * 暂存唯一的 DEX，沿用 D8 的字节数组回调，保持工具版本间的接口兼容。
+				 * 接收唯一 DEX 的数据视图，复制输出供转换整体成功后写入。
 				 *
 				 * @param index DEX 索引。
-				 * @param data DEX 字节。
+				 * @param data 仅在本次回调期间有效的 DEX 数据视图。
 				 * @param descriptors 本 DEX 的类描述符。
 				 * @param handler D8 诊断接收器。
 				 * @throws IllegalStateException 工具尝试输出多个 DEX。
 				 */
 				@Override
-				@SuppressWarnings("deprecation")
-				public void accept(int index, byte[] data, Set<String> descriptors, DiagnosticsHandler handler) {
+				public void accept(int index, ByteDataView data, Set<String> descriptors, DiagnosticsHandler handler) {
 					if (index != 0) {
 						throw new IllegalStateException("当前编译器只支持单个 classes.dex，不能输出多个 DEX。");
 					}
 
-					dex.set(data);
+					// 回调结束后视图会失效，必须保存独立的字节副本。
+					dex.set(data.copyByteData());
 				}
 
 				/**

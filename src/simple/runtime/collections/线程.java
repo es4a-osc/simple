@@ -257,10 +257,10 @@ public class 线程 {
 	 * @return 成功返回{@code true}，否则返回{@code false}
 	 */
 	@SimpleFunction
-	@SuppressWarnings("deprecation") // 忽略该方法调用已弃用的API
+	@SuppressWarnings("deprecation")
 	public boolean 终止() {
 		try {
-			// Thread.stop() 已过时
+			// 该方法已过期
 			thread.stop();
 			return true;
 		} catch (SecurityException e) {

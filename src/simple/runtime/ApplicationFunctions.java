@@ -45,9 +45,9 @@ public interface ApplicationFunctions {
 	void switchForm(窗口 form);
 
 	/**
-	 * 终止此应用程序。
+	 * 终止此应用程序，结束主活动及当前应用进程。
 	 */
-	void finish();
+	void terminate();
 
 	/**
 	 * 检索以前存储的首选项的值（即使从同一程序的先前部分检索）。
@@ -87,27 +87,27 @@ public interface ApplicationFunctions {
 	String getVersionName();
 
 	/**
-	 * 获取应用程序版本名称信息
+	 * 读取当前应用清单中 versionCode 指定的整数版本号。
 	 *
-	 * @return 当前应用的版本名称
+	 * @return 当前应用的版本号；读取失败时返回 0。
 	 */
-	long getVersionCode();
+	int getVersionCode();
 
 	/**
 	 * 启动指定服务。
 	 *
 	 * @param intent 意图实例。
-	 * @return 成功返回{@code true}，否则返回{@code false}。
+	 * @return 请求已受理返回真；服务不存在、启动受限、意图无效或权限不足返回假。
 	 */
 	boolean serviceStart(意图 intent);
 
 	/**
-	 * 立刻停止指定服务。
+	 * 请求停止指定服务。
 	 *
-	 * <p>注意：服务在任务执行完成后自行结束自己，而不需要外部去调用停止服务。
+	 * <p>Simple 服务单元会在队列处理完毕后自动停止；停止请求不保证当前操作已经退出。
 	 *
 	 * @param intent 意图实例。
-	 * @return 成功返回{@code true}，否则返回{@code false}。
+	 * @return 正在运行的匹配服务已收到停止请求时返回真；未运行或请求失败返回假。
 	 */
 	boolean serviceStop(意图 intent);
 
@@ -119,42 +119,50 @@ public interface ApplicationFunctions {
 	void broadcastSend(意图 intent);
 
 	/**
-	 * 取屏幕宽度
+	 * 取当前应用的显示区域宽度。
+	 *
+	 * <p>左右若有系统导航栏或刘海，不包含其占用区域。
 	 *
 	 * @return 宽度，单位像素（px）
 	 */
-	int getScreenWidth();
+	int getDisplayWidth();
 
 	/**
-	 * 取屏幕高度
+	 * 取当前应用的显示区域高度。
+	 *
+	 * <p>含系统状态栏和应用标题栏，不含上下系统导航栏及刘海占用区域。
 	 *
 	 * @return 高度，单位像素（px）
 	 */
-	int getScreenHeight();
+	int getDisplayHeight();
 
 	/**
-	 * 取屏幕密度
+	 * 取当前应用的显示密度比例。
 	 *
-	 * @return 密度
+	 * @return 密度比例
 	 */
-	double getScreenDensity();
+	double getDisplayDensity();
 
 	/**
-	 * 取状态栏高度
+	 * 取系统状态栏高度，不受是否隐藏影响。
 	 *
 	 * @return 高度，单位像素（px）
 	 */
 	int getStatusBarHeight();
 
 	/**
-	 * 取内容宽度
+	 *  取当前应用实际内容宽度
+	 *
+	 * <p>左右若有系统导航栏，不包含其占用区域。
 	 *
 	 * @return 宽度，单位像素（px）
 	 */
 	int getContentWidth();
 
 	/**
-	 * 取内容高度
+	 *  取当前应用实际内容高度
+	 *
+	 * <p>不含系统状态栏、应用标题栏和底部系统导航栏。
 	 *
 	 * @return 高度，单位像素（px）
 	 */

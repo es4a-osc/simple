@@ -9,7 +9,11 @@ import simple.compiler.Compiler.Platform;
 import simple.compiler.parser.Parser;
 import simple.compiler.scanner.Scanner;
 
-/** 验证显式本对象在静态环境中提前报错，实例事件、函数、过程及属性访问器保持合法。 */
+/**
+ * 验证显式本对象在静态环境中提前报错，实例事件、函数、过程及属性访问器保持合法。
+ *
+ * @author 树先生 xhwsd@qq.com
+ */
 public final class MeExpressionTest extends TestCase {
 
 	public void testRejectsMeInLoadEvent() throws Exception {
@@ -68,11 +72,19 @@ public final class MeExpressionTest extends TestCase {
 		assertEquals(diagnostics.toString("UTF-8"), 0, compiler.getErrorCount());
 	}
 
+	/**
+	 * 使用当前 Android 平台加载运行库，解析并检查指定的测试成员。
+	 *
+	 * @param body 测试对象中的用户代码。
+	 * @param diagnostics 接收编译诊断的缓冲区。
+	 * @return 完成解析和语义检查的编译器。
+	 * @throws Exception 诊断流初始化或运行库加载失败。
+	 */
 	private Compiler resolve(String body, ByteArrayOutputStream diagnostics) throws Exception {
 		PrintStream messages = new PrintStream(diagnostics, true, "UTF-8");
 		Compiler compiler = new Compiler(Platform.None, messages, messages);
 		RuntimeLoader loader = new RuntimeLoader(compiler,
-				new File(System.getenv("ANDROID_HOME"), "platforms/android-26/android.jar").getAbsolutePath(),
+				new File(System.getenv("ANDROID_HOME"), "platforms/android-30/android.jar").getAbsolutePath(),
 				new File("build/runtime/android/classes").getAbsolutePath(), null);
 		loader.loadSimpleObjects();
 		String source = "静态 变量 保存实例 为 对象\r\n"

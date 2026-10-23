@@ -43,13 +43,9 @@
 	<echo message="SIMPLE_HOME = ${env.SIMPLE_HOME}"/>
 
 	<!--
-      - Building the Simple package requires a Java SDK 1.6 or newer.
-      - Note that if you are building on a Mac and it defaults to an older version, the only way
-      - to fix this, is to additionally define the following environment variable (with a possible
-      - adjustment of the version number depending on your system):
-      - JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Home
+      - Building the Simple package requires JDK 11.
+      - JAVA_HOME must point to the JDK 11 installation directory.
       -->
-    <property name="build.compiler" value="javac1.6"/>
 	<echo message="JAVA_HOME = ${env.JAVA_HOME}"/>
 
 	<!--
@@ -89,7 +85,7 @@
     </path>
 
 	<!-- 允许在隔离验证时指定 D8 候选制品，不覆盖 SDK 中的工具。 -->
-	<property name="d8.jar" location="${env.ANDROID_HOME}/platforms/android-26/tools/lib/d8.jar"/>
+	<property name="d8.jar" location="${env.ANDROID_HOME}/platforms/android-30/tools/lib/d8.jar"/>
 
 	<path id="simplecompiler.classpath">
         <pathelement location="${build.simplecompiler}"/>
@@ -100,7 +96,7 @@
 
     <path id="simpleruntime.android.classpath">
         <pathelement location="${build.simpleruntime.android}"/>
-        <pathelement location="${env.ANDROID_HOME}/platforms/android-26/android.jar"/>
+        <pathelement location="${env.ANDROID_HOME}/platforms/android-30/android.jar"/>
     </path>
 
 	<path id="tests.compile.classpath">
@@ -145,7 +141,7 @@
 		  - deprecation：输出详细过期警告
 		  - includeantruntime：是否导入ANT运行库（Ant1.8） 
 		  -->
-        <javac debug="true" destdir="${build.simplecompiler}" source="1.8" target="1.8"
+        <javac debug="true" destdir="${build.simplecompiler}" source="11" target="11"
           encoding="UTF-8" deprecation="true" includeantruntime="false">
             <!-- -Xlint:unchecked 输出错误详细 -->
             <compilerarg value="-Xlint:unchecked"/>
@@ -164,7 +160,7 @@
       - Builds the Simple runtime library (for Android).
       -->
     <target name="SimpleAndroidRuntime" depends="init" description="Build Simple runtime libraries">
-        <javac debug="true" destdir="${build.simpleruntime.android}" source="1.8" target="1.8"
+        <javac debug="true" destdir="${build.simpleruntime.android}" source="11" target="11"
           encoding="UTF-8" deprecation="true" includeantruntime="false">
             <compilerarg value="-Xlint:unchecked"/>
             <src path="${src}"/>
@@ -178,7 +174,7 @@
       - ABSOLUTELY MUST BE RUN BEFORE ALL CODE SUBMISSIONS! NO EXCUSES!
       -->
     <target name="compiletests" depends="distribution">
-        <javac debug="true" destdir="${build.tests}" source="1.8" target="1.8"
+        <javac debug="true" destdir="${build.tests}" source="11" target="11"
           encoding="UTF-8" deprecation="true" includeantruntime="false">
             <src path="${tests}"/>
             <classpath refid="tests.compile.classpath"/>

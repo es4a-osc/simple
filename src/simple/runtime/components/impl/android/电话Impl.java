@@ -73,7 +73,6 @@ public final class 电话Impl extends 组件Impl implements 电话 {
 		telephony = (TelephonyManager) activity.getSystemService(Context.TELEPHONY_SERVICE);
 		vibrator = (Vibrator) activity.getSystemService(Context.VIBRATOR_SERVICE);
 		destroyListener = new MainActivity.OnDestroyListener() {
-
 			@Override
 			public void onDestroy() {
 				// Activity 正在遍历监听器列表，此处不能修改该列表。

@@ -32,7 +32,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface ManifestNodes {
-
 	/**
 	 * @return 插入到{@code /manifest}下的XML
 	 */

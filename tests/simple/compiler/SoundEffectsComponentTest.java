@@ -50,7 +50,7 @@ public final class SoundEffectsComponentTest extends TestCase {
 	 */
 	public void testRealExampleCompiles() throws Exception {
 		assertNotNull(Compiler.compileForUnitTesting(
-			new Project(new File("examples/音效播放/project.properties"))));
+			new Project(new File("examples/音效播放器/project.properties"))));
 	}
 
 	/**
@@ -63,7 +63,7 @@ public final class SoundEffectsComponentTest extends TestCase {
 		PrintStream messages = new PrintStream(diagnostics, true, "UTF-8");
 		Compiler compiler = new Compiler(Compiler.Platform.Android, messages, messages);
 
-		for (Project.SourceDescriptor descriptor : new Project("examples/音效播放/project.properties", null).getSources()) {
+		for (Project.SourceDescriptor descriptor : new Project("examples/音效播放器/project.properties", null).getSources()) {
 			String source = new String(Files.readAllBytes(descriptor.getFile().toPath()), StandardCharsets.UTF_8);
 			new Parser(compiler, new Scanner(compiler, source), descriptor.getQualifiedName()).parse();
 		}

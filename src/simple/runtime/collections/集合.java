@@ -109,10 +109,10 @@ public final class 集合 {
 	@SimpleFunction
 	public Variant 项目(int index) {
 		/*
-		 * 关联代码：
-		 * {@link simple.compiler.statements.ForEachStatement#generate(simple.classfiles.Method)}
-		 * {@link simple.runtime.helpers.StmtHelpers#forEachItem(Variant, int)}
-		 */
+		关联代码：
+		simple.compiler.statements.ForEachStatement#generate(simple.classfiles.Method)
+		simple.runtime.helpers.StmtHelpers#forEachItem(Variant, int)
+		*/
 		try {
 			return list.get(index);
 		} catch (IndexOutOfBoundsException e) {
@@ -145,8 +145,8 @@ public final class 集合 {
 	public int 计数() {
 		/*
 		关联代码：
-		{@link simple.compiler.statements.ForEachStatement#generate(simple.classfiles.Method)}
-		{@link simple.runtime.helpers.StmtHelpers#forEachCount(Variant)}
+		simple.compiler.statements.ForEachStatement#generate(simple.classfiles.Method)
+		simple.runtime.helpers.StmtHelpers#forEachCount(Variant)
 		*/
 		return list.size();
 	}

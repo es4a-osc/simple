@@ -49,7 +49,6 @@ public final class 单选框Impl extends 文本视图组件
 		// 监听焦点变化
 		view.setOnFocusChangeListener(this);
 		view.setOnCheckedChangeListener(this);
-
 		return view;
 	}
 

@@ -185,7 +185,7 @@ public final class DexToolchainTest extends TestCase {
 	 */
 	private boolean dex(Path output, List<File> inputs) throws Exception {
 		PrintStream log = new PrintStream(diagnostics, true, "UTF-8");
-		File platform = new File(System.getenv("ANDROID_HOME"), "platforms/android-26/android.jar");
+		File platform = new File(System.getenv("ANDROID_HOME"), "platforms/android-30/android.jar");
 
 		return Toolchain.generateDex(output.toFile(), inputs, platform, 14, log, log);
 	}

@@ -115,6 +115,8 @@ public final class XMLObjectsTest extends TestCase {
 	 * @throws Exception 项目读取失败。
 	 */
 	public void testRealExampleCompiles() throws Exception {
-		assertNotNull(Compiler.compileForUnitTesting(new Project(new File("examples/XML处理/project.properties"))));
+		for (String name : new String[]{"XML解析器", "XML生成器"}) {
+			assertNotNull(Compiler.compileForUnitTesting(new Project(new File("examples/" + name + "/project.properties"))));
+		}
 	}
 }

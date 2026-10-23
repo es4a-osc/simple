@@ -194,11 +194,11 @@ public class EventDispatcher {
 	}
 
 	/**
-	 * 注销对象所有关联的事件。
+	 * 注销对象作为事件源或事件拥有者注册的全部事件。
 	 *
 	 * xhwsd@qq.com 2021-6-10
 	 *
-	 * @param that 事件对象
+	 * @param that 事件源或事件拥有者
 	 */
 	public static void unregisterEvent(Object that) {
 		// 注销该对象的所有事件
@@ -208,9 +208,12 @@ public class EventDispatcher {
 			if (closures != null) {
 				// 注意因删除操作，需递减遍历
 				for (int i = closures.size() - 1; i >= 0; i--) {
-					if (closures.get(i).getDataMemberObject() == that) {
+					if (closures.get(i).object == that || closures.get(i).getDataMemberObject() == that) {
 						closures.remove(i);
 					}
+				}
+				if (closures.isEmpty()) {
+					iterator.remove();
 				}
 			}
 		}

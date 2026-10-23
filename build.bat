@@ -5,7 +5,7 @@ REM --------------------------------------------------
 
 :定义变量
 REM JavaSDK根目录
-FOR %%I IN ("%~dp0..\sdk\tools\jdk1.8.0_503") DO SET "JAVA_HOME=%%~fI"
+FOR %%I IN ("%~dp0..\sdk\tools\jdk-11") DO SET "JAVA_HOME=%%~fI"
 REM AndroidSDK根目录（编译Simple运行库需要）
 FOR %%I IN ("%~dp0..\sdk\tools\android") DO SET "ANDROID_HOME=%%~fI"
 REM Ant根目录
@@ -21,7 +21,7 @@ REM --------------------------------------------------
 REM 设置path环境变量
 SET path=%JAVA_HOME%\bin;%path%
 REM 设置classpath环境变量
-SET classpath=.;%JAVA_HOME%\lib\tools.jar;%JAVA_HOME%\lib\dt.jar
+SET classpath=.
 
 REM --------------------------------------------------
 

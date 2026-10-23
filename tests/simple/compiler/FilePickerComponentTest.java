@@ -106,7 +106,7 @@ public final class FilePickerComponentTest extends TestCase {
 	 * @throws Exception 项目读取失败。
 	 */
 	public void testRealExampleCompiles() throws Exception {
-		assertNotNull(Compiler.compileForUnitTesting(new Project(new File("examples/文件选择/project.properties"))));
+		assertNotNull(Compiler.compileForUnitTesting(new Project(new File("examples/文件选择器/project.properties"))));
 	}
 
 	/**
@@ -118,7 +118,7 @@ public final class FilePickerComponentTest extends TestCase {
 		ByteArrayOutputStream diagnostics = new ByteArrayOutputStream();
 		PrintStream messages = new PrintStream(diagnostics, true, "UTF-8");
 		Compiler compiler = new Compiler(Compiler.Platform.Android, messages, messages);
-		for (Project.SourceDescriptor descriptor : new Project("examples/文件选择/project.properties", null).getSources()) {
+		for (Project.SourceDescriptor descriptor : new Project("examples/文件选择器/project.properties", null).getSources()) {
 			String source = new String(Files.readAllBytes(descriptor.getFile().toPath()), StandardCharsets.UTF_8);
 			new Parser(compiler, new Scanner(compiler, source), descriptor.getQualifiedName()).parse();
 		}

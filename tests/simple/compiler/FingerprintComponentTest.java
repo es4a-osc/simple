@@ -72,7 +72,7 @@ public final class FingerprintComponentTest extends TestCase {
 		Set<?> used = permissions("examples/指纹验证/project.properties");
 		assertEquals(1, used.size());
 		assertTrue(used.contains("android.permission.USE_FINGERPRINT"));
-		assertFalse(permissions("examples/电池监视/project.properties").contains("android.permission.USE_FINGERPRINT"));
+		assertFalse(permissions("examples/电池监视器/project.properties").contains("android.permission.USE_FINGERPRINT"));
 	}
 
 	/**

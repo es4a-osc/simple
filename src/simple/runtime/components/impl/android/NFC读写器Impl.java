@@ -36,7 +36,7 @@ public final class NFC读写器Impl extends 组件Impl implements NFC读写器,
 	private final int pendingRequest = NEXT_REQUEST.getAndIncrement();
 	private static final Charset UTF_8 = Charset.forName("UTF-8");
 
-	// 编译平台为 API 26；Android 12 起 NFC 前台分发需要可变 PendingIntent。
+	// 编译平台为 API 30；Android 12 起 NFC 前台分发需要可变 PendingIntent。
 	private static final int FLAG_MUTABLE = 0x02000000;
 	private final MainActivity activity;
 	private NfcAdapter adapter;
@@ -202,8 +202,12 @@ public final class NFC读写器Impl extends 组件Impl implements NFC读写器,
 			if (writeText.isEmpty()) {
 				读取到信息("请输入您要写入标签的信息");
 			} else {
-				NdefRecord record = new NdefRecord(NdefRecord.TNF_MIME_MEDIA,
-						"text/plain".getBytes(UTF_8), new byte[0], writeText.getBytes(UTF_8));
+				NdefRecord record = new NdefRecord(
+					NdefRecord.TNF_MIME_MEDIA,
+					"text/plain".getBytes(UTF_8),
+					new byte[0],
+					writeText.getBytes(UTF_8)
+				);
 				writeTag(new NdefMessage(new NdefRecord[] { record }), tag);
 			}
 		}

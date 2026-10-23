@@ -22,6 +22,7 @@ import simple.runtime.components.impl.组件Impl;
 import simple.runtime.events.EventDispatcher;
 
 import android.os.Handler;
+import android.os.Looper;
 
 /**
  * Android实现Simple的计时器组件
@@ -47,7 +48,7 @@ public final class 计时器Impl extends 组件Impl implements 计时器, Runnab
 	public 计时器Impl(组件容器 container) {
 		super(container);
 
-		handler = new Handler();
+		handler = new Handler(Looper.myLooper());
 	}
 
 	/* 组件事件 */

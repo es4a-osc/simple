@@ -1,5 +1,8 @@
 package simple.runtime;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import simple.runtime.annotations.SimpleFunction;
 import simple.runtime.annotations.SimpleObject;
 import simple.runtime.variants.ObjectVariant;
@@ -57,16 +60,40 @@ public final class 对象操作 {
 	/* 对象创建 */
 
 	/**
-	 * 创建指定限定类名的对象
+	 * 通过可访问的无参数构造方法创建指定类的对象。
 	 *
-	 * @param className 单元的完全限定类名。
-	 * @return 成功返回对象实例，否则返回{@code null}。
+	 * @param className 类的完全限定名称。
+	 * @return 成功返回对象实例；类不存在、不能实例化、构造方法不可访问或抛出异常时返回{@code null}。
+	 * @throws Error 类初始化或构造方法发生错误时，继续抛出原错误。
 	 */
 	@SimpleFunction
 	public static Object 创建对象(String className) {
 		try {
-			// 通过完全限定类名查找类。实例化该类，返回对象
-			return Class.forName(className).newInstance();
+			Class<?> type = Class.forName(className);
+			Constructor<?> constructor = type.getDeclaredConstructor();
+
+			// 部分 Android 实现未拒绝私有构造，显式保持旧入口的访问边界；不使用 setAccessible。
+			if (type != 对象操作.class) {
+				int modifiers = constructor.getModifiers();
+				if (Modifier.isPrivate(modifiers)) {
+					return null;
+				}
+				if (!Modifier.isPublic(type.getModifiers()) || !Modifier.isPublic(modifiers)) {
+					Package targetPackage = type.getPackage();
+					if (targetPackage == null || type.getClassLoader() != 对象操作.class.getClassLoader()
+							|| !targetPackage.getName().equals(对象操作.class.getPackage().getName())) {
+						return null;
+					}
+				}
+			}
+			return constructor.newInstance();
+		} catch (InvocationTargetException e) {
+			// 新反射调用会包装构造方法的失败，不能因此把原本向外传播的 Error 当作普通异常吞掉。
+			Throwable cause = e.getCause();
+			if (cause instanceof Error) {
+				throw (Error) cause;
+			}
+			return null;
 		} catch (Exception e) {
 			return null;
 		}

@@ -29,7 +29,6 @@ import android.widget.FrameLayout;
  * @author 树先生 xhwsd@qq.com
  */
 public class 单帧布局Impl extends 布局Impl implements 单帧布局 {
-
 	/*
 	FrameLayout
 	https://developer.android.google.cn/reference/android/widget/FrameLayout

@@ -114,6 +114,6 @@ public class CompilerSmokeTest extends TestCase {
 	 */
 	public void testArithmeticExampleCompiles() throws IOException {
 		assertNotNull(Compiler.compileForUnitTesting(
-				new Project(new File("examples/转换与运算/project.properties"))));
+				new Project(new File("examples/数值运算/project.properties"))));
 	}
 }

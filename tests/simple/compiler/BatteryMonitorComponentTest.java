@@ -53,7 +53,7 @@ public final class BatteryMonitorComponentTest extends TestCase {
 	 * @throws Exception 示例文件读取失败。
 	 */
 	public void testRealExampleCompiles() throws Exception {
-		assertNotNull(Compiler.compileForUnitTesting(new Project(new File("examples/电池监视/project.properties"))));
+		assertNotNull(Compiler.compileForUnitTesting(new Project(new File("examples/电池监视器/project.properties"))));
 	}
 
 	/**
@@ -65,7 +65,7 @@ public final class BatteryMonitorComponentTest extends TestCase {
 		ByteArrayOutputStream diagnostics = new ByteArrayOutputStream();
 		PrintStream messages = new PrintStream(diagnostics, true, "UTF-8");
 		Compiler compiler = new Compiler(Compiler.Platform.Android, messages, messages);
-		Project project = new Project("examples/电池监视/project.properties", null);
+		Project project = new Project("examples/电池监视器/project.properties", null);
 		for (Project.SourceDescriptor descriptor : project.getSources()) {
 			String source = new String(Files.readAllBytes(descriptor.getFile().toPath()), StandardCharsets.UTF_8);
 			new Parser(compiler, new Scanner(compiler, source), descriptor.getQualifiedName()).parse();

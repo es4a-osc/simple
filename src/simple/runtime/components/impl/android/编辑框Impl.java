@@ -87,7 +87,6 @@ public class 编辑框Impl extends 文本视图组件 implements 编辑框 {
 
 		// 监听焦点变化
 		view.setOnFocusChangeListener(new OnFocusChangeListener() {
-
 			@Override
 			public void onFocusChange(View previouslyFocused, boolean gainFocus) {
 				if (gainFocus) {

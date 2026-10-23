@@ -32,7 +32,7 @@ public final class VolumePermissionsTest extends TestCase {
 	 */
 	public void testVolumeExampleDeclaresOnlyAudioSettingsPermission() throws Exception {
 		assertEquals(Collections.singleton("android.permission.MODIFY_AUDIO_SETTINGS"),
-			permissions("examples/音量管理/project.properties"));
+			permissions("examples/音量管理器/project.properties"));
 	}
 
 	/**
@@ -41,7 +41,7 @@ public final class VolumePermissionsTest extends TestCase {
 	 * @throws Exception 读取项目或反射权限集合失败。
 	 */
 	public void testOtherExampleDoesNotRequestAudioSettingsPermission() throws Exception {
-		assertFalse(permissions("examples/标签显示/project.properties")
+		assertFalse(permissions("examples/标签/project.properties")
 			.contains("android.permission.MODIFY_AUDIO_SETTINGS"));
 	}
 

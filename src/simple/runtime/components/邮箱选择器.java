@@ -23,15 +23,20 @@ import simple.runtime.annotations.SimpleProperty;
 import simple.runtime.annotations.UsesPermissions;
 
 /**
- * 使用自动完成的文本框从联系人挑出电子邮件地址。
+ * 输入邮箱，并从本机通讯录按姓名或邮箱地址显示自动补全候选。
+ *
+ * <p>输入至少一个字符，最多显示 50 个去重后的邮箱候选；建议功能需要读取联系人权限，
+ * 未授权时仍可手动输入。全部操作和事件在主线程执行。
+ * 失去焦点、停用或离开前台时取消查询并清除候选，保留当前文本；销毁时释放查询资源。
  *
  * @author Herbert Czymontek
  * @author Sharon Perl
+ * @author 树先生 xhwsd@qq.com
  */
 @SimpleComponent
 @SimpleObject
 @UsesPermissions(permissionNames =
-	// 允许读取通讯录。
+	// 允许读取联系人姓名和邮箱，用于自动补全候选。
 	"android.permission.READ_CONTACTS"
 )
 public interface 邮箱选择器 extends 文本组件 {
@@ -39,35 +44,79 @@ public interface 邮箱选择器 extends 文本组件 {
 	/* 组件事件 */
 
 	/**
-	 * 默认获得焦点事件处理器。
+	 * 输入框获得焦点时触发；不会修改当前文本。
 	 */
 	@SimpleEvent
 	void 获得焦点();
 
 	/**
-	 * 默认失去焦点事件处理器。
+	 * 输入框失去焦点时触发；取消建议查询，保留当前文本。
 	 */
 	@SimpleEvent
 	void 失去焦点();
 
+	/**
+	 * 用户选中一个邮箱候选后触发；文本已更新为带姓名的邮箱格式，无姓名时为邮箱地址。
+	 *
+	 * @param name 联系人显示名
+	 * @param address 选中的邮箱地址
+	 */
+	@SimpleEvent
+	void 选择完毕(String name, String address);
+
+	/**
+	 * 有效建议查询因权限或联系人提供者错误而失败时触发；没有匹配项不视为失败。
+	 *
+	 * @param message 失败原因
+	 */
+	@SimpleEvent
+	void 操作失败(String message);
+
 	/* 组件属性 */
 
 	/**
-	 * 启用属性获取器。
+	 * 获取是否允许输入和显示邮箱建议。
 	 *
-	 * @return {@code true}表示启用，{@code false}表示禁用
+	 * @return 启用时为真，组件销毁后为假
 	 */
 	@SimpleProperty
 	boolean 启用();
 
 	/**
-	 * 启用属性设置器。
+	 * 设置是否允许输入和显示邮箱建议；停用时取消查询并保留文本。
 	 *
-	 * @param enabled {@code true}表示启用，{@code false}表示禁用
+	 * @param enabled 是否启用
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_BOOLEAN,
 		initializer = "True"
 	)
 	void 启用(boolean enabled);
+
+	/**
+	 * 获取邮箱输入框是否使用单行显示。
+	 *
+	 * @return 单行时为真
+	 */
+	@SimpleProperty
+	boolean 单行模式();
+
+	/**
+	 * 设置邮箱输入框是否使用单行显示，初始为真。
+	 *
+	 * @param singleLine 是否单行
+	 */
+	@SimpleProperty(
+		type = SimpleProperty.PROPERTY_TYPE_BOOLEAN,
+		initializer = "True"
+	)
+	void 单行模式(boolean singleLine);
+
+	/**
+	 * 获取最近一次有效建议查询的失败原因。
+	 *
+	 * @return 无错误或查询成功后为空文本
+	 */
+	@SimpleProperty
+	String 错误信息();
 }

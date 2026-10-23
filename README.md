@@ -7,20 +7,20 @@
 
 - `src/simple/compiler/`：编译器。
 - `src/simple/runtime/`：Android 运行库。
-- `samples/`：[原有演示项目](samples/README.md)。
-- `examples/`：[运行库功能示例](examples/)，按主题选择、编译和运行。
+- `samples/`：[原有示例](samples/)。
+- `examples/`：[运行库对象与语言特性示例](examples/)，每个项目独立编译运行；运行库对象示例的目录与导出类同名。
 - `tests/`：编译器和运行库测试。
 
 
 ## 构建
 
 1. 获取 [ES4A SDK 仓库](https://gitee.com/es4a/sdk)，与 `simple` 同级放置，并按 SDK 的 README 准备 JDK 和 Android 工具。
-2. [下载 Ant](https://dwz.wsd.cx/es4a-ant)，解压到 `simple/tools/apache-ant-1.9.15/`。
+2. [下载 Ant](https://dwz.wsd.cx/es4a-ant)，解压到 `simple/tools/`。
 3. 在 Windows 下，于本目录运行 `build.bat`。
 
 脚本执行清理、构建和测试，产物位于 `dist/`。
 
-构建成功后运行 `release.bat`，将 `dist/windows/` 中的编译器和运行库 JAR 更新到同级 `sdk/simple/`；发布不会重新构建。
+构建成功后运行 `release.bat`，将 `dist/windows/` 中的编译器和运行库 JAR 更新到同级 `sdk/simple/`，并将 `examples/` 同步到 `sdk/simple/examples/`，排除各示例的 `build/` 目录。发布会清理目标中的旧示例，不会重新构建。
 
 
 ## 相关链接

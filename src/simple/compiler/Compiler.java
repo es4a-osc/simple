@@ -75,10 +75,12 @@ public final class Compiler {
 	private static final String LIBRARIES_HOME = System.getenv("LIBRARIES_HOME");
 	private static final String KEY_PASSWORD = System.getenv("KEY_PASSWORD");
 
-	// 运行时
-	private static final int ANDROID_MIN_SDK_VERSION = 14;
-	private static final String ANDROID_RUNTIME =
-			ANDROID_HOME + "/platforms/android-" + Toolchain.ANDROID_API_LEVEL + "/android.jar";
+	/* 运行时 */
+	/** 最低API级别：API24对应系统版本为Android 7.0 发布于 2016-08-22 */
+	private static final int ANDROID_MIN_SDK_VERSION = 24;
+	/** 目标API级别：API30对应系统版本为Android 11 发布于 2020-09-08，将以改API等级做向下兼容处理 */
+	public static final int ANDROID_TARGET_SDK_VERSION = 30;
+	private static final String ANDROID_RUNTIME = ANDROID_HOME + "/platforms/android-" + ANDROID_TARGET_SDK_VERSION + "/android.jar";
 	private static final String SIMPLE_ANDROID_RUNTIME = SIMPLE_HOME + "/SimpleAndroidRuntime.jar";
 
 	// 签名APK文件的密钥库
@@ -472,14 +474,11 @@ public final class Compiler {
 			// 应用对不同版本平台兼容性
 			out.write("    <uses-sdk " +
 					// 指定应用运行所需最低API级别
-					// API14对应版本为Android 4.0
 					"android:minSdkVersion=\"" + ANDROID_MIN_SDK_VERSION + "\" " +
 					// 指定应用的目标API级别，该属性添加于API4
 					// 根据《移动应用软件高API等级预置与分发自律公约》自2019年5月1日起，
 					// 新上架应用应基于Android 8.0（API等级26）及以上开发。
-					// 目前API版本为26对应版本为Android 8.0
-					// 锁定API26，开发将基于该版本做兼容处理
-					"android:targetSdkVersion=\"26\" />\n");
+					"android:targetSdkVersion=\"" + ANDROID_TARGET_SDK_VERSION + "\" />\n");
 
 			// 应用对屏幕大小支持机制，该节点添加于API4
 			out.write("    <supports-screens " +
@@ -510,6 +509,8 @@ public final class Compiler {
 					"android:icon=\"" + project.getIcon() + "\" " +
 					// 应用名
 					"android:label=\"" + appLabel + "\" " +
+					// 目标 API 28 及以上默认禁止明文流量；显式允许 HTTP、ws:// 等既有网络功能。
+					"android:usesCleartextTraffic=\"true\" " +
 					// 硬件加速，该属性添加于API11
 					"android:hardwareAccelerated=\"true\">\n");
 

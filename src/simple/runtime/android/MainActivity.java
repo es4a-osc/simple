@@ -36,6 +36,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
@@ -49,10 +50,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.Window;
+import android.view.WindowInsets;
+import android.view.WindowMetrics;
+import android.graphics.Insets;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.lang.reflect.Field;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * 组件基础活动和UI应用程序。
@@ -63,14 +68,12 @@ import java.lang.reflect.Field;
  * @author 树先生 xhwsd@qq.com
  */
 public final class MainActivity extends Activity implements ApplicationFunctions {
-
 	/**
 	 * 重启监听器
 	 *
 	 * <p>用于将 Activity onRestart() 方法分发给感兴趣的组件。
 	 */
 	public interface OnRestartListener {
-
 		/**
 		 * 响应活动重新启动通知。
 		 */
@@ -83,7 +86,6 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * <p>用于将 Activity OnResume() 方法分发给感兴趣的组件。
 	 */
 	public interface OnResumeListener {
-
 		/**
 		 * 响应活动恢复到前台的通知。
 		 */
@@ -96,11 +98,10 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * <p>用于将 Activity onPause() 方法分配给感兴趣的组件。
 	 */
 	public interface OnPauseListener {
-
 		/**
 		 * 响应活动暂停通知。
 		 */
-		void onPause();
+		public void onPause();
 	}
 
 	/**
@@ -109,7 +110,6 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * <p>用于将 Activity onStop() 方法分配给感兴趣的组件。
 	 */
 	public interface OnStopListener {
-
 		/**
 		 * 响应活动停止通知。
 		 */
@@ -122,7 +122,6 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * <p>用于将 Activity onDestroy() 方法分发给感兴趣的组件。
 	 */
 	public interface OnDestroyListener {
-
 		/**
 		 * 响应宿主销毁通知，处理本对象的资源清理。
 		 */
@@ -135,7 +134,6 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * <p>用于将 Activity onSaveInstanceState() 方法分发给感兴趣的组件。
 	 */
 	public interface OnSaveInstanceStateListener {
-
 		/**
 		 * 保存活动重建需要恢复的状态。
 		 *
@@ -150,7 +148,6 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * <p>用于将 Activity onRestoreInstanceState() 方法分发给感兴趣的组件。
 	 */
 	public interface OnRestoreInstanceStateListener {
-
 		/**
 		 * 恢复活动先前保存的状态。
 		 *
@@ -165,7 +162,6 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * <p>用于将 Activity onConfigurationChanged() 方法分发给感兴趣的组件。
 	 */
 	public interface OnConfigurationChangedListener {
-
 		/**
 		 * 处理屏幕方向等配置变化。
 		 *
@@ -180,7 +176,6 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * <p>用于将 Activity onNewIntent() 方法分发给感兴趣的组件。
 	 */
 	public interface OnNewIntentListener {
-
 		/**
 		 * 处理宿主收到的新启动意图。
 		 *
@@ -195,7 +190,6 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * <p>用于将 Activity onActivityResult() 方法分发给感兴趣的组件。
 	 */
 	public interface OnActivityResultListener {
-
 		/**
 		 * 处理由本组件发起的活动返回结果。
 		 *
@@ -212,7 +206,6 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 * <p>用于将 Activity onRequestPermissionsResult() 方法分发给感兴趣的组件。
 	 */
 	public interface OnRequestPermissionsResultListener {
-
 		/**
 		 * 处理系统返回的权限请求结果。
 		 *
@@ -226,6 +219,7 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	// 活动上下文
 	private static MainActivity INSTANCE;
 
+	// 生命周期监听按本轮快照分发；回调内增删不会改变本轮顺序，新监听器从下一轮生效。
 	// 活动重启监听器
 	private final List<OnRestartListener> onRestartListeners;
 	// 活动恢复监听器
@@ -267,13 +261,15 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	// 当前是否在前
 	private boolean inForeground;
 
+	// 只有显式调用终止应用才结束进程，普通活动销毁不连带结束服务。
+	private boolean terminationRequested;
+
 	/**
 	 * 返回当前主活动的上下文实例。
 	 *
 	 * @return 活动上下文
 	 */
 	public static MainActivity getContext() {
-		// 注意该方法必须“全程静态”，否则会报错
 		return INSTANCE;
 	}
 
@@ -284,28 +280,31 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 		INSTANCE = this;
 
 		// 初始化变量
-		onRestartListeners = new ArrayList<OnRestartListener>();
-		onResumeListeners = new ArrayList<OnResumeListener>();
-		onPauseListeners = new ArrayList<OnPauseListener>();
-		onStopListeners = new ArrayList<OnStopListener>();
-		onDestroyListeners = new ArrayList<OnDestroyListener>();
-		onSaveInstanceStateListeners = new ArrayList<OnSaveInstanceStateListener>();
-		onRestoreInstanceStateListeners = new ArrayList<OnRestoreInstanceStateListener>();
-		onConfigurationChangedListeners = new ArrayList<OnConfigurationChangedListener>();
-		onNewIntentListeners = new ArrayList<OnNewIntentListener>();
-		onActivityResultListeners = new ArrayList<OnActivityResultListener>();
-		onRequestPermissionsResultListeners = new ArrayList<OnRequestPermissionsResultListener>();
+		onRestartListeners = new CopyOnWriteArrayList<OnRestartListener>();
+		onResumeListeners = new CopyOnWriteArrayList<OnResumeListener>();
+		onPauseListeners = new CopyOnWriteArrayList<OnPauseListener>();
+		onStopListeners = new CopyOnWriteArrayList<OnStopListener>();
+		onDestroyListeners = new CopyOnWriteArrayList<OnDestroyListener>();
+		onSaveInstanceStateListeners = new CopyOnWriteArrayList<OnSaveInstanceStateListener>();
+		onRestoreInstanceStateListeners = new CopyOnWriteArrayList<OnRestoreInstanceStateListener>();
+		onConfigurationChangedListeners = new CopyOnWriteArrayList<OnConfigurationChangedListener>();
+		onNewIntentListeners = new CopyOnWriteArrayList<OnNewIntentListener>();
+		onActivityResultListeners = new CopyOnWriteArrayList<OnActivityResultListener>();
+		onRequestPermissionsResultListeners = new CopyOnWriteArrayList<OnRequestPermissionsResultListener>();
 
 		menuItems = new ArrayList<String>();
 	}
 
+	/**
+	 * 创建活动、运行库适配器和主窗口，再分发首次启动意图。
+	 *
+	 * @param icicle 系统保存的活动状态；首次创建时为空
+	 */
 	@Override
 	public void onCreate(Bundle icicle) {
-		// 首次创建活动时调用
 		super.onCreate(icicle);
 
 		gestureDetector = new GestureDetector(this, new SimpleOnGestureListener() {
-
 			@Override
 			public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
 				int direction;
@@ -360,12 +359,9 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 			}
 		});
 
-		// 在主线程下执行网络连接（HTTP请求）奔溃（android.os.NetworkOnMainThreadException） xhwsd@qq.com 2021-5-30
-		// 参考文档：https://blog.csdn.net/qq_29477223/article/details/81027716
-		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.GINGERBREAD) {
-			StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-			StrictMode.setThreadPolicy(policy);
-		}
+		// 现有同步网络函数仍依赖此策略；迁移调用方为异步之前保留，不把放宽策略当作异步处理。
+		StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+		StrictMode.setThreadPolicy(policy);
 
 		// 初始化运行时组件
 		应用操作.initialize(this);
@@ -382,27 +378,39 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 		// 获取主窗口信息并切换到它
 		try {
 			Bundle metaData = getPackageManager().getActivityInfo(getComponentName(), PackageManager.GET_META_DATA).metaData;
-
-			String mainFormName = metaData.getString("simple.runtime.android.MainForm");
-
+			String mainFormName = metaData == null ? null : metaData.getString("simple.runtime.android.MainForm");
+			if (mainFormName == null || mainFormName.isEmpty()) {
+				日志输出.error("应用清单缺少主窗口类名");
+				finish();
+				return;
+			}
 			日志输出.输出信息(日志输出.MODULE_NAME_RTL, "主窗口类: " + mainFormName);
-			switchForm((窗口Impl) getClassLoader().loadClass(mainFormName).newInstance());
-
+			switchForm((窗口Impl) getClassLoader().loadClass(mainFormName).getDeclaredConstructor().newInstance());
+		} catch (NoSuchMethodException e) {
+			日志输出.error("主窗口缺少无参构造方法");
+			e.printStackTrace();
+			finish();
+			return;
+		} catch (InvocationTargetException e) {
+			日志输出.error("主窗口构造方法执行失败");
+			e.getCause().printStackTrace();
+			finish();
+			return;
 		} catch (ClassNotFoundException e) {
-			日志输出.输出错误(日志输出.MODULE_NAME_RTL, "未找不到主窗口类");
+			日志输出.error("未找到主窗口类");
+			e.printStackTrace();
 			finish();
+			return;
 		} catch (NameNotFoundException e) {
-			日志输出.输出错误(日志输出.MODULE_NAME_RTL, "没有主窗口数据的清单文件");
+			日志输出.error("未找到主活动的清单信息");
+			e.printStackTrace();
 			finish();
-		} catch (SecurityException e) {
-			// 不应该发生
+			return;
+		} catch (InstantiationException | IllegalAccessException | SecurityException | ClassCastException e) {
+			日志输出.error("无法创建主窗口");
+			e.printStackTrace();
 			finish();
-		} catch (InstantiationException e) {
-			日志输出.输出错误(日志输出.MODULE_NAME_RTL, "无法实例化主窗口");
-			finish();
-		} catch (IllegalAccessException e) {
-			// 不应该发生
-			finish();
+			return;
 		}
 
 		// 程序启动事件
@@ -487,36 +495,56 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	}
 
 	/**
-	 * 销毁
+	 * 分发活动销毁并释放宿主引用；只有显式终止应用才结束当前进程。
 	 *
-	 * <p>退出当前Activity时被调用，调用之后Activity就结束了
+	 * <p>系统为配置变化重建活动时也会调用，不将其等同于用户终止应用。
 	 */
 	@Override
 	protected void onDestroy() {
-		super.onDestroy();
+		inForeground = false;
+		try {
+			日志输出.info("MainActivity.onDestroy 程序被销毁");
+			for (OnDestroyListener listener : onDestroyListeners) {
+				listener.onDestroy();
+			}
+		} finally {
+			// 移除全部宿主监听与视图引用，不依赖结束进程回收当前活动。
+			onRestartListeners.clear();
+			onResumeListeners.clear();
+			onPauseListeners.clear();
+			onStopListeners.clear();
+			onDestroyListeners.clear();
+			onSaveInstanceStateListeners.clear();
+			onRestoreInstanceStateListeners.clear();
+			onConfigurationChangedListeners.clear();
+			onNewIntentListeners.clear();
+			onActivityResultListeners.clear();
+			onRequestPermissionsResultListeners.clear();
+			if (rootView != null) {
+				rootView.removeAllViews();
+			}
+			activeForm = null;
+			contentView = null;
+			rootView = null;
+			gestureDetector = null;
+			if (INSTANCE == this) {
+				INSTANCE = null;
+				应用操作.initialize(null);
+			}
+			super.onDestroy();
 
-		日志输出.输出信息(日志输出.MODULE_NAME_RTL, "MainActivity.onDestroy 程序被销毁");
-
-		// 分发事件
-		for (OnDestroyListener onDestroyListener : onDestroyListeners) {
-			onDestroyListener.onDestroy();
+			// 终止() 保留结束整个应用进程的约定；返回键、finish() 和配置重建不走此分支。
+			if (terminationRequested) {
+				android.os.Process.killProcess(android.os.Process.myPid());
+			}
 		}
-
-		// 因活动退出（Activity.finish）后无法完全退出应用，所以这里强制结束进程
-		android.os.Process.killProcess(android.os.Process.myPid());
 	}
 
 	/**
-	 * 保存实例状态
+	 * 保存供后续活动重建使用的临时界面状态；不替代持久数据保存。
 	 *
-	 * <p>Activity被系统杀死时被调用。
-	 *
-	 * <p>例如：
-	 * 屏幕方向改变时，Activity被销毁再重建；
-	 * 当前Activity处于后台，系统资源紧张将其杀死。
-	 * 另外，当跳转到其他Activity或者按Home键回到主屏时该方法也会被调用，
-	 * 系统是为了保存当前View组件的状态。
-	 * 在onPause之前被调用。
+	 * <p>Android 9 及以上且目标 API 至少为 28 时，在 onStop() 之后调用；其它情况不依赖固定顺序。
+	 * 系统直接结束进程时不保证有机会调用。
 	 *
 	 * @param outState 需要写入的状态
 	 */
@@ -587,6 +615,7 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
+		setIntent(intent);
 
 		日志输出.输出信息(日志输出.MODULE_NAME_RTL, "MainActivity.onNewIntent 程序被启动；行为=" + intent.getAction());
 
@@ -659,7 +688,7 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 		if (activeForm != null) {
 			activeForm.按下某键(keycode, shield);
 		}
-		return shield.get();
+		return shield.get() || super.onKeyDown(keycode, event);
 	}
 
 	/**
@@ -672,7 +701,7 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 */
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		return gestureDetector.onTouchEvent(event);
+		return (gestureDetector != null && gestureDetector.onTouchEvent(event)) || super.onTouchEvent(event);
 	}
 
 	/**
@@ -944,6 +973,14 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	/* ApplicationFunctions 实现 */
 
 	@Override
+	public void terminate() {
+		runOnUiThread(() -> {
+			terminationRequested = true;
+			finishAndRemoveTask();
+		});
+	}
+
+	@Override
 	public void addMenuItem(String caption) {
 		menuItems.add(caption);
 	}
@@ -985,14 +1022,15 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 		SharedPreferences preferences = getPreferences(MODE_PRIVATE);
 		SharedPreferences.Editor editor = preferences.edit();
 		editor.putString(name, value.getString());
+		// 终止应用会主动结束进程，保持同步写盘，不能把尚未持久化的数据当作已经保存。
 		editor.commit();
 	}
 
 	@Override
 	public String getAppName() {
 		try {
-			PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-			return getResources().getString(packageInfo.applicationInfo.labelRes);
+			CharSequence label = getPackageManager().getApplicationLabel(getApplicationInfo());
+			return label == null ? "" : label.toString();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -1002,7 +1040,8 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	@Override
 	public String getVersionName() {
 		try {
-			return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+			String name = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+			return name == null ? "" : name;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -1010,9 +1049,17 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	}
 
 	@Override
-	public long getVersionCode() {
+	@SuppressWarnings("deprecation")
+	public int getVersionCode() {
 		try {
-			return getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
+			PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+				// 新接口返回高低位合并值，转为 int 只保留 versionCode 对应的低 32 位。
+				return (int) packageInfo.getLongVersionCode();
+			} else {
+				// 旧系统没有新接口，沿用旧字段并在本方法内抑制弃用警告。
+				return packageInfo.versionCode;
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -1021,12 +1068,33 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 
 	@Override
 	public boolean serviceStart(意图 intent) {
-		return startService(intent.getIntent()) != null;
+		if (intent == null) {
+			日志输出.warning("启动服务失败：意图为空");
+			return false;
+		}
+		try {
+			// 返回值只表示系统受理请求；后台限制与权限拒绝按公开约定返回失败。
+			return startService(intent.getIntent()) != null;
+		} catch (IllegalStateException | IllegalArgumentException | SecurityException e) {
+			日志输出.error("启动服务失败：%s", e.toString());
+			e.printStackTrace();
+			return false;
+		}
 	}
 
 	@Override
 	public boolean serviceStop(意图 intent) {
-		return stopService(intent.getIntent());
+		if (intent == null) {
+			日志输出.warning("停止服务失败：意图为空");
+			return false;
+		}
+		try {
+			return stopService(intent.getIntent());
+		} catch (IllegalStateException | IllegalArgumentException | SecurityException e) {
+			日志输出.error("停止服务失败：%s", e.toString());
+			e.printStackTrace();
+			return false;
+		}
 	}
 
 	@Override
@@ -1035,34 +1103,72 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	}
 
 	@Override
-	public int getScreenWidth()  {
-		DisplayMetrics displaymetrics = new DisplayMetrics();
-		getContext().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-		return displaymetrics.widthPixels;
+	@SuppressWarnings("deprecation")
+	public int getDisplayWidth() {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+			// API 30 起通过窗口指标获取当前应用窗口范围。
+			WindowMetrics metrics = getWindowManager().getCurrentWindowMetrics();
+			// 按旧接口的尺寸口径，扣除左右导航栏和刘海安全区域的占用。
+			Insets insets = metrics.getWindowInsets().getInsetsIgnoringVisibility(
+				WindowInsets.Type.navigationBars() | WindowInsets.Type.displayCutout()
+			);
+			return metrics.getBounds().width() - insets.left - insets.right;
+		} else {
+			// 左右若有系统导航栏或刘海，不包含其占用区域。
+			DisplayMetrics displaymetrics = new DisplayMetrics();
+			getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+			return displaymetrics.widthPixels;
+		}
 	}
 
 	@Override
-	public int getScreenHeight() {
-		DisplayMetrics displaymetrics = new DisplayMetrics();
-		getContext().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-		return displaymetrics.heightPixels;
+	@SuppressWarnings("deprecation")
+	public int getDisplayHeight() {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+			// API 30 起通过窗口指标获取当前应用窗口范围。
+			WindowMetrics metrics = getWindowManager().getCurrentWindowMetrics();
+			// 按旧接口的尺寸口径，扣除上下导航栏和刘海安全区域的占用。
+			Insets insets = metrics.getWindowInsets().getInsetsIgnoringVisibility(
+				WindowInsets.Type.navigationBars() | WindowInsets.Type.displayCutout()
+			);
+			return metrics.getBounds().height() - insets.top - insets.bottom;
+		} else {
+			// 含系统状态栏和应用标题栏，不含上下系统导航栏及刘海占用区域。
+			DisplayMetrics displaymetrics = new DisplayMetrics();
+			getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+			return displaymetrics.heightPixels;
+		}
 	}
 
 	@Override
-	public double getScreenDensity() {
-		DisplayMetrics displaymetrics = new DisplayMetrics();
-		getContext().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-		return displaymetrics.density;
+	@SuppressWarnings("deprecation")
+	public double getDisplayDensity() {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+			// 从当前 Activity 配置读取逻辑密度，并按 160 dpi 基准换算为比例。
+			int densityDpi = getResources().getConfiguration().densityDpi;
+			// 按原 density 字段的 float 精度计算，再自动扩宽为 double。
+			return densityDpi * (1.0f / DisplayMetrics.DENSITY_DEFAULT);
+		} else {
+			DisplayMetrics displaymetrics = new DisplayMetrics();
+			getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+			return displaymetrics.density;
+		}
 	}
 
 	@Override
 	public int getStatusBarHeight() {
 		try {
-			Class<?> c = Class.forName("com.android.internal.R$dimen");
-			Object obj = c.newInstance();
-			Field field = c.getField("status_bar_height");
-			int id = Integer.parseInt(field.get(obj).toString());
-			return getContext().getResources().getDimensionPixelSize(id);
+			// 沿用原 Activity 的资源配置，通过资源名称替代对内部 R 类的反射。
+			Resources resources = getResources();
+			int resourceId = resources.getIdentifier(
+				"status_bar_height", "dimen", "android"
+			);
+			if (resourceId == 0) {
+				return 0;
+			}
+
+			// 读取系统配置的状态栏像素高度，不受状态栏显示或隐藏影响。
+			return resources.getDimensionPixelSize(resourceId);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -1071,17 +1177,19 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 
 	@Override
 	public int getContentWidth() {
-		return getContext().getWindow().findViewById(Window.ID_ANDROID_CONTENT).getWidth();
+		// 左右若有系统导航栏，不包含其占用区域。
+		return getWindow().findViewById(Window.ID_ANDROID_CONTENT).getWidth();
 	}
 
 	@Override
 	public int getContentHeight() {
-		return getContext().getWindow().findViewById(Window.ID_ANDROID_CONTENT).getHeight();
+		// 不含系统状态栏、应用标题栏和底部系统导航栏。
+		return getWindow().findViewById(Window.ID_ANDROID_CONTENT).getHeight();
 	}
 
 	@Override
 	public boolean isPortraitOrientation() {
-		return getContext().getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
+		return getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
 	}
 
 	@Override
@@ -1094,13 +1202,13 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 		Intent intent = new Intent(Intent.ACTION_MAIN);
 		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		intent.addCategory(Intent.CATEGORY_HOME);
-		getContext().startActivity(intent);
+		startActivity(intent);
 	}
 
 	@Override
 	public void returnApp() {
-		Intent intent = new Intent(getContext().getApplicationContext(), getContext().getClass());
-		intent.setFlags(335544320);
-		getContext().getApplicationContext().startActivity(intent);
+		Intent intent = new Intent(this, MainActivity.class);
+		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+		startActivity(intent);
 	}
 }

@@ -24,7 +24,6 @@ import android.widget.TextView;
 public class 单选列表框Impl extends 列表视图组件 implements 单选列表框 {
 
 	private ArrayAdapter<String> adapter;
-
 	private List<String> list;
 
 	public 单选列表框Impl(组件容器 container) {
@@ -35,12 +34,10 @@ public class 单选列表框Impl extends 列表视图组件 implements 单选列
 	protected View createView() {
 		list = new ArrayList<String>();
 		// 单选列表布局 android.R.layout.simple_list_item_single_choice
-		adapter = new ArrayAdapter<String>(MainActivity.getContext(),
-				android.R.layout.simple_list_item_single_choice, list) {
-
-			// 重写该方法，实现对文本视图的属性自定义
+		adapter = new ArrayAdapter<String>(MainActivity.getContext(), android.R.layout.simple_list_item_single_choice, list) {
 			@Override
 			public View getView(int position, View convertView, ViewGroup parent) {
+				// 重写该方法，实现对文本视图的属性自定义
 				TextView textView = (TextView) super.getView(position, convertView, parent);
 				//textView.setTextColor(Color.RED);
 				return textView;
@@ -87,7 +84,6 @@ public class 单选列表框Impl extends 列表视图组件 implements 单选列
 
 		// 项目点击监听器
 		view.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 				项目被单击(position);
@@ -96,7 +92,6 @@ public class 单选列表框Impl extends 列表视图组件 implements 单选列
 
 		// 项目长按监听器
 		view.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-
 			@Override
 			public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
 				项目被长按(position);

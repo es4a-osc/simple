@@ -1,187 +1,164 @@
 package simple.runtime.components.impl.android;
 
-import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
-import simple.runtime.components.组件容器;
+import android.os.Looper;
+
+import simple.runtime.android.MainActivity;
 import simple.runtime.components.UDP数据报;
+import simple.runtime.components.组件容器;
 import simple.runtime.components.impl.组件Impl;
+import simple.runtime.components.impl.android.util.UdpTransport;
 import simple.runtime.events.EventDispatcher;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
 
 /**
- * Android UDP数据报实现。
+ * 将 UDP 收发结果交付到主线程，协调组件及宿主销毁时的资源释放。
  *
  * @author 树先生 xhwsd@qq.com
  */
-public class UDP数据报Impl extends 组件Impl implements UDP数据报 {
+public final class UDP数据报Impl extends 组件Impl implements UDP数据报, MainActivity.OnDestroyListener {
 
-	/* 消息标识 */
-
-	private static final int RECEIVE_MSG = 1;
-
-	/* 连接及接收状态 */
-
-	private DatagramSocket socket;
-	private WaitClientThread waitThread;
-	private boolean started = false;
-	private int receiveSize = 1024;
-
-	// 沿用原组件创建线程的消息循环，网络线程只投递消息。
-	private Handler handler = new Handler() {
-
-		@Override
-		public void handleMessage(Message msg) {
-			if (msg.what == RECEIVE_MSG) {
-				byte[] data = msg.getData().getByteArray("RecMsg");
-				String remoteAddress = msg.getData().getString("RemoteIP");
-				int remotePort = msg.getData().getInt("RemotePort");
-
-				UDP数据报Impl.this.收到数据(data, remoteAddress, remotePort);
-			}
-		}
-	};
+	private final MainActivity activity;
+	private final Handler handler;
+	private final UdpTransport transport;
+	private boolean attached;
+	private volatile boolean destroyed;
 
 	/**
-	 * 创建不可视网络组件；消息处理器绑定组件创建线程的消息循环。
+	 * 创建传输组件并延后登记宿主监听，避免修改正在分发的监听集合。
 	 *
-	 * @param container 容纳组件的窗口。
+	 * @param container 所属组件容器
 	 */
 	public UDP数据报Impl(组件容器 container) {
 		super(container);
+		activity = MainActivity.getContext();
+		handler = new Handler(Looper.getMainLooper());
+		transport = new UdpTransport(action -> handler.post(action), new UdpTransport.Listener() {
+			@Override
+			public void started(boolean result, int port) {
+				启动完毕(result, port);
+			}
+
+			@Override
+			public void received(byte[] data, String address, int port) {
+				收到数据(data, address, port);
+			}
+
+			@Override
+			public void sent(int length, String address, int port) {
+				发送完毕(length, address, port);
+			}
+
+			@Override
+			public void stopped() {
+				监听停止();
+			}
+
+			@Override
+			public void failed(String operation, String message) {
+				操作失败(operation, message);
+			}
+		});
+		handler.post(() -> {
+			if (!destroyed) {
+				if (activity.isFinishing() || activity.isDestroyed()) {
+					销毁();
+					return;
+				}
+				activity.addOnDestroyListener(this);
+				attached = true;
+			}
+		});
 	}
 
 	/* 组件事件 */
+
+	@Override
+	public void 启动完毕(boolean result, int port) {
+		EventDispatcher.dispatchEvent(this, "启动完毕", result, port);
+	}
 
 	@Override
 	public void 收到数据(byte[] data, String address, int port) {
 		EventDispatcher.dispatchEvent(this, "收到数据", data, address, port);
 	}
 
+	@Override
+	public void 发送完毕(int length, String address, int port) {
+		EventDispatcher.dispatchEvent(this, "发送完毕", length, address, port);
+	}
+
+	@Override
+	public void 监听停止() {
+		EventDispatcher.dispatchEvent(this, "监听停止");
+	}
+
+	@Override
+	public void 操作失败(String operation, String message) {
+		EventDispatcher.dispatchEvent(this, "操作失败", operation, message);
+	}
+
+	/* 组件属性 */
+
+	@Override
+	public boolean 正在监听() {
+		return transport.isListening();
+	}
+
+	@Override
+	public int 监听端口() {
+		return transport.getLocalPort();
+	}
+
+	@Override
+	public String 错误信息() {
+		return transport.getLastError();
+	}
+
 	/* 组件方法 */
 
 	@Override
-	public void 置接收数据包大小(int size) {
-		this.receiveSize = size;
+	public boolean 置接收数据包大小(int size) {
+		return transport.setBufferSize(size);
 	}
 
 	@Override
-	public void 开始监听(int port) {
-		this.waitThread = new WaitClientThread(port);
-		this.waitThread.start();
+	public boolean 开始监听(int port) {
+		return transport.start(port);
 	}
 
 	@Override
-	public void 发送数据(byte[] data, String address, int port) {
-		try {
-			DatagramPacket packet = new DatagramPacket(data, data.length);
-			if (address.equals("")) {
-				address = "255.255.255.255";
-			}
-
-			packet.setAddress(InetAddress.getByName(address));
-			packet.setPort(port);
-			packet.setData(data);
-			this.socket.send(packet);
-		} catch (Exception exception) {
-			// 保留原组件忽略发送异常的处理，不增加错误事件。
-		}
+	public boolean 发送数据(byte[] data, String address, int port) {
+		return transport.send(data, address, port);
 	}
 
 	@Override
 	public void 停止监听() {
-		this.started = false;
-		if (this.socket != null) {
-			try {
-				this.socket.close();
-				this.socket = null;
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-		if (this.waitThread != null) {
-			this.waitThread.interrupt();
-		}
+		transport.stop();
 	}
 
-	/* 内部辅助方法 */
-
-	/**
-	 * 按原组件规则从网络地址取得地址文本。
-	 *
-	 * @param address 网络地址对象。
-	 * @return IP 地址文本；无法分离地址时为空文本。
-	 */
-	private String getAddress(InetAddress address) {
-		String local = address.toString();
-		String[] temp = local.split("/");
-
-		if (temp.length == 2) {
-			return temp[1];
+	@Override
+	public void 销毁() {
+		if (Looper.myLooper() != Looper.getMainLooper()) {
+			transport.destroy();
+			handler.post(this::销毁);
+			return;
 		}
-
-		return "";
+		if (destroyed) {
+			return;
+		}
+		destroyed = true;
+		transport.destroy();
+		handler.post(() -> {
+			if (attached) {
+				activity.removeOnDestroyListener(this);
+				attached = false;
+			}
+		});
+		super.销毁();
 	}
 
-	/**
-	 * 取得当前接收缓冲区大小。
-	 *
-	 * @return 缓冲区大小，单位字节。
-	 */
-	private int getReceiveSize() {
-		return this.receiveSize;
-	}
-
-	/* 内部线程 */
-
-	/**
-	 * 绑定监听端口并等待网络数据或客户连接。
-	 */
-	private class WaitClientThread extends Thread {
-		private int port;
-
-		WaitClientThread(int port) {
-			this.port = port;
-		}
-
-		@Override
-		public void run() {
-			try {
-				// 数据报套接字绑定成功后才进入接收循环，收发共用本次绑定的端口。
-				UDP数据报Impl.this.socket = new DatagramSocket(this.port);
-				UDP数据报Impl.this.started = true;
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-
-			while (UDP数据报Impl.this.started) {
-				try {
-					byte[] buf = new byte[UDP数据报Impl.this.getReceiveSize()];
-					DatagramPacket packet = new DatagramPacket(buf, buf.length);
-
-					UDP数据报Impl.this.socket.receive(packet);
-
-					// 复制实际收到的数据报内容，再投递组件事件。
-					byte[] received = new byte[packet.getLength()];
-					System.arraycopy(buf, 0, received, 0, packet.getLength());
-					String remoteAddress = UDP数据报Impl.this.getAddress(packet.getAddress());
-					int remotePort = packet.getPort();
-					Message msg = new Message();
-					Bundle b = new Bundle();
-
-					b.putByteArray("RecMsg", received);
-					b.putString("RemoteIP", remoteAddress);
-					b.putInt("RemotePort", remotePort);
-					msg.setData(b);
-					msg.what = RECEIVE_MSG;
-					UDP数据报Impl.this.handler.sendMessage(msg);
-				} catch (Exception e2) {
-					e2.printStackTrace();
-				}
-			}
-		}
+	@Override
+	public void onDestroy() {
+		销毁();
 	}
 }

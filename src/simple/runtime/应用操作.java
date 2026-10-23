@@ -26,6 +26,7 @@ import simple.runtime.variants.Variant;
  * 实现各种应用程序相关的运行时函数。
  *
  * @author Herbert Czymontek
+ * @author 树先生 xhwsd@qq.com
  */
 @SimpleObject
 public abstract class 应用操作 {
@@ -70,12 +71,12 @@ public abstract class 应用操作 {
 	}
 
 	/**
-	 * 终止此应用程序
+	 * 终止此应用程序，结束主活动及当前应用进程。
 	 */
 	@SimpleFunction
 	public static void 终止() {
 		// Simple核心关键字已使用“结束”。
-		applicationFunctions.finish();
+		applicationFunctions.terminate();
 	}
 
 	/**
@@ -103,7 +104,7 @@ public abstract class 应用操作 {
 	/**
 	 * 返回当前应用程序的包名
 	 *
-	 * @return 应用包名
+	 * @return 成功返回包名
 	 */
 	@SimpleFunction
 	public static String 取包名() {
@@ -113,7 +114,7 @@ public abstract class 应用操作 {
 	/**
 	 * 获取应用程序名称
 	 *
-	 * @return 应用程序名称
+	 * @return 成功返回名称，否则返回空字符串
 	 */
 	@SimpleFunction
 	public static String 取应用名() {
@@ -121,9 +122,9 @@ public abstract class 应用操作 {
 	}
 
 	/**
-	 * 获取应用程序版本名称信息
+	 * 获取应用程序版本名称
 	 *
-	 * @return 当前应用的版本名称
+	 * @return 成功返回版本名称，否则返回空字符串
 	 */
 	@SimpleFunction
 	public static String 取版本名() {
@@ -131,20 +132,22 @@ public abstract class 应用操作 {
 	}
 
 	/**
-	 * 获取应用程序版本名称信息
+	 * 获取应用程序版本编号
 	 *
-	 * @return 当前应用的版本号
+	 * @return 成功版本编号，否则返回0
 	 */
 	@SimpleFunction
-	public static long 取版本号() {
+	public static int 取版本号() {
 		return applicationFunctions.getVersionCode();
 	}
 
 	/**
-	 * 启动指定服务
+	 * 请求启动指定服务，返回真仅表示系统受理，不表示任务处理完成。
 	 *
-	 * @param intent 意图实例
-	 * @return 成功返回{@code true}，否则返回{@code false}
+	 * <p>API 26 及以上受普通服务后台执行限制；启动还需满足目标服务的权限要求。
+	 *
+	 * @param intent 启动意图
+	 * @return 请求已受理返回真；服务不存在、启动受限、意图无效或权限不足返回假
 	 */
 	@SimpleFunction
 	public static boolean 启动服务(意图 intent) {
@@ -152,12 +155,10 @@ public abstract class 应用操作 {
 	}
 
 	/**
-	 * 立刻停止指定服务。
+	 * 请求停止指定服务；正在执行的任务需要响应中断后退出。
 	 *
-	 * <p>注意：服务在任务执行完成后自行结束自己，不需要外部去调用停止服务
-	 *
-	 * @param intent 意图动作。
-	 * @return 成功返回{@code true}，否则返回{@code false}
+	 * @param intent 服务意图
+	 * @return 正在运行的匹配服务已收到停止请求时返回真；未运行或请求失败返回假
 	 */
 	@SimpleFunction
 	public static boolean 停止服务(意图 intent) {
@@ -175,37 +176,41 @@ public abstract class 应用操作 {
 	}
 
 	/**
-	 * 取屏幕宽度
+	 * 取当前应用的显示区域宽度。
+	 *
+	 * <p>左右若有系统导航栏或刘海，不包含其占用区域。
 	 *
 	 * @return 宽度，单位像素（px）
 	 */
 	@SimpleFunction
-	public static int 取屏幕宽度() {
-		return applicationFunctions.getScreenWidth();
+	public static int 取显示宽度() {
+		return applicationFunctions.getDisplayWidth();
 	}
 
 	/**
-	 * 取屏幕高度
+	 * 取当前应用的显示区域高度。
+	 *
+	 * <p>含系统状态栏和应用标题栏，不含上下系统导航栏及刘海占用区域。
 	 *
 	 * @return 高度，单位像素（px）
 	 */
 	@SimpleFunction
-	public static int 取屏幕高度() {
-		return applicationFunctions.getScreenHeight();
+	public static int 取显示高度() {
+		return applicationFunctions.getDisplayHeight();
 	}
 
 	/**
-	 * 取屏幕密度
+	 * 取当前应用的显示密度比例。
 	 *
-	 * @return 密度
+	 * @return 密度比例
 	 */
 	@SimpleFunction
-	public static double 取屏幕密度() {
-		return applicationFunctions.getScreenDensity();
+	public static double 取显示密度() {
+		return applicationFunctions.getDisplayDensity();
 	}
 
 	/**
-	 * 取状态栏高度
+	 * 取系统状态栏高度，不受是否隐藏影响。
 	 *
 	 * @return 高度，单位像素（px）
 	 */
@@ -215,7 +220,9 @@ public abstract class 应用操作 {
 	}
 
 	/**
-	 * 取内容宽度
+	 * 取当前应用实际内容宽度
+	 *
+	 * <p>不含系统状态栏、应用标题栏和底部系统导航栏。
 	 *
 	 * @return 宽度，单位像素（px）
 	 */
@@ -225,7 +232,7 @@ public abstract class 应用操作 {
 	}
 
 	/**
-	 * 取内容高度
+	 * 取当前应用实际内容高度
 	 *
 	 * @return 高度，单位像素（px）
 	 */

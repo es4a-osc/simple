@@ -5,7 +5,6 @@ import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.hardware.fingerprint.FingerprintManager;
 import android.os.Build;
 import android.os.CancellationSignal;
 import android.os.Handler;
@@ -19,7 +18,7 @@ import simple.runtime.components.impl.组件Impl;
 import simple.runtime.events.EventDispatcher;
 
 /**
- * 在主线程管理单次指纹请求，隔离 API 23 类型并丢弃过期回调。
+ * 在主线程管理单次指纹请求。
  *
  * @author 树先生 xhwsd@qq.com
  */
@@ -29,22 +28,21 @@ public final class 指纹验证Impl extends 组件Impl implements 指纹验证 {
 	private static final int RESULT_FAILED = 1;
 	private static final int RESULT_HELP = 2;
 	private static final int RESULT_ERROR = 3;
-	private static final int ERROR_CANCELED = 5;
+	private static final int RESULT_CANCELED = 4;
 
 	private final MainActivity activity;
 	private final Handler handler;
 	private final MainActivity.OnPauseListener pauseListener;
-	private final MainActivity.OnResumeListener resumeListener;
 	private final MainActivity.OnDestroyListener destroyListener;
 	private long sequence;
 	private long activeRequest;
 	private Object cancellation;
-	private boolean paused;
+	private boolean listenersRegistered;
 	private boolean destroyed;
 	private String lastError = "";
 
 	/**
-	 * 绑定宿主生命周期；构造时不访问指纹硬件，也不开始验证。
+	 * 准备宿主生命周期回调；延后注册以避开宿主事件遍历，构造时不开始验证。
 	 *
 	 * @param container 所属组件容器。
 	 */
@@ -55,14 +53,7 @@ public final class 指纹验证Impl extends 组件Impl implements 指纹验证 {
 		pauseListener = new MainActivity.OnPauseListener() {
 			@Override
 			public void onPause() {
-				paused = true;
 				cancelCurrent(true);
-			}
-		};
-		resumeListener = new MainActivity.OnResumeListener() {
-			@Override
-			public void onResume() {
-				paused = false;
 			}
 		};
 		destroyListener = new MainActivity.OnDestroyListener() {
@@ -71,12 +62,10 @@ public final class 指纹验证Impl extends 组件Impl implements 指纹验证 {
 				release();
 			}
 		};
-		activity.addOnPauseListener(pauseListener);
-		activity.addOnResumeListener(resumeListener);
-		activity.addOnDestroyListener(destroyListener);
+		handler.post(this::registerListeners);
 	}
 
-	/* 事件 */
+	/* 组件事件 */
 
 	@Override
 	public void 验证成功() {
@@ -103,7 +92,7 @@ public final class 指纹验证Impl extends 组件Impl implements 指纹验证 {
 		EventDispatcher.dispatchEvent(this, "验证错误", code, message);
 	}
 
-	/* 属性 */
+	/* 组件属性 */
 
 	@Override
 	public boolean 正在验证() {
@@ -117,7 +106,7 @@ public final class 指纹验证Impl extends 组件Impl implements 指纹验证 {
 		return lastError;
 	}
 
-	/* 方法 */
+	/* 组件方法 */
 
 	@Override
 	public int 取可用状态() {
@@ -148,8 +137,8 @@ public final class 指纹验证Impl extends 组件Impl implements 指纹验证 {
 			lastError = "已有验证正在进行。";
 			return false;
 		}
-		if (paused) {
-			lastError = "应用不在前台，不能开始指纹验证。";
+		if (!activity.isInForeground() || activity.isFinishing() || activity.isDestroyed()) {
+			lastError = "应用未在前台或宿主正在关闭，不能开始指纹验证。";
 			return false;
 		}
 		int status = 取可用状态();
@@ -157,6 +146,7 @@ public final class 指纹验证Impl extends 组件Impl implements 指纹验证 {
 			lastError = statusMessage(status);
 			return false;
 		}
+
 		// 请求先登记再交给系统，所有结果延后到消息队列，避免开始方法中的事件重入。
 		long request = ++sequence;
 		try {
@@ -188,6 +178,10 @@ public final class 指纹验证Impl extends 组件Impl implements 指纹验证 {
 			lastError = statusMessage(destroyed ? 状态_已销毁 : 状态_系统不支持);
 			return false;
 		}
+		if (!activity.isInForeground() || activity.isFinishing() || activity.isDestroyed()) {
+			lastError = "应用未在前台或宿主正在关闭，不能打开安全设置。";
+			return false;
+		}
 		try {
 			activity.startActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS));
 			lastError = "";
@@ -207,6 +201,25 @@ public final class 指纹验证Impl extends 组件Impl implements 指纹验证 {
 	/* 请求与生命周期 */
 
 	/**
+	 * 延后登记暂停与销毁监听；若宿主已离开前台，立即终止排队期间开始的请求。
+	 */
+	private void registerListeners() {
+		if (destroyed || listenersRegistered) {
+			return;
+		}
+		if (activity.isDestroyed()) {
+			release();
+			return;
+		}
+		activity.addOnPauseListener(pauseListener);
+		activity.addOnDestroyListener(destroyListener);
+		listenersRegistered = true;
+		if (!activity.isInForeground() || activity.isFinishing() || activity.isDestroyed()) {
+			cancelCurrent(true);
+		}
+	}
+
+	/**
 	 * 投递原始系统回调；派发时核对请求归属，旧请求不能结束或通知新请求。
 	 *
 	 * @param request 回调所属请求。
@@ -222,6 +235,15 @@ public final class 指纹验证Impl extends 组件Impl implements 指纹验证 {
 				if (destroyed || activeRequest != request) {
 					return;
 				}
+				if (activity.isDestroyed()) {
+					release();
+					return;
+				}
+				// 暂停通知尚未到达或正在关闭时，也不能把排队的成功结果发给后台调用方。
+				if (!activity.isInForeground() || activity.isFinishing()) {
+					cancelCurrent(true);
+					return;
+				}
 				if (result == RESULT_FAILED) {
 					验证未通过();
 				} else if (result == RESULT_HELP) {
@@ -232,7 +254,7 @@ public final class 指纹验证Impl extends 组件Impl implements 指纹验证 {
 					if (result == RESULT_SUCCESS) {
 						lastError = "";
 						验证成功();
-					} else if (code == ERROR_CANCELED) {
+					} else if (result == RESULT_CANCELED) {
 						lastError = "";
 						验证取消();
 					} else {
@@ -292,9 +314,11 @@ public final class 指纹验证Impl extends 组件Impl implements 指纹验证 {
 		handler.post(new Runnable() {
 			@Override
 			public void run() {
-				activity.removeOnPauseListener(pauseListener);
-				activity.removeOnResumeListener(resumeListener);
-				activity.removeOnDestroyListener(destroyListener);
+				if (listenersRegistered) {
+					activity.removeOnPauseListener(pauseListener);
+					activity.removeOnDestroyListener(destroyListener);
+					listenersRegistered = false;
+				}
 			}
 		});
 		super.销毁();
@@ -319,13 +343,20 @@ public final class 指纹验证Impl extends 组件Impl implements 指纹验证 {
 	 */
 	private static String statusMessage(int status) {
 		switch (status) {
-			case 状态_系统不支持: return "指纹验证需要 Android 6.0（API 23）或以上。";
-			case 状态_无指纹硬件: return "设备没有可用的指纹硬件。";
-			case 状态_未设置锁屏: return "请先设置安全锁屏。";
-			case 状态_未录入指纹: return "请先在系统安全设置中录入指纹。";
-			case 状态_权限不足: return "应用没有 USE_FINGERPRINT 权限。";
-			case 状态_已销毁: return "指纹验证组件已经销毁。";
-			default: return "指纹服务暂不可用。";
+			case 状态_系统不支持:
+				return "指纹验证需要 Android 6.0（API 23）或以上。";
+			case 状态_无指纹硬件:
+				return "设备没有可用的指纹硬件。";
+			case 状态_未设置锁屏:
+				return "请先设置安全锁屏。";
+			case 状态_未录入指纹:
+				return "请先在系统安全设置中录入指纹。";
+			case 状态_权限不足:
+				return "应用没有 USE_FINGERPRINT 权限。";
+			case 状态_已销毁:
+				return "指纹验证组件已经销毁。";
+			default:
+				return "指纹服务暂不可用。";
 		}
 	}
 
@@ -341,7 +372,12 @@ public final class 指纹验证Impl extends 组件Impl implements 指纹验证 {
 	}
 
 	/**
-	 * API 23 类型只在此分支的字段、签名及字节码中出现，低版本不进入该分支。
+	 * 隔离指纹专用平台调用；API 23 以下不进入此分支。
+	 *
+	 * <p>API 28 起的 BiometricPrompt 不能限制仅使用指纹，API 30 的生物特征强度也不是模态筛选。
+	 * 为维持本组件只接受指纹的契约，所有支持版本继续使用公开的 FingerprintManager。
+	 *
+	 * @author 树先生 xhwsd@qq.com
 	 */
 	@TargetApi(23)
 	private static final class Api23 {
@@ -352,11 +388,13 @@ public final class 指纹验证Impl extends 组件Impl implements 指纹验证 {
 		 * @param activity 宿主 Activity。
 		 * @return 组件可用状态常量。
 		 */
+		@SuppressWarnings("deprecation")
 		static int status(MainActivity activity) {
 			if (activity.checkSelfPermission("android.permission.USE_FINGERPRINT") != PackageManager.PERMISSION_GRANTED) {
 				return 状态_权限不足;
 			}
-			FingerprintManager manager = (FingerprintManager) activity.getSystemService(Context.FINGERPRINT_SERVICE);
+			android.hardware.fingerprint.FingerprintManager manager =
+				(android.hardware.fingerprint.FingerprintManager) activity.getSystemService(Context.FINGERPRINT_SERVICE);
 			if (manager == null || !manager.isHardwareDetected()) {
 				return 状态_无指纹硬件;
 			}
@@ -383,15 +421,17 @@ public final class 指纹验证Impl extends 组件Impl implements 指纹验证 {
 		 * @param request 所属请求编号。
 		 * @param cancellation 系统取消对象。
 		 */
+		@SuppressWarnings("deprecation")
 		static void authenticate(final 指纹验证Impl owner, final long request, Object cancellation) {
-			FingerprintManager manager = (FingerprintManager) owner.activity.getSystemService(Context.FINGERPRINT_SERVICE);
+			android.hardware.fingerprint.FingerprintManager manager =
+				(android.hardware.fingerprint.FingerprintManager) owner.activity.getSystemService(Context.FINGERPRINT_SERVICE);
 			if (manager == null) {
 				throw new IllegalStateException("指纹服务暂不可用。");
 			}
 			manager.authenticate(null, (CancellationSignal) cancellation, 0,
-				new FingerprintManager.AuthenticationCallback() {
+				new android.hardware.fingerprint.FingerprintManager.AuthenticationCallback() {
 					@Override
-					public void onAuthenticationSucceeded(FingerprintManager.AuthenticationResult result) {
+					public void onAuthenticationSucceeded(android.hardware.fingerprint.FingerprintManager.AuthenticationResult result) {
 						owner.postResult(request, RESULT_SUCCESS, 0, "");
 					}
 
@@ -407,7 +447,10 @@ public final class 指纹验证Impl extends 组件Impl implements 指纹验证 {
 
 					@Override
 					public void onAuthenticationError(int code, CharSequence message) {
-						owner.postResult(request, RESULT_ERROR, code, message);
+						int outcome = code == android.hardware.fingerprint.FingerprintManager.FINGERPRINT_ERROR_CANCELED
+								|| code == android.hardware.fingerprint.FingerprintManager.FINGERPRINT_ERROR_USER_CANCELED
+								? RESULT_CANCELED : RESULT_ERROR;
+						owner.postResult(request, outcome, code, message);
 					}
 				}, owner.handler);
 		}
