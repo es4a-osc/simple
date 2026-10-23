@@ -160,7 +160,7 @@ public final class 标签Impl extends 文本视图组件 implements 标签 {
 
 	@Override
 	public void 触摸移动(int lastX, int lastY, int currX, int currY) {
-		EventDispatcher.dispatchEvent(this, "触点移动", lastX, lastY, currX, currY);
+		EventDispatcher.dispatchEvent(this, "触摸移动", lastX, lastY, currX, currY);
 	}
 
 	@Override

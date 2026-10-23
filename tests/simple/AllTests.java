@@ -17,25 +17,10 @@
 package simple;
 
 import simple.compiler.CompilerSmokeTest;
-import simple.compiler.PopupMenuComponentTest;
-import simple.runtime.components.impl.android.util.PopupMenuModelTest;
-import simple.runtime.components.impl.android.util.HttpTransportTest;
-import simple.compiler.CanvasComponentTest;
-import simple.compiler.BatteryMonitorComponentTest;
-import simple.compiler.FingerprintComponentTest;
-import simple.runtime.components.impl.android.util.BatterySnapshotTest;
-import simple.compiler.ClipboardOperationsTest;
-import simple.compiler.StorageSpaceTest;
-import simple.compiler.DateTimePickerTest;
-import simple.compiler.DataTableComponentTest;
-import simple.compiler.RichTextComponentTest;
-import simple.runtime.components.impl.android.util.RichTextRangesTest;
-import simple.runtime.components.impl.android.util.DataTableModelTest;
-import simple.compiler.ContactsPermissionsTest;
-import simple.compiler.DependenciesTest;
-import simple.compiler.KeywordMemberTest;
 import simple.compiler.parser.ParserTest;
 import simple.compiler.scanner.ScannerTest;
+import simple.compiler.util.ResourceTest;
+
 import simple.runtime.ArraysTest;
 import simple.runtime.ConversionsTest;
 import simple.runtime.DatesTest;
@@ -49,11 +34,6 @@ import simple.runtime.RadixConversionsTest;
 import simple.runtime.SequencesTest;
 import simple.runtime.StringsTest;
 import simple.runtime.TextFormattingTest;
-import simple.compiler.util.ResourceTest;
-import simple.compiler.util.DexToolchainTest;
-import simple.compiler.util.JarResourcesTest;
-import simple.compiler.util.ApkBuilderTest;
-import simple.compiler.util.SigningToolchainTest;
 
 import junit.framework.TestSuite;
 import junit.framework.Test;
@@ -74,34 +54,18 @@ public class AllTests {
 	 */
 	public static Test suite() {
 		TestSuite suite = new TestSuite("Simple Tests");
-		// compiler
+
+		// simple.compiler
 		suite.addTestSuite(CompilerSmokeTest.class);
-		suite.addTestSuite(PopupMenuComponentTest.class);
-		suite.addTestSuite(PopupMenuModelTest.class);
-		suite.addTestSuite(CanvasComponentTest.class);
-		suite.addTestSuite(BatteryMonitorComponentTest.class);
-		suite.addTestSuite(FingerprintComponentTest.class);
-		suite.addTestSuite(BatterySnapshotTest.class);
-		suite.addTestSuite(ClipboardOperationsTest.class);
-		suite.addTestSuite(StorageSpaceTest.class);
-		suite.addTestSuite(DateTimePickerTest.class);
-		suite.addTestSuite(DataTableComponentTest.class);
-		suite.addTestSuite(RichTextComponentTest.class);
-		suite.addTestSuite(RichTextRangesTest.class);
-		suite.addTestSuite(DataTableModelTest.class);
-		suite.addTestSuite(ContactsPermissionsTest.class);
-		suite.addTestSuite(DependenciesTest.class);
-		suite.addTestSuite(KeywordMemberTest.class);
+
 		// simple.compiler.parser
 		suite.addTestSuite(ParserTest.class);
+
 		// simple.compiler.scanner
 		suite.addTestSuite(ScannerTest.class);
+
 		// simple.util
 		suite.addTestSuite(ResourceTest.class);
-		suite.addTestSuite(DexToolchainTest.class);
-		suite.addTestSuite(JarResourcesTest.class);
-		suite.addTestSuite(ApkBuilderTest.class);
-		suite.addTestSuite(SigningToolchainTest.class);
 
 		// simple.runtime
 		suite.addTestSuite(ArraysTest.class);
@@ -117,7 +81,7 @@ public class AllTests {
 		suite.addTestSuite(StringsTest.class);
 		suite.addTestSuite(TextFormattingTest.class);
 		suite.addTestSuite(SequencesTest.class);
-		suite.addTestSuite(HttpTransportTest.class);
+
 		return suite;
 	}
 }

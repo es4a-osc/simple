@@ -132,7 +132,7 @@ public final class 按钮Impl extends 文本视图组件 implements 按钮 {
 					case MotionEvent.ACTION_UP:
 						lastX = currX;
 						lastY = currY;
-						被按下(currX, currY);
+						被弹起(currX, currY);
 						break;
 					case MotionEvent.ACTION_MOVE:
 						触摸移动(lastX, lastY, currX, currY);

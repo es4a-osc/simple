@@ -1,0 +1,56 @@
+' 该对象用于从 Java 类执行冒烟测试。
+
+静态 过程 运行冒烟测试()
+	变量 测试集合 为 集合
+	测试集合 = 创建 集合
+
+	' 转换测试。
+	测试集合.加入(创建 simple.smoketest.conversions.逻辑型转换测试)
+	测试集合.加入(创建 simple.smoketest.conversions.字节型转换测试)
+	测试集合.加入(创建 simple.smoketest.conversions.短整数型转换测试)
+	测试集合.加入(创建 simple.smoketest.conversions.整数型转换测试)
+	测试集合.加入(创建 simple.smoketest.conversions.长整数型转换测试)
+
+	' 表达式测试。
+	测试集合.加入(创建 simple.smoketest.expressions.加法表达式测试)
+	测试集合.加入(创建 simple.smoketest.expressions.与表达式测试)
+	测试集合.加入(创建 simple.smoketest.expressions.数组表达式测试)
+	测试集合.加入(创建 simple.smoketest.expressions.调用表达式测试)
+	测试集合.加入(创建 simple.smoketest.expressions.连接表达式测试)
+	测试集合.加入(创建 simple.smoketest.expressions.正负号表达式测试)
+	' 验证未初始化变体值的相等和不等比较 xhwsd@qq.com 2026-9-4
+	测试集合.加入(创建 simple.smoketest.expressions.变体相等表达式测试)
+	测试集合.加入(创建 simple.smoketest.expressions.整数除法表达式测试)
+	测试集合.加入(创建 simple.smoketest.expressions.匹配表达式测试)
+	' 验证百分号求模运算符 xhwsd@qq.com 2026-9-4
+	测试集合.加入(创建 simple.smoketest.expressions.取模表达式测试)
+	测试集合.加入(创建 simple.smoketest.expressions.创建表达式测试)
+	测试集合.加入(创建 simple.smoketest.expressions.或表达式测试)
+	测试集合.加入(创建 simple.smoketest.expressions.类型判断表达式测试)
+	测试集合.加入(创建 simple.smoketest.expressions.异或表达式测试)
+
+	' 作用域测试。
+	测试集合.加入(创建 simple.smoketest.scopes.作用域测试)
+
+	' 语句测试。
+	测试集合.加入(创建 simple.smoketest.statements.执行直到语句测试)
+	测试集合.加入(创建 simple.smoketest.statements.执行当语句测试)
+	测试集合.加入(创建 simple.smoketest.statements.退出语句测试)
+	测试集合.加入(创建 simple.smoketest.statements.条件语句测试)
+	测试集合.加入(创建 simple.smoketest.statements.计次循环语句测试)
+	测试集合.加入(创建 simple.smoketest.statements.遍历循环语句测试)
+	测试集合.加入(创建 simple.smoketest.statements.错误处理语句测试)
+	测试集合.加入(创建 simple.smoketest.statements.触发事件语句测试)
+	测试集合.加入(创建 simple.smoketest.statements.选择语句测试)
+	测试集合.加入(创建 simple.smoketest.statements.当循环语句测试)
+
+	' 运行全部测试。
+	变量 测试项 为 测试用例
+	循环 每个 测试项 从 测试集合
+		测试项.运行()
+	下个 测试项
+结束 过程
+
+$属性
+	$资源 $对象
+$结束 $属性

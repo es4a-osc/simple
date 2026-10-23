@@ -141,6 +141,7 @@ public final class ViewUtil {
 	 */
 	public static void setWidth(View view, int width) {
 		view.getLayoutParams().width = simpleToAndroidLength(width);
+		view.requestLayout();
 	}
 
 	/**
@@ -161,6 +162,7 @@ public final class ViewUtil {
 	 */
 	public static void setHeight(View view, int height) {
 		view.getLayoutParams().height = simpleToAndroidLength(height);
+		view.requestLayout();
 	}
 
 	/**

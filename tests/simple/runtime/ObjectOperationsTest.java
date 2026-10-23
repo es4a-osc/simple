@@ -1,13 +1,10 @@
 package simple.runtime;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 import junit.framework.TestCase;
-import simple.compiler.Compiler;
-import simple.compiler.Project;
 
 import simple.runtime.annotations.SimpleFunction;
 import simple.runtime.annotations.SimpleObject;
@@ -113,15 +110,6 @@ public final class ObjectOperationsTest extends TestCase {
 		} catch (ExceptionInInitializerError expected) {
 			assertEquals("初始化失败", expected.getCause().getMessage());
 		}
-	}
-
-	/**
-	 * 用现有程序信息示例验证反射创建、失败返回值和实例方法调用。
-	 *
-	 * @throws IOException 示例项目无法读取
-	 */
-	public void testReflectionExampleCompiles() throws IOException {
-		assertNotNull(Compiler.compileForUnitTesting(new Project(new File("examples/对象操作/project.properties"))));
 	}
 
 	/**

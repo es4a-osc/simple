@@ -174,7 +174,7 @@ public final class 图片框Impl extends 图片视图组件 implements 图片框
 
 	@Override
 	public void 触摸移动(int lastX, int lastY, int currX, int currY) {
-		EventDispatcher.dispatchEvent(this, "触点移动", lastX, lastY, currX, currY);
+		EventDispatcher.dispatchEvent(this, "触摸移动", lastX, lastY, currX, currY);
 	}
 
 	@Override

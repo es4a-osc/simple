@@ -688,7 +688,10 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 		if (activeForm != null) {
 			activeForm.按下某键(keycode, shield);
 		}
-		return shield.get() || super.onKeyDown(keycode, event);
+
+		// 保留由 Simple 窗口事件自行控制切换和退出的约定。
+		// 此处不调用父类，避免返回键在切换窗口后继续触发系统默认退出。
+		return shield.get();
 	}
 
 	/**

@@ -13,6 +13,7 @@ import simple.runtime.variants.LongVariant;
 import simple.runtime.variants.ShortVariant;
 import simple.runtime.variants.SingleVariant;
 import simple.runtime.variants.StringVariant;
+import simple.runtime.variants.UninitializedVariant;
 import simple.runtime.variants.Variant;
 
 import java.io.Serializable;
@@ -20,6 +21,7 @@ import java.lang.reflect.Array;
 import java.util.Calendar;
 
 import android.content.Intent;
+import android.os.Bundle;
 
 /**
  * 意图对象。
@@ -204,11 +206,15 @@ public final class 意图 {
 	 * 取意图的指定附加参数的值。
 	 *
 	 * @param name 参数名。
-	 * @return 成功返回参数值，否则返回{@code null}。
+	 * @return 参数值；缺失或为{@code null}时返回未初始化变体，即 Simple 的空值。
 	 */
 	@SimpleFunction
 	public Variant 取附加(String name) {
-		Object object = intent.getExtras().get(name);
-		return ConvHelpers.object2variant(object);
+		Bundle extras = intent.getExtras();
+		Object object = extras == null ? null : extras.get(name);
+		// Java null 不能参与 Simple 变体运算，缺失值统一使用语言的空值。
+		return object == null
+			? UninitializedVariant.getUninitializedVariant()
+			: ConvHelpers.object2variant(object);
 	}
 }

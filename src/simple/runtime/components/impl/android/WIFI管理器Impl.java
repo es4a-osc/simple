@@ -54,7 +54,7 @@ public final class WIFI管理器Impl extends 组件Impl implements WIFI管理器
 	private final BroadcastReceiver receiver;
 	private final Handler handler = new Handler(Looper.getMainLooper());
 	private NetworkObserver networkObserver;
-	private ScanObserver scanObserver;
+	private Runnable unregisterScanCallback;
 	private WifiManager.WifiLock wifiLock;
 	private WifiApAdmin hotspot;
 	private boolean scanPending;
@@ -94,7 +94,7 @@ public final class WIFI管理器Impl extends 组件Impl implements WIFI管理器
 				String action = intent.getAction();
 				if (WifiManager.SCAN_RESULTS_AVAILABLE_ACTION.equals(action)) {
 					boolean updated = intent.getBooleanExtra(WifiManager.EXTRA_RESULTS_UPDATED, false);
-					if (scanObserver == null || !scanObserver.registered || !updated) {
+					if (unregisterScanCallback == null || !updated) {
 						// API 30 的成功结果由回调通知；各版本的失败通知都结束等待并返回假。
 						completeScan(updated);
 					}
@@ -139,8 +139,12 @@ public final class WIFI管理器Impl extends 组件Impl implements WIFI管理器
 				networkObserver.register();
 			}
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-				scanObserver = new ScanObserver();
-				scanObserver.register();
+				try {
+					// 外层只保存稳定类型，避免旧系统解析字段及合成访问方法时加载新回调类。
+					unregisterScanCallback = Api30.registerScanCallback(manager, context, () -> completeScan(true));
+				} catch (RuntimeException error) {
+					Log.e("WIFI管理", "无法注册 Wi-Fi 扫描通知，改用广播", error);
+				}
 			}
 		}
 	}
@@ -373,7 +377,7 @@ public final class WIFI管理器Impl extends 组件Impl implements WIFI管理器
 	@Override
 	public synchronized boolean 开始扫描() {
 		if (destroyed || manager == null || scanPending
-				|| (!receiverRegistered && (scanObserver == null || !scanObserver.registered))) {
+				|| (!receiverRegistered && unregisterScanCallback == null)) {
 			return false;
 		}
 
@@ -792,9 +796,14 @@ public final class WIFI管理器Impl extends 组件Impl implements WIFI管理器
 			networkObserver.unregister();
 			networkObserver = null;
 		}
-		if (scanObserver != null) {
-			scanObserver.unregister();
-			scanObserver = null;
+		if (unregisterScanCallback != null) {
+			Runnable unregister = unregisterScanCallback;
+			unregisterScanCallback = null;
+			try {
+				unregister.run();
+			} catch (RuntimeException error) {
+				Log.e("WIFI管理", "无法注销 Wi-Fi 扫描通知", error);
+			}
 		}
 
 		// 先使本地热点请求失效，迟到回调不得重新持有资源或分发结果。
@@ -1274,11 +1283,31 @@ public final class WIFI管理器Impl extends 组件Impl implements WIFI管理器
 	}
 
 	/**
-	 * 隔离 API 30 的保存网络配置类型，低版本不会加载该实现。
+	 * 隔离 API 30 的网络配置和扫描回调类型，低版本不会加载该实现。
 	 *
 	 * @author 树先生 xhwsd@qq.com
 	 */
 	private static final class Api30 {
+
+		/**
+		 * 注册主线程扫描通知，将新回调类型及其注销过程封闭在版本分支内。
+		 *
+		 * @param manager Wi-Fi 服务
+		 * @param context 提供主线程执行器的应用上下文
+		 * @param onResults 结果更新时执行的通知
+		 * @return 仅注销本次注册的动作
+		 */
+		private static Runnable registerScanCallback(WifiManager manager, Context context, Runnable onResults) {
+			WifiManager.ScanResultsCallback callback = new WifiManager.ScanResultsCallback() {
+
+				@Override
+				public void onScanResultsAvailable() {
+					onResults.run();
+				}
+			};
+			manager.registerScanResultsCallback(context.getMainExecutor(), callback);
+			return () -> manager.unregisterScanResultsCallback(callback);
+		}
 
 		/**
 		 * 构造单个网络的系统确认请求，不向应用伪造网络标识。
@@ -1460,49 +1489,4 @@ public final class WIFI管理器Impl extends 组件Impl implements WIFI管理器
 		}
 	}
 
-	/**
-	 * 隔离 API 30 的扫描回调类型，旧系统继续使用扫描广播。
-	 *
-	 * @author 树先生 xhwsd@qq.com
-	 */
-	private final class ScanObserver extends WifiManager.ScanResultsCallback {
-
-		private volatile boolean registered;
-
-		/**
-		 * 在主线程接收结果；注册失败时保留广播作为结果来源。
-		 */
-		private void register() {
-			try {
-				manager.registerScanResultsCallback(context.getMainExecutor(), this);
-				registered = true;
-			} catch (RuntimeException error) {
-				Log.e("WIFI管理", "无法注册 Wi-Fi 扫描通知，改用广播", error);
-			}
-		}
-
-		/**
-		 * 释放本实例注册的扫描回调。
-		 */
-		private void unregister() {
-			if (registered) {
-				registered = false;
-				try {
-					manager.unregisterScanResultsCallback(this);
-				} catch (RuntimeException error) {
-					Log.e("WIFI管理", "无法注销 Wi-Fi 扫描通知", error);
-				}
-			}
-		}
-
-		/**
-		 * 结果更新时结束本组件的一次扫描等待。
-		 */
-		@Override
-		public void onScanResultsAvailable() {
-			if (registered) {
-				completeScan(true);
-			}
-		}
-	}
 }
