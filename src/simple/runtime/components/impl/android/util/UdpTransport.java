@@ -216,7 +216,12 @@ public final class UdpTransport {
 			current = null;
 			session.close();
 			if (session.started && !destroyed) {
-				post(token, listener::stopped);
+				post(token, new Runnable() {
+					@Override
+					public void run() {
+						listener.stopped();
+					}
+				});
 			}
 		}
 	}
@@ -243,7 +248,12 @@ public final class UdpTransport {
 	 */
 	private boolean reject(String operation, String text) {
 		lastError = text;
-		post(revision, () -> listener.failed(operation, text));
+		post(revision, new Runnable() {
+			@Override
+			public void run() {
+				listener.failed(operation, text);
+			}
+		});
 		return false;
 	}
 
@@ -254,10 +264,13 @@ public final class UdpTransport {
 	 * @param action 实际回调
 	 */
 	private void post(long token, Runnable action) {
-		callbacks.execute(() -> {
-			synchronized (lock) {
-				if (!destroyed && revision == token) {
-					action.run();
+		callbacks.execute(new Runnable() {
+			@Override
+			public void run() {
+				synchronized (lock) {
+					if (!destroyed && revision == token) {
+						action.run();
+					}
 				}
 			}
 		});
@@ -301,8 +314,18 @@ public final class UdpTransport {
 			this.token = token;
 			this.port = port;
 			socket = new DatagramSocket(null);
-			reader = new Thread(this::receive, "SimpleUdp-receive-" + token);
-			writer = new Thread(this::transmit, "SimpleUdp-send-" + token);
+			reader = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					Session.this.receive();
+				}
+			}, "SimpleUdp-receive-" + token);
+			writer = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					Session.this.transmit();
+				}
+			}, "SimpleUdp-send-" + token);
 			reader.setDaemon(true);
 			writer.setDaemon(true);
 		}
@@ -332,7 +355,12 @@ public final class UdpTransport {
 					}
 					started = true;
 					int actualPort = socket.getLocalPort();
-					post(token, () -> listener.started(true, actualPort));
+					post(token, new Runnable() {
+						@Override
+						public void run() {
+							listener.started(true, actualPort);
+						}
+					});
 					writer.start();
 				}
 
@@ -349,7 +377,12 @@ public final class UdpTransport {
 					byte[] data = Arrays.copyOf(packet.getData(), packet.getLength());
 					String address = packet.getAddress().getHostAddress();
 					int remotePort = packet.getPort();
-					deliver(() -> listener.received(data, address, remotePort));
+					deliver(new Runnable() {
+						@Override
+						public void run() {
+							listener.received(data, address, remotePort);
+						}
+					});
 				}
 			} catch (IOException | SecurityException exception) {
 				synchronized (lock) {
@@ -358,11 +391,26 @@ public final class UdpTransport {
 						close();
 						lastError = message(exception);
 						String error = lastError;
-						post(token, () -> listener.failed(started ? "接收数据" : "开始监听", error));
+						post(token, new Runnable() {
+							@Override
+							public void run() {
+								listener.failed(started ? "接收数据" : "开始监听", error);
+							}
+						});
 						if (started) {
-							post(token, listener::stopped);
+							post(token, new Runnable() {
+								@Override
+								public void run() {
+									listener.stopped();
+								}
+							});
 						} else {
-							post(token, () -> listener.started(false, 0));
+							post(token, new Runnable() {
+								@Override
+								public void run() {
+									listener.started(false, 0);
+								}
+							});
 						}
 					}
 				}
@@ -373,7 +421,12 @@ public final class UdpTransport {
 					if (active()) {
 						current = null;
 						if (started) {
-							post(token, listener::stopped);
+							post(token, new Runnable() {
+								@Override
+								public void run() {
+									listener.stopped();
+								}
+							});
 						}
 					}
 					close();
@@ -394,7 +447,12 @@ public final class UdpTransport {
 							return;
 						}
 						socket.send(new DatagramPacket(item.data, item.data.length, target, item.port));
-						deliver(() -> listener.sent(item.data.length, target.getHostAddress(), item.port));
+						deliver(new Runnable() {
+							@Override
+							public void run() {
+								listener.sent(item.data.length, target.getHostAddress(), item.port);
+							}
+						});
 					} catch (IOException | SecurityException exception) {
 						fail("发送数据", message(exception));
 					} finally {
@@ -421,15 +479,18 @@ public final class UdpTransport {
 				deliveries.release();
 				return;
 			}
-			callbacks.execute(() -> {
-				try {
-					synchronized (lock) {
-						if (active()) {
-							action.run();
+			callbacks.execute(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						synchronized (lock) {
+							if (active()) {
+								action.run();
+							}
 						}
+					} finally {
+						deliveries.release();
 					}
-				} finally {
-					deliveries.release();
 				}
 			});
 		}
@@ -448,7 +509,12 @@ public final class UdpTransport {
 				}
 				lastError = text;
 			}
-			deliver(() -> listener.failed(operation, text));
+			deliver(new Runnable() {
+				@Override
+				public void run() {
+					listener.failed(operation, text);
+				}
+			});
 		}
 
 		/**

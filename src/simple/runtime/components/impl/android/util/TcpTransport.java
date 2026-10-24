@@ -198,14 +198,17 @@ public final class TcpTransport {
 		 */
 		final void deliver(BooleanSupplier valid, Runnable action, Runnable release) {
 			try {
-				callbacks.execute(() -> {
-					try {
-						if (!destroyed && valid.getAsBoolean()) {
-							action.run();
-						}
-					} finally {
-						if (release != null) {
-							release.run();
+				callbacks.execute(new Runnable() {
+					@Override
+					public void run() {
+						try {
+							if (!destroyed && valid.getAsBoolean()) {
+								action.run();
+							}
+						} finally {
+							if (release != null) {
+								release.run();
+							}
 						}
 					}
 				});
@@ -281,7 +284,12 @@ public final class TcpTransport {
 			if (previous != null) {
 				previous.close();
 			}
-			thread("SimpleTcpConnect", () -> connect(next, address.trim(), port, timeout));
+			thread("SimpleTcpConnect", new Runnable() {
+				@Override
+				public void run() {
+					connect(next, address.trim(), port, timeout);
+				}
+			});
 			return true;
 		}
 
@@ -301,15 +309,40 @@ public final class TcpTransport {
 				}
 				attempt.socket.connect(destination, timeout);
 				// 连接创建后即归本次尝试持有，由 Attempt.close() 统一释放。
-				attempt.connection = new Connection(attempt.socket, () -> bufferSize, new Sink() {
+				attempt.connection = new Connection(attempt.socket, new IntSupplier() {
+					@Override
+					public int getAsInt() {
+						return bufferSize;
+					}
+				}, new Sink() {
 					@Override
 					public void data(byte[] data, Runnable release) {
-						deliver(() -> owns(attempt), () -> listener.received(data), release);
+						deliver(new BooleanSupplier() {
+							@Override
+							public boolean getAsBoolean() {
+								return owns(attempt);
+							}
+						}, new Runnable() {
+							@Override
+							public void run() {
+								listener.received(data);
+							}
+						}, release);
 					}
 
 					@Override
 					public void sent(int length) {
-						deliver(() -> owns(attempt), () -> listener.sent(length), null);
+						deliver(new BooleanSupplier() {
+							@Override
+							public boolean getAsBoolean() {
+								return owns(attempt);
+							}
+						}, new Runnable() {
+							@Override
+							public void run() {
+								listener.sent(length);
+							}
+						}, null);
 					}
 
 					@Override
@@ -323,7 +356,17 @@ public final class TcpTransport {
 						if (message != null) {
 							failure(attempt, "通信", message);
 						}
-						deliver(() -> owns(attempt), listener::disconnected, null);
+						deliver(new BooleanSupplier() {
+							@Override
+							public boolean getAsBoolean() {
+								return owns(attempt);
+							}
+						}, new Runnable() {
+							@Override
+							public void run() {
+								listener.disconnected();
+							}
+						}, null);
 					}
 				});
 				Connection connection = attempt.connection;
@@ -335,7 +378,17 @@ public final class TcpTransport {
 					attempt.connected = true;
 					attempt.connecting = false;
 				}
-				deliver(() -> owns(attempt), () -> listener.connected(true), null);
+				deliver(new BooleanSupplier() {
+					@Override
+					public boolean getAsBoolean() {
+						return owns(attempt);
+					}
+				}, new Runnable() {
+					@Override
+					public void run() {
+						listener.connected(true);
+					}
+				}, null);
 				if (owns(attempt)) {
 					connection.start();
 				}
@@ -344,7 +397,17 @@ public final class TcpTransport {
 					attempt.connecting = false;
 					attempt.connected = false;
 					failure(attempt, "连接", failure.toString());
-					deliver(() -> owns(attempt), () -> listener.connected(false), null);
+					deliver(new BooleanSupplier() {
+						@Override
+						public boolean getAsBoolean() {
+							return owns(attempt);
+						}
+					}, new Runnable() {
+						@Override
+						public void run() {
+							listener.connected(false);
+						}
+					}, null);
 				}
 				attempt.close();
 			} finally {
@@ -416,7 +479,17 @@ public final class TcpTransport {
 				boolean notify = previous.connected;
 				previous.close();
 				if (notify) {
-					deliver(() -> revisionIs(expected), listener::disconnected, null);
+					deliver(new BooleanSupplier() {
+						@Override
+						public boolean getAsBoolean() {
+							return revisionIs(expected);
+						}
+					}, new Runnable() {
+						@Override
+						public void run() {
+							listener.disconnected();
+						}
+					}, null);
 				}
 			}
 		}
@@ -469,7 +542,17 @@ public final class TcpTransport {
 				}
 				lastError = message;
 			}
-			deliver(() -> owns(attempt), () -> listener.failed(operation, message), null);
+			deliver(new BooleanSupplier() {
+				@Override
+				public boolean getAsBoolean() {
+					return owns(attempt);
+				}
+			}, new Runnable() {
+				@Override
+				public void run() {
+					listener.failed(operation, message);
+				}
+			}, null);
 		}
 
 		@Override
@@ -479,7 +562,17 @@ public final class TcpTransport {
 				lastError = message;
 				expected = revision;
 			}
-			deliver(() -> revisionIs(expected), () -> listener.failed(operation, message), null);
+			deliver(new BooleanSupplier() {
+				@Override
+				public boolean getAsBoolean() {
+					return revisionIs(expected);
+				}
+			}, new Runnable() {
+				@Override
+				public void run() {
+					listener.failed(operation, message);
+				}
+			}, null);
 		}
 	}
 
@@ -534,7 +627,12 @@ public final class TcpTransport {
 				error("启动", failure.toString());
 				return false;
 			}
-			thread("SimpleTcpAccept", () -> accept(next, port));
+			thread("SimpleTcpAccept", new Runnable() {
+				@Override
+				public void run() {
+					accept(next, port);
+				}
+			});
 			return true;
 		}
 
@@ -555,22 +653,57 @@ public final class TcpTransport {
 					owner.started = true;
 				}
 				final int actualPort = owner.socket.getLocalPort();
-				deliver(() -> revisionIs(owner.revision), () -> listener.started(true, actualPort), null);
+				deliver(new BooleanSupplier() {
+					@Override
+					public boolean getAsBoolean() {
+						return revisionIs(owner.revision);
+					}
+				}, new Runnable() {
+					@Override
+					public void run() {
+						listener.started(true, actualPort);
+					}
+				}, null);
 				while (owns(owner)) {
 					Socket accepted = owner.socket.accept();
 					Connection connection;
 					try {
-						connection = new Connection(accepted, () -> bufferSize, new Sink() {
+						connection = new Connection(accepted, new IntSupplier() {
+							@Override
+							public int getAsInt() {
+								return bufferSize;
+							}
+						}, new Sink() {
 							@Override
 							public void data(byte[] data, Runnable release) {
-								deliver(() -> revisionIs(owner.revision),
-										() -> listener.received(data, accepted.getInetAddress().getHostAddress(), accepted.getPort()), release);
+								deliver(new BooleanSupplier() {
+									@Override
+									public boolean getAsBoolean() {
+										return revisionIs(owner.revision);
+									}
+								},
+										new Runnable() {
+											@Override
+											public void run() {
+												listener.received(data, accepted.getInetAddress().getHostAddress(), accepted.getPort());
+											}
+										}, release);
 							}
 
 							@Override
 							public void sent(int length) {
-								deliver(() -> revisionIs(owner.revision),
-										() -> listener.sent(length, accepted.getInetAddress().getHostAddress(), accepted.getPort()), null);
+								deliver(new BooleanSupplier() {
+									@Override
+									public boolean getAsBoolean() {
+										return revisionIs(owner.revision);
+									}
+								},
+										new Runnable() {
+											@Override
+											public void run() {
+												listener.sent(length, accepted.getInetAddress().getHostAddress(), accepted.getPort());
+											}
+										}, null);
 							}
 
 							@Override
@@ -586,8 +719,18 @@ public final class TcpTransport {
 								if (message != null) {
 									failure(owner, "客户通信", message);
 								}
-								deliver(() -> revisionIs(owner.revision),
-										() -> listener.left(accepted.getInetAddress().getHostAddress(), accepted.getPort()), null);
+								deliver(new BooleanSupplier() {
+									@Override
+									public boolean getAsBoolean() {
+										return revisionIs(owner.revision);
+									}
+								},
+										new Runnable() {
+											@Override
+											public void run() {
+												listener.left(accepted.getInetAddress().getHostAddress(), accepted.getPort());
+											}
+										}, null);
 							}
 						});
 					} catch (IOException | RuntimeException failure) {
@@ -605,8 +748,18 @@ public final class TcpTransport {
 						}
 						owner.clients.put(key(accepted), connection);
 					}
-					deliver(() -> revisionIs(owner.revision),
-							() -> listener.entered(accepted.getInetAddress().getHostAddress(), accepted.getPort()), null);
+					deliver(new BooleanSupplier() {
+						@Override
+						public boolean getAsBoolean() {
+							return revisionIs(owner.revision);
+						}
+					},
+							new Runnable() {
+								@Override
+								public void run() {
+									listener.entered(accepted.getInetAddress().getHostAddress(), accepted.getPort());
+								}
+							}, null);
 					if (owns(owner)) {
 						connection.start();
 					}
@@ -617,9 +770,29 @@ public final class TcpTransport {
 					failure(owner, wasStarted ? "监听" : "启动", failure.toString());
 					stop(owner, false);
 					if (wasStarted) {
-						deliver(() -> revisionIs(owner.revision), listener::stopped, null);
+						deliver(new BooleanSupplier() {
+							@Override
+							public boolean getAsBoolean() {
+								return revisionIs(owner.revision);
+							}
+						}, new Runnable() {
+							@Override
+							public void run() {
+								listener.stopped();
+							}
+						}, null);
 					} else {
-						deliver(() -> revisionIs(owner.revision), () -> listener.started(false, 0), null);
+						deliver(new BooleanSupplier() {
+							@Override
+							public boolean getAsBoolean() {
+								return revisionIs(owner.revision);
+							}
+						}, new Runnable() {
+							@Override
+							public void run() {
+								listener.started(false, 0);
+							}
+						}, null);
 					}
 				}
 			} finally {
@@ -734,7 +907,17 @@ public final class TcpTransport {
 				connection.close();
 			}
 			if (explicit && owner.started) {
-				deliver(() -> revisionIs(expected), listener::stopped, null);
+				deliver(new BooleanSupplier() {
+					@Override
+					public boolean getAsBoolean() {
+						return revisionIs(expected);
+					}
+				}, new Runnable() {
+					@Override
+					public void run() {
+						listener.stopped();
+					}
+				}, null);
 			}
 		}
 
@@ -776,7 +959,17 @@ public final class TcpTransport {
 				}
 				lastError = message;
 			}
-			deliver(() -> revisionIs(owner.revision), () -> listener.failed(operation, message), null);
+			deliver(new BooleanSupplier() {
+				@Override
+				public boolean getAsBoolean() {
+					return revisionIs(owner.revision);
+				}
+			}, new Runnable() {
+				@Override
+				public void run() {
+					listener.failed(operation, message);
+				}
+			}, null);
 		}
 
 		@Override
@@ -786,7 +979,17 @@ public final class TcpTransport {
 				lastError = message;
 				expected = revision;
 			}
-			deliver(() -> revisionIs(expected), () -> listener.failed(operation, message), null);
+			deliver(new BooleanSupplier() {
+				@Override
+				public boolean getAsBoolean() {
+					return revisionIs(expected);
+				}
+			}, new Runnable() {
+				@Override
+				public void run() {
+					listener.failed(operation, message);
+				}
+			}, null);
 		}
 	}
 
@@ -919,8 +1122,18 @@ public final class TcpTransport {
 		 */
 		void start() {
 			if (!closed.get()) {
-				reader = thread("SimpleTcpRead", this::read);
-				writer = thread("SimpleTcpWrite", this::write);
+				reader = thread("SimpleTcpRead", new Runnable() {
+					@Override
+					public void run() {
+						Connection.this.read();
+					}
+				});
+				writer = thread("SimpleTcpWrite", new Runnable() {
+					@Override
+					public void run() {
+						Connection.this.write();
+					}
+				});
 			}
 		}
 
@@ -977,7 +1190,12 @@ public final class TcpTransport {
 							deliveries.release();
 							return;
 						}
-						sink.data(Arrays.copyOf(buffer, count), deliveries::release);
+						sink.data(Arrays.copyOf(buffer, count), new Runnable() {
+							@Override
+							public void run() {
+								deliveries.release();
+							}
+						});
 					}
 				}
 			} catch (InterruptedException interrupted) {

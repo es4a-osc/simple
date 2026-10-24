@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-import simple.compiler.Compiler;
 import simple.util.Execution;
 
 /**
@@ -33,6 +32,10 @@ import simple.util.Execution;
  * @author 树先生 xhwsd@qq.com
  */
 public final class Toolchain {
+	/**
+	 * Android 编译平台 API 等级，同时作为生成应用的目标 SDK 等级。
+	 */
+	public static final int API_LEVEL = 30;
 
 	// 外部工具路径统一由工具链根据构建环境解析，调用方不关心可执行文件位置。
 	private static final String EXECUTABLE_EXTENSION = System.getProperty("os.name").startsWith("Windows") ? ".exe" : "";
@@ -43,8 +46,8 @@ public final class Toolchain {
 	private static final String JAVAC_BINARY = JAVA_HOME + "/bin/javac" + EXECUTABLE_EXTENSION;
 	private static final String KEYTOOL_BINARY = JAVA_HOME + "/bin/keytool" + EXECUTABLE_EXTENSION;
 	private static final String JAVA_BINARY = JAVA_HOME + "/bin/java" + EXECUTABLE_EXTENSION;
-	private static final String ZIPALIGN_BINARY = ANDROID_HOME + "/platforms/android-" + Compiler.ANDROID_TARGET_SDK_VERSION + "/tools/zipalign" + EXECUTABLE_EXTENSION;
-	private static final String APKSIGNER_JAR = ANDROID_HOME + "/platforms/android-" + Compiler.ANDROID_TARGET_SDK_VERSION + "/tools/lib/apksigner.jar";
+	private static final String ZIPALIGN_BINARY = ANDROID_HOME + "/platforms/android-" + API_LEVEL + "/tools/zipalign" + EXECUTABLE_EXTENSION;
+	private static final String APKSIGNER_JAR = ANDROID_HOME + "/platforms/android-" + API_LEVEL + "/tools/lib/apksigner.jar";
 
 	/**
 	 * 禁止实例化统一工具链入口。
@@ -59,13 +62,13 @@ public final class Toolchain {
 	 */
 	private static String getAapt2Binary() {
 		// 只按副本是否存在选择；执行失败仍报告错误，不自动换工具重试。
-		File utf8 = new File(ANDROID_HOME + "/platforms/android-" + Compiler.ANDROID_TARGET_SDK_VERSION + "/tools/aapt2_utf8" + EXECUTABLE_EXTENSION);
+		File utf8 = new File(ANDROID_HOME + "/platforms/android-" + API_LEVEL + "/tools/aapt2_utf8" + EXECUTABLE_EXTENSION);
 		if (utf8.isFile()) {
 			return utf8.getPath();
 		}
 
 		// 未生成 UTF-8 副本的 SDK 继续使用原有 AAPT2。
-		return ANDROID_HOME + "/platforms/android-" + Compiler.ANDROID_TARGET_SDK_VERSION + "/tools/aapt2" + EXECUTABLE_EXTENSION;
+		return ANDROID_HOME + "/platforms/android-" + API_LEVEL + "/tools/aapt2" + EXECUTABLE_EXTENSION;
 	}
 
 	/**

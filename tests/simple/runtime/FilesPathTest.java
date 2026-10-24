@@ -93,8 +93,18 @@ public final class FilesPathTest extends TestCase {
 		assertFalse(文件操作.创建文件("first.bin"));
 		文件操作.写出文本文件("first.bin", "源内容");
 		文件操作.写出文本文件("second.bin", "目标内容");
-		expectFailure(文件已存在错误.class, () -> 文件操作.修改文件名("first.bin", "second.bin"));
-		expectFailure(IllegalArgumentException.class, () -> 文件操作.复制文件("first.bin", "./first.bin"));
+		expectFailure(文件已存在错误.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.修改文件名("first.bin", "second.bin");
+			}
+		});
+		expectFailure(IllegalArgumentException.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.复制文件("first.bin", "./first.bin");
+			}
+		});
 		assertEquals("源内容", 文件操作.读入文本文件("first.bin"));
 		assertEquals("目标内容", 文件操作.读入文本文件("second.bin"));
 
@@ -130,7 +140,12 @@ public final class FilesPathTest extends TestCase {
 		assertFalse(文件操作.路径是否存在("empty"));
 		文件操作.创建目录("work/a/b");
 		文件操作.写出文本文件("work/a/b/file.txt", "内容");
-		expectFailure(文件读写错误.class, () -> 文件操作.删除空目录("work"));
+		expectFailure(文件读写错误.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.删除空目录("work");
+			}
+		});
 		assertTrue(文件操作.删除目录("work"));
 		assertFalse(文件操作.删除目录("work"));
 		assertFalse(文件操作.文件是否存在("work"));
@@ -159,13 +174,48 @@ public final class FilesPathTest extends TestCase {
 	/** 参数错误应先失败，不能截断已有目标或把读取失败当成空文件。 */
 	public void testInvalidArgumentsPreserveData() {
 		文件操作.写出文本文件("guard.txt", "保留原文");
-		expectFailure(IllegalArgumentException.class, () -> 文件操作.写出文本文件("guard.txt", "覆盖", "NO-SUCH-CHARSET"));
-		expectFailure(IllegalArgumentException.class, () -> 文件操作.写出文本文件("guard.txt", null));
-		expectFailure(IllegalArgumentException.class, () -> 文件操作.写出字节文件("guard.txt", null));
-		expectFailure(IllegalArgumentException.class, () -> 文件操作.文件是否存在("content://example/document/1"));
-		expectFailure(IllegalArgumentException.class, () -> 文件操作.创建文件(""));
-		expectFailure(IllegalArgumentException.class, () -> 文件操作.创建目录(null));
-		expectFailure(文件未存在错误.class, () -> 文件操作.读入文本文件("missing.txt"));
+		expectFailure(IllegalArgumentException.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.写出文本文件("guard.txt", "覆盖", "NO-SUCH-CHARSET");
+			}
+		});
+		expectFailure(IllegalArgumentException.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.写出文本文件("guard.txt", null);
+			}
+		});
+		expectFailure(IllegalArgumentException.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.写出字节文件("guard.txt", null);
+			}
+		});
+		expectFailure(IllegalArgumentException.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.文件是否存在("content://example/document/1");
+			}
+		});
+		expectFailure(IllegalArgumentException.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.创建文件("");
+			}
+		});
+		expectFailure(IllegalArgumentException.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.创建目录(null);
+			}
+		});
+		expectFailure(文件未存在错误.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.读入文本文件("missing.txt");
+			}
+		});
 		assertEquals("保留原文", 文件操作.读入文本文件("guard.txt"));
 	}
 
@@ -173,17 +223,57 @@ public final class FilesPathTest extends TestCase {
 	public void testPathTypeErrors() {
 		文件操作.创建目录("work");
 		文件操作.写出文本文件("plain.txt", "文件");
-		expectFailure(文件读写错误.class, () -> 文件操作.读入字节文件("work"));
-		expectFailure(文件读写错误.class, () -> 文件操作.删除文件("work"));
-		expectFailure(文件读写错误.class, () -> 文件操作.删除目录("plain.txt"));
-		expectFailure(文件读写错误.class, () -> 文件操作.创建目录("plain.txt"));
-		expectFailure(文件读写错误.class, () -> 文件操作.创建文件("work"));
-		expectFailure(文件读写错误.class, () -> 文件操作.取文件列表("plain.txt"));
-		expectFailure(文件读写错误.class, () -> 文件操作.写出文本文件("missing/child.txt", "内容"));
+		expectFailure(文件读写错误.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.读入字节文件("work");
+			}
+		});
+		expectFailure(文件读写错误.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.删除文件("work");
+			}
+		});
+		expectFailure(文件读写错误.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.删除目录("plain.txt");
+			}
+		});
+		expectFailure(文件读写错误.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.创建目录("plain.txt");
+			}
+		});
+		expectFailure(文件读写错误.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.创建文件("work");
+			}
+		});
+		expectFailure(文件读写错误.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.取文件列表("plain.txt");
+			}
+		});
+		expectFailure(文件读写错误.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.写出文本文件("missing/child.txt", "内容");
+			}
+		});
 		assertTrue(文件操作.是否为目录("work"));
 		assertFalse(文件操作.是否为目录("missing"));
 		assertTrue(文件操作.路径是否为目录("work"));
-		expectFailure(文件未存在错误.class, () -> 文件操作.路径是否为目录("missing"));
+		expectFailure(文件未存在错误.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.路径是否为目录("missing");
+			}
+		});
 	}
 
 	/** 相对路径、绝对路径指向同一文件，根目录及祖先不能递归清理。 */
@@ -199,14 +289,29 @@ public final class FilesPathTest extends TestCase {
 	/** 删除保护触发后，已有文件和测试根目录必须保持原样。 */
 	public void testRootDirectoryProtection() {
 		文件操作.写出文本文件("guard.txt", "保留");
-		expectFailure(IllegalArgumentException.class, () -> 文件操作.删除目录("."));
-		expectFailure(IllegalArgumentException.class, () -> 文件操作.删除目录(root.getParentFile().getAbsolutePath()));
+		expectFailure(IllegalArgumentException.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.删除目录(".");
+			}
+		});
+		expectFailure(IllegalArgumentException.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.删除目录(root.getParentFile().getAbsolutePath());
+			}
+		});
 		File top = root;
 		while (top.getParentFile() != null) {
 			top = top.getParentFile();
 		}
 		final String topPath = top.getAbsolutePath();
-		expectFailure(IllegalArgumentException.class, () -> 文件操作.删除目录(topPath));
+		expectFailure(IllegalArgumentException.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.删除目录(topPath);
+			}
+		});
 		assertTrue(root.isDirectory());
 		assertEquals("保留", 文件操作.读入文本文件("guard.txt"));
 	}
@@ -248,11 +353,31 @@ public final class FilesPathTest extends TestCase {
 	/** 无效或缺失路径沿用路径接口的错误约定，不以容量 0 掩盖缺失路径。 */
 	public void testStorageSpaceRejectsInvalidAndMissingPaths() {
 		for (String path : new String[] { null, "", "  ", "content://example/document/1" }) {
-			expectFailure(IllegalArgumentException.class, () -> 文件操作.取存储总空间(path));
-			expectFailure(IllegalArgumentException.class, () -> 文件操作.取存储可用空间(path));
+			expectFailure(IllegalArgumentException.class, new Runnable() {
+				@Override
+				public void run() {
+					文件操作.取存储总空间(path);
+				}
+			});
+			expectFailure(IllegalArgumentException.class, new Runnable() {
+				@Override
+				public void run() {
+					文件操作.取存储可用空间(path);
+				}
+			});
 		}
-		expectFailure(文件未存在错误.class, () -> 文件操作.取存储总空间("missing-space"));
-		expectFailure(文件未存在错误.class, () -> 文件操作.取存储可用空间("missing-space"));
+		expectFailure(文件未存在错误.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.取存储总空间("missing-space");
+			}
+		});
+		expectFailure(文件未存在错误.class, new Runnable() {
+			@Override
+			public void run() {
+				文件操作.取存储可用空间("missing-space");
+			}
+		});
 		assertFalse(文件操作.文件是否存在("missing-space"));
 	}
 
@@ -274,8 +399,18 @@ public final class FilesPathTest extends TestCase {
 	public void testStorageQueriesRequireInitializedDefaultRoot() {
 		文件操作.initialize(null);
 		try {
-			expectFailure(IllegalStateException.class, () -> 文件操作.取存储总空间());
-			expectFailure(IllegalStateException.class, () -> 文件操作.取存储可用空间());
+			expectFailure(IllegalStateException.class, new Runnable() {
+				@Override
+				public void run() {
+					文件操作.取存储总空间();
+				}
+			});
+			expectFailure(IllegalStateException.class, new Runnable() {
+				@Override
+				public void run() {
+					文件操作.取存储可用空间();
+				}
+			});
 
 			// 显式绝对路径不依赖应用相对路径基准。
 			assertEquals(root.getTotalSpace(), 文件操作.取存储总空间(root.getAbsolutePath()));

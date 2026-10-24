@@ -68,7 +68,12 @@ public final class 位置传感器Impl extends 组件Impl implements 位置传�
 	private final MainActivity activity;
 	private final LocationManager manager;
 	private final Handler handler = new Handler(Looper.getMainLooper());
-	private final Executor mainExecutor = command -> handler.post(command);
+	private final Executor mainExecutor = new Executor() {
+		@Override
+		public void execute(Runnable command) {
+			handler.post(command);
+		}
+	};
 	private final ExecutorService addressWorker = Executors.newSingleThreadExecutor();
 	private final Set<String> providers = new LinkedHashSet<>();
 	private final ProviderReceiver receiver = new ProviderReceiver();
@@ -228,30 +233,39 @@ public final class 位置传感器Impl extends 组件Impl implements 位置传�
 		queryingAddress = true;
 		lastError = "";
 		try {
-			addressWorker.execute(() -> {
-				try {
-					// 编译上限为 API 30，尚不能使用 API 33 的异步入口；同步服务仅在工作线程调用。
-					List<Address> addresses = new Geocoder(activity).getFromLocation(latitude, longitude, 1);
-					final String address = addressText(addresses);
-					handler.post(() -> {
-						if (destroyed) {
-							return;
-						}
-						queryingAddress = false;
-						if (lastLocation != null && lastLocation.getLatitude() == latitude
-								&& lastLocation.getLongitude() == longitude) {
-							currentAddress = address;
-						}
-						lastError = "";
-						地址查询完毕(latitude, longitude, address);
-					});
-				} catch (IOException | RuntimeException error) {
-					handler.post(() -> {
-						if (!destroyed) {
-							queryingAddress = false;
-							failure("查询地址", errorMessage(error));
-						}
-					});
+			addressWorker.execute(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						// 编译上限为 API 30，尚不能使用 API 33 的异步入口；同步服务仅在工作线程调用。
+						List<Address> addresses = new Geocoder(activity).getFromLocation(latitude, longitude, 1);
+						final String address = addressText(addresses);
+						handler.post(new Runnable() {
+							@Override
+							public void run() {
+								if (destroyed) {
+									return;
+								}
+								queryingAddress = false;
+								if (lastLocation != null && lastLocation.getLatitude() == latitude
+										&& lastLocation.getLongitude() == longitude) {
+									currentAddress = address;
+								}
+								lastError = "";
+								地址查询完毕(latitude, longitude, address);
+							}
+						});
+					} catch (IOException | RuntimeException error) {
+						handler.post(new Runnable() {
+							@Override
+							public void run() {
+								if (!destroyed) {
+									queryingAddress = false;
+									failure("查询地址", errorMessage(error));
+								}
+							}
+						});
+					}
 				}
 			});
 			return true;
@@ -271,17 +285,20 @@ public final class 位置传感器Impl extends 组件Impl implements 位置传�
 		enabled = false;
 		queryingAddress = false;
 		addressWorker.shutdownNow();
-		handler.post(() -> {
-			stopListening();
-			stopReceiver();
-			if (attached) {
-				activity.removeOnResumeListener(this);
-				activity.removeOnPauseListener(this);
-				activity.removeOnDestroyListener(this);
-				activity.removeOnRequestPermissionsResultListener(this);
-				attached = false;
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				stopListening();
+				stopReceiver();
+				if (attached) {
+					activity.removeOnResumeListener(位置传感器Impl.this);
+					activity.removeOnPauseListener(位置传感器Impl.this);
+					activity.removeOnDestroyListener(位置传感器Impl.this);
+					activity.removeOnRequestPermissionsResultListener(位置传感器Impl.this);
+					attached = false;
+				}
+				位置传感器Impl.super.销毁();
 			}
-			super.销毁();
 		});
 	}
 
@@ -344,9 +361,12 @@ public final class 位置传感器Impl extends 组件Impl implements 位置传�
 	 */
 	private void failure(String operation, String message) {
 		lastError = message;
-		handler.post(() -> {
-			if (!destroyed) {
-				操作失败(operation, message);
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				if (!destroyed) {
+					操作失败(operation, message);
+				}
 			}
 		});
 	}
@@ -367,10 +387,13 @@ public final class 位置传感器Impl extends 组件Impl implements 位置传�
 	private void queueRefresh() {
 		if (!destroyed && initialized && !refreshQueued) {
 			refreshQueued = true;
-			handler.post(() -> {
-				refreshQueued = false;
-				if (!destroyed) {
-					refresh();
+			handler.post(new Runnable() {
+				@Override
+				public void run() {
+					refreshQueued = false;
+					if (!destroyed) {
+						refresh();
+					}
 				}
 			});
 		}
@@ -534,9 +557,12 @@ public final class 位置传感器Impl extends 组件Impl implements 位置传�
 		String state = listening + ":" + message;
 		if (!state.equals(reportedState)) {
 			reportedState = state;
-			handler.post(() -> {
-				if (!destroyed) {
-					定位状态改变(listening, message);
+			handler.post(new Runnable() {
+				@Override
+				public void run() {
+					if (!destroyed) {
+						定位状态改变(listening, message);
+					}
 				}
 			});
 		}

@@ -977,9 +977,12 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 
 	@Override
 	public void terminate() {
-		runOnUiThread(() -> {
-			terminationRequested = true;
-			finishAndRemoveTask();
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				terminationRequested = true;
+				finishAndRemoveTask();
+			}
 		});
 	}
 

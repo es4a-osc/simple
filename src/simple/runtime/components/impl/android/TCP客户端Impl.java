@@ -3,6 +3,8 @@ package simple.runtime.components.impl.android;
 import android.os.Handler;
 import android.os.Looper;
 
+import java.util.concurrent.Executor;
+
 import simple.runtime.android.MainActivity;
 import simple.runtime.components.TCP客户端;
 import simple.runtime.components.组件容器;
@@ -32,7 +34,12 @@ public final class TCP客户端Impl extends 组件Impl implements TCP客户端, 
 		super(container);
 		activity = MainActivity.getContext();
 		handler = new Handler(Looper.getMainLooper());
-		transport = new TcpTransport.Client(action -> handler.post(action), new TcpTransport.ClientListener() {
+		transport = new TcpTransport.Client(new Executor() {
+			@Override
+			public void execute(Runnable action) {
+				handler.post(action);
+			}
+		}, new TcpTransport.ClientListener() {
 			@Override
 			public void connected(boolean result) {
 				连接完毕(result);
@@ -58,14 +65,17 @@ public final class TCP客户端Impl extends 组件Impl implements TCP客户端, 
 				操作失败(operation, message);
 			}
 		});
-		handler.post(() -> {
-			if (!destroyed) {
-				if (activity.isFinishing() || activity.isDestroyed()) {
-					销毁();
-					return;
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				if (!destroyed) {
+					if (activity.isFinishing() || activity.isDestroyed()) {
+						销毁();
+						return;
+					}
+					activity.addOnDestroyListener(TCP客户端Impl.this);
+					attached = true;
 				}
-				activity.addOnDestroyListener(this);
-				attached = true;
 			}
 		});
 	}
@@ -140,7 +150,12 @@ public final class TCP客户端Impl extends 组件Impl implements TCP客户端, 
 	public void 销毁() {
 		if (Looper.myLooper() != Looper.getMainLooper()) {
 			transport.destroy();
-			handler.post(this::销毁);
+			handler.post(new Runnable() {
+				@Override
+				public void run() {
+					TCP客户端Impl.this.销毁();
+				}
+			});
 			return;
 		}
 		if (destroyed) {
@@ -148,10 +163,13 @@ public final class TCP客户端Impl extends 组件Impl implements TCP客户端, 
 		}
 		destroyed = true;
 		transport.destroy();
-		handler.post(() -> {
-			if (attached) {
-				activity.removeOnDestroyListener(this);
-				attached = false;
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				if (attached) {
+					activity.removeOnDestroyListener(TCP客户端Impl.this);
+					attached = false;
+				}
 			}
 		});
 		super.销毁();

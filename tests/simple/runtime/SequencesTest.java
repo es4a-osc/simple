@@ -53,7 +53,12 @@ public final class SequencesTest extends TestCase {
 		assertEquals("a.a!a", text.get());
 		文本操作.子文本替换(text, "a", "x", text.get().length());
 		assertEquals("a.a!a", text.get());
-		invalid(() -> 文本操作.子文本替换(text, "a", "x", -1));
+		invalid(new Runnable() {
+			@Override
+			public void run() {
+				文本操作.子文本替换(text, "a", "x", -1);
+			}
+		});
 		assertEquals("a.a!a", text.get());
 
 		text.set("aa");
@@ -68,9 +73,24 @@ public final class SequencesTest extends TestCase {
 		assertEquals("abc", 文本操作.取文本右边("abc", Integer.MAX_VALUE));
 		assertEquals("", 文本操作.取文本中间("abc", 3, 100));
 		assertEquals(2, 文本操作.取字符数("\uD83D\uDE00"));
-		invalid(() -> 文本操作.取文本中间("abc", -1, 1));
-		invalid(() -> 文本操作.取文本中间("abc", 4, 1));
-		invalid(() -> 文本操作.取文本右边("abc", -1));
+		invalid(new Runnable() {
+			@Override
+			public void run() {
+				文本操作.取文本中间("abc", -1, 1);
+			}
+		});
+		invalid(new Runnable() {
+			@Override
+			public void run() {
+				文本操作.取文本中间("abc", 4, 1);
+			}
+		});
+		invalid(new Runnable() {
+			@Override
+			public void run() {
+				文本操作.取文本右边("abc", -1);
+			}
+		});
 	}
 
 	/** 单个空格和全空格应完全删除，制表符维持既有语义。 */
@@ -113,7 +133,12 @@ public final class SequencesTest extends TestCase {
 		assertEquals("aXYc!", text.get());
 		文本操作.替换文本区间(text, 1, Integer.MAX_VALUE, "");
 		assertEquals("a", text.get());
-		invalid(() -> 文本操作.替换文本区间(text, 2, 0, "x"));
+		invalid(new Runnable() {
+			@Override
+			public void run() {
+				文本操作.替换文本区间(text, 2, 0, "x");
+			}
+		});
 		assertEquals("a", text.get());
 	}
 
@@ -123,7 +148,12 @@ public final class SequencesTest extends TestCase {
 		assertEquals(6, 文本操作.取文本字节数("中文"));
 		assertEquals(4, 文本操作.取文本字节数("中文", "GBK"));
 		assertEquals(0, 文本操作.取文本字节数(""));
-		invalid(() -> 文本操作.取文本字节数("中文", "NO-SUCH-CHARSET"));
+		invalid(new Runnable() {
+			@Override
+			public void run() {
+				文本操作.取文本字节数("中文", "NO-SUCH-CHARSET");
+			}
+		});
 	}
 
 	/** 标记为字面内容，保留跨行及空内容，不递归处理嵌套。 */
@@ -135,7 +165,12 @@ public final class SequencesTest extends TestCase {
 		assertEquals(0, 文本操作.取全部标记间文本("缺少[右边", "[", "]").length);
 		assertEquals("x", 文本操作.取标记间文本("\\Ex$", "\\E", "$"));
 		assertEquals("a", 文本操作.取标记间文本("|a|", "|", "|"));
-		invalid(() -> 文本操作.取标记间文本("abc", "", "]"));
+		invalid(new Runnable() {
+			@Override
+			public void run() {
+				文本操作.取标记间文本("abc", "", "]");
+			}
+		});
 	}
 
 	/** 追加后保持全部 Simple 基本元素类型和原数组内容。 */
@@ -292,13 +327,48 @@ public final class SequencesTest extends TestCase {
 
 	/** 无效字节参数应抛出可转换为 Simple 错误的参数异常。 */
 	public void testByteInvalidArguments() {
-		invalid(() -> 字节集操作.取字节集长度(null));
-		invalid(() -> 字节集操作.合并字节集(null, new byte[0]));
-		invalid(() -> 字节集操作.合并字节集(new byte[0], null));
-		invalid(() -> 字节集操作.取字节集左边(new byte[]{1}, -1));
-		invalid(() -> 字节集操作.取字节集中间(new byte[]{1}, 2, 0));
-		invalid(() -> 字节集操作.分割字节集(new byte[]{1}, new byte[0]));
-		invalid(() -> 字节集操作.分割字节集(new byte[]{1}, null));
+		invalid(new Runnable() {
+			@Override
+			public void run() {
+				字节集操作.取字节集长度(null);
+			}
+		});
+		invalid(new Runnable() {
+			@Override
+			public void run() {
+				字节集操作.合并字节集(null, new byte[0]);
+			}
+		});
+		invalid(new Runnable() {
+			@Override
+			public void run() {
+				字节集操作.合并字节集(new byte[0], null);
+			}
+		});
+		invalid(new Runnable() {
+			@Override
+			public void run() {
+				字节集操作.取字节集左边(new byte[]{1}, -1);
+			}
+		});
+		invalid(new Runnable() {
+			@Override
+			public void run() {
+				字节集操作.取字节集中间(new byte[]{1}, 2, 0);
+			}
+		});
+		invalid(new Runnable() {
+			@Override
+			public void run() {
+				字节集操作.分割字节集(new byte[]{1}, new byte[0]);
+			}
+		});
+		invalid(new Runnable() {
+			@Override
+			public void run() {
+				字节集操作.分割字节集(new byte[]{1}, null);
+			}
+		});
 	}
 
 	/**

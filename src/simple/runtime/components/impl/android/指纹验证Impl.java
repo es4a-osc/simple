@@ -62,7 +62,12 @@ public final class 指纹验证Impl extends 组件Impl implements 指纹验证 {
 				release();
 			}
 		};
-		handler.post(this::registerListeners);
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				指纹验证Impl.this.registerListeners();
+			}
+		});
 	}
 
 	/* 组件事件 */

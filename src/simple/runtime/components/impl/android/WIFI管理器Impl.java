@@ -141,7 +141,12 @@ public final class WIFI管理器Impl extends 组件Impl implements WIFI管理器
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
 				try {
 					// 外层只保存稳定类型，避免旧系统解析字段及合成访问方法时加载新回调类。
-					unregisterScanCallback = Api30.registerScanCallback(manager, context, () -> completeScan(true));
+					unregisterScanCallback = Api30.registerScanCallback(manager, context, new Runnable() {
+						@Override
+						public void run() {
+							completeScan(true);
+						}
+					});
 				} catch (RuntimeException error) {
 					Log.e("WIFI管理", "无法注册 Wi-Fi 扫描通知，改用广播", error);
 				}
@@ -1306,7 +1311,12 @@ public final class WIFI管理器Impl extends 组件Impl implements WIFI管理器
 				}
 			};
 			manager.registerScanResultsCallback(context.getMainExecutor(), callback);
-			return () -> manager.unregisterScanResultsCallback(callback);
+			return new Runnable() {
+				@Override
+				public void run() {
+					manager.unregisterScanResultsCallback(callback);
+				}
+			};
 		}
 
 		/**

@@ -43,12 +43,12 @@ public @interface ManifestNodes {
 	String applicationXml() default "";
 
 	/**
-	 * @return 插入到主{@code activity}下的XML
+	 * @return 插入到{@code /manifest/application/activity}下的XML
 	 */
 	String activityXml() default "";
 
 	/**
-	 * @return 插入到主{@code activity/intent-filter}下的XML
+	 * @return 插入到{@code /manifest/application/activity/intent-filter}下的XML
 	 */
 	String intentFilterXml() default "";
 }

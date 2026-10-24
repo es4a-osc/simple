@@ -47,8 +47,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Arrays;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -90,11 +92,14 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 		cameraThread = new HandlerThread("SimpleCamera");
 		cameraThread.start();
 		cameraHandler = new Handler(cameraThread.getLooper());
-		handler.post(() -> {
-			if (!destroyed) {
-				activity.addOnPauseListener(this);
-				activity.addOnDestroyListener(this);
-				attached = true;
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				if (!destroyed) {
+					activity.addOnPauseListener(摄像框Impl.this);
+					activity.addOnDestroyListener(摄像框Impl.this);
+					attached = true;
+				}
 			}
 		});
 	}
@@ -330,13 +335,21 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 		destroyed = true;
 		关闭摄像头();
 		encoder.shutdownNow();
-		cameraHandler.post(this::retireCameraThread);
+		cameraHandler.post(new Runnable() {
+			@Override
+			public void run() {
+				摄像框Impl.this.retireCameraThread();
+			}
+		});
 		// 编码结果仍需回到主线程清理临时文件，不能清空这些待处理回调。
-		handler.post(() -> {
-			if (attached) {
-				activity.removeOnPauseListener(this);
-				activity.removeOnDestroyListener(this);
-				attached = false;
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				if (attached) {
+					activity.removeOnPauseListener(摄像框Impl.this);
+					activity.removeOnDestroyListener(摄像框Impl.this);
+					attached = false;
+				}
 			}
 		});
 		super.销毁();
@@ -392,9 +405,12 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 	 * @param arguments 事件参数
 	 */
 	private void emit(CameraView owner, String event, Object... arguments) {
-		handler.post(() -> {
-			if (!destroyed && owner == cameraView) {
-				EventDispatcher.dispatchEvent(this, event, arguments);
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				if (!destroyed && owner == cameraView) {
+					EventDispatcher.dispatchEvent(摄像框Impl.this, event, arguments);
+				}
 			}
 		});
 	}
@@ -453,53 +469,67 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 			return;
 		}
 		try {
-			encoder.execute(() -> {
-				File staged = null;
-				try {
-					byte[] encoded = encodePicture(data, rotation, format, quality);
-					if (destroyed || cameraView != owner || Thread.currentThread().isInterrupted()) {
-						handler.post(() -> processing.set(false));
-						return;
-					}
-					File target = null;
-					if (!returnBytes) {
-						target = outputFile(path);
-						staged = File.createTempFile(".simple-photo-", ".tmp", target.getParentFile());
-						try (FileOutputStream stream = new FileOutputStream(staged)) {
-							stream.write(encoded);
-							stream.getFD().sync();
-						}
-					}
-					final File pending = staged;
-					final File destination = target;
-					handler.post(() -> {
-						processing.set(false);
-						if (destroyed || cameraView != owner) {
-							discard(pending);
+			encoder.execute(new Runnable() {
+				@Override
+				public void run() {
+					File staged = null;
+					try {
+						byte[] encoded = encodePicture(data, rotation, format, quality);
+						if (destroyed || cameraView != owner || Thread.currentThread().isInterrupted()) {
+							handler.post(new Runnable() {
+								@Override
+								public void run() {
+									processing.set(false);
+								}
+							});
 							return;
 						}
-						try {
-							if (returnBytes) {
-								拍照完毕2(encoded);
-							} else {
-								publishFile(pending, destination);
-								拍照完毕(destination.getAbsolutePath());
+						File target = null;
+						if (!returnBytes) {
+							target = outputFile(path);
+							staged = File.createTempFile(".simple-photo-", ".tmp", target.getParentFile());
+							try (FileOutputStream stream = new FileOutputStream(staged)) {
+								stream.write(encoded);
+								stream.getFD().sync();
 							}
-						} catch (IOException failure) {
-							discard(pending);
-							fail("拍摄照片", failure.getMessage());
 						}
-					});
-				} catch (IOException | RuntimeException failure) {
-					discard(staged);
-					handler.post(() -> {
-						processing.set(false);
-						if (!destroyed && cameraView == owner) {
-							fail("拍摄照片", failure.toString());
-						}
-					});
+						final File pending = staged;
+						final File destination = target;
+						handler.post(new Runnable() {
+							@Override
+							public void run() {
+								processing.set(false);
+								if (destroyed || cameraView != owner) {
+									discard(pending);
+									return;
+								}
+								try {
+									if (returnBytes) {
+										拍照完毕2(encoded);
+									} else {
+										publishFile(pending, destination);
+										拍照完毕(destination.getAbsolutePath());
+									}
+								} catch (IOException failure) {
+									discard(pending);
+									fail("拍摄照片", failure.getMessage());
+								}
+							}
+						});
+					} catch (IOException | RuntimeException failure) {
+						discard(staged);
+						handler.post(new Runnable() {
+							@Override
+							public void run() {
+								processing.set(false);
+								if (!destroyed && cameraView == owner) {
+									fail("拍摄照片", failure.toString());
+								}
+							}
+						});
+					}
 				}
-		});
+			});
 		} catch (java.util.concurrent.RejectedExecutionException stopped) {
 			processing.set(false);
 		}
@@ -603,7 +633,12 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 			bufferWidth = width;
 			bufferHeight = height;
 			sensorOrientation = sensor;
-			post(this::requestLayout);
+			post(new Runnable() {
+				@Override
+				public void run() {
+					CameraView.this.requestLayout();
+				}
+			});
 		}
 
 		@Override
@@ -743,11 +778,14 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 		 * @param message 原因
 		 */
 		private void reportFailure(String operation, String message) {
-			摄像框Impl.this.handler.post(() -> {
-				if (!destroyed && cameraView == this) {
-					lastError = message;
-					Log.w("摄像框", operation + "：" + message);
-					操作失败(operation, message);
+			摄像框Impl.this.handler.post(new Runnable() {
+				@Override
+				public void run() {
+					if (!destroyed && cameraView == ModernCameraView.this) {
+						lastError = message;
+						Log.w("摄像框", operation + "：" + message);
+						操作失败(operation, message);
+					}
 				}
 			});
 		}
@@ -764,12 +802,20 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 		@Override
 		public void surfaceCreated(SurfaceHolder surface) {
 			if (Looper.myLooper() != handler.getLooper()) {
-				摄像框Impl.this.handler.postDelayed(() -> {
-					if (current() && camera == null) {
-						fatal("打开摄像头超时");
+				摄像框Impl.this.handler.postDelayed(new Runnable() {
+					@Override
+					public void run() {
+						if (current() && camera == null) {
+							fatal("打开摄像头超时");
+						}
 					}
 				}, 15000);
-				handler.post(() -> surfaceCreated(surface));
+				handler.post(new Runnable() {
+					@Override
+					public void run() {
+						surfaceCreated(surface);
+					}
+				});
 				return;
 			}
 			if (!current()) {
@@ -815,9 +861,12 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 				sensorOrientation = orientation == null ? 0 : orientation;
 				pictureRotation = imageRotation(sensorOrientation, displayRotation(), cameraFacing == 1);
 				fit(previewSize.getWidth(), previewSize.getHeight(), sensorOrientation);
-				post(() -> {
-					if (current()) {
-						holder.setFixedSize(previewSize.getWidth(), previewSize.getHeight());
+				post(new Runnable() {
+					@Override
+					public void run() {
+						if (current()) {
+							holder.setFixedSize(previewSize.getWidth(), previewSize.getHeight());
+						}
 					}
 				});
 				int[] modes = characteristics.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES);
@@ -827,7 +876,12 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 					continuousMode = CaptureRequest.CONTROL_AF_MODE_AUTO;
 				}
 				reader = ImageReader.newInstance(pictureSize.getWidth(), pictureSize.getHeight(), ImageFormat.JPEG, 2);
-				reader.setOnImageAvailableListener(this::receiveImage, handler);
+				reader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
+					@Override
+					public void onImageAvailable(ImageReader value) {
+						ModernCameraView.this.receiveImage(value);
+					}
+				}, handler);
 				CameraDevice.StateCallback callback = new CameraDevice.StateCallback() {
 					@Override
 					public void onOpened(CameraDevice opened) {
@@ -859,9 +913,12 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 						}
 					}
 				};
-				timeout = () -> {
-					if (current()) {
-						fatal("打开摄像头超时");
+				timeout = new Runnable() {
+					@Override
+					public void run() {
+						if (current()) {
+							fatal("打开摄像头超时");
+						}
 					}
 				};
 				摄像框Impl.this.handler.postDelayed(timeout, 15000);
@@ -871,7 +928,12 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 				opening = true;
 				++openingCameras;
 				if (Build.VERSION.SDK_INT >= 28) {
-					manager.openCamera(cameraId, command -> handler.post(command), callback);
+					manager.openCamera(cameraId, new Executor() {
+						@Override
+						public void execute(Runnable command) {
+							handler.post(command);
+						}
+					}, callback);
 				} else {
 					manager.openCamera(cameraId, callback, handler);
 				}
@@ -961,9 +1023,12 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 					}
 				};
 				cancelTimeout();
-				timeout = () -> {
-					if (current() && revision == expected) {
-						fatal("配置相机会话超时");
+				timeout = new Runnable() {
+					@Override
+					public void run() {
+						if (current() && revision == expected) {
+							fatal("配置相机会话超时");
+						}
 					}
 				};
 				摄像框Impl.this.handler.postDelayed(timeout, 15000);
@@ -1006,7 +1071,12 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 				outputs.add(new OutputConfiguration(surface));
 			}
 			device.createCaptureSession(new SessionConfiguration(SessionConfiguration.SESSION_REGULAR,
-					outputs, command -> handler.post(command), callback));
+					outputs, new Executor() {
+						@Override
+						public void execute(Runnable command) {
+							handler.post(command);
+						}
+					}, callback));
 		}
 
 		/**
@@ -1030,7 +1100,12 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 					reportFailure("开始对焦", "预览尚未就绪");
 					return;
 				}
-				handler.post(() -> focus());
+				handler.post(new Runnable() {
+					@Override
+					public void run() {
+						focus();
+					}
+				});
 				return;
 			}
 			if (!available("开始对焦") || recorder != null || picturePending || processing.get() || focusing) {
@@ -1063,9 +1138,12 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 						}
 					}
 				}, handler);
-				focusTimeout = () -> {
-					if (current() && focusing) {
-						finishFocus(false);
+				focusTimeout = new Runnable() {
+					@Override
+					public void run() {
+						if (current() && focusing) {
+							finishFocus(false);
+						}
 					}
 				};
 				handler.postDelayed(focusTimeout, 5000);
@@ -1107,7 +1185,12 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 					reportFailure("拍摄照片", "预览尚未就绪");
 					return;
 				}
-				handler.post(() -> takePicture(path, format, quality, returnBytes));
+				handler.post(new Runnable() {
+					@Override
+					public void run() {
+						takePicture(path, format, quality, returnBytes);
+					}
+				});
 				return;
 			}
 			if (!available("拍摄照片")) {
@@ -1155,10 +1238,13 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 						}
 					}
 				}, handler);
-				photoTimeout = () -> {
-					if (current() && picturePending) {
-						// 超时后关闭整个后端，不能把迟到图像配给后续照片请求。
-						fatal("等待照片超时");
+				photoTimeout = new Runnable() {
+					@Override
+					public void run() {
+						if (current() && picturePending) {
+							// 超时后关闭整个后端，不能把迟到图像配给后续照片请求。
+							fatal("等待照片超时");
+						}
 					}
 				};
 				handler.postDelayed(photoTimeout, 15000);
@@ -1201,7 +1287,12 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 					reportFailure("开始录像", "预览尚未就绪");
 					return;
 				}
-				handler.post(() -> takeVideo(path, quality, sound));
+				handler.post(new Runnable() {
+					@Override
+					public void run() {
+						takeVideo(path, quality, sound);
+					}
+				});
 				return;
 			}
 			if (!available("开始录像")) {
@@ -1244,9 +1335,12 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 				}
 				recorder.setOrientationHint(imageRotation(sensorOrientation, displayRotation(), cameraFacing == 1));
 				recorder.setOutputFile(videoTemp.getAbsolutePath());
-				recorder.setOnErrorListener((failed, what, extra) -> {
-					if (current() && recorder == failed) {
-						fatal("录像器错误：" + what + "/" + extra);
+				recorder.setOnErrorListener(new MediaRecorder.OnErrorListener() {
+					@Override
+					public void onError(MediaRecorder failed, int what, int extra) {
+						if (current() && recorder == failed) {
+							fatal("录像器错误：" + what + "/" + extra);
+						}
 					}
 				});
 				recorder.prepare();
@@ -1260,7 +1354,12 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 		@Override
 		void stopVideo() {
 			if (Looper.myLooper() != handler.getLooper()) {
-				handler.post(() -> stopVideo());
+				handler.post(new Runnable() {
+					@Override
+					public void run() {
+						stopVideo();
+					}
+				});
 				return;
 			}
 			if (!current() || recorder == null) {
@@ -1312,17 +1411,20 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 			videoTarget = null;
 			if (publish && complete && current()) {
 				// 文件提交与关闭都在主线程排序，避免关闭之后才落下未通知的视频。
-				摄像框Impl.this.handler.post(() -> {
-					if (!current()) {
-						discard(staged);
-						return;
-					}
-					try {
-						publishFile(staged, target);
-						录像完毕(target.getAbsolutePath());
-					} catch (IOException failure) {
-						discard(staged);
-						reportFailure("停止录像", failure.getMessage());
+				摄像框Impl.this.handler.post(new Runnable() {
+					@Override
+					public void run() {
+						if (!current()) {
+							discard(staged);
+							return;
+						}
+						try {
+							publishFile(staged, target);
+							录像完毕(target.getAbsolutePath());
+						} catch (IOException failure) {
+							discard(staged);
+							reportFailure("停止录像", failure.getMessage());
+						}
 					}
 				});
 				return;
@@ -1339,7 +1441,12 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 					reportFailure("设置闪光灯", "预览尚未就绪");
 					return;
 				}
-				handler.post(() -> applyFlashlight(enabled));
+				handler.post(new Runnable() {
+					@Override
+					public void run() {
+						applyFlashlight(enabled);
+					}
+				});
 				return;
 			}
 			if (!available("设置闪光灯")) {
@@ -1403,11 +1510,21 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 			}
 			closed = true;
 			ready = false;
-			post(() -> holder.removeCallback(this));
+			post(new Runnable() {
+				@Override
+				public void run() {
+					holder.removeCallback(ModernCameraView.this);
+				}
+			});
 			if (Looper.myLooper() == handler.getLooper()) {
 				releaseResources();
 			} else {
-				handler.post(this::releaseResources);
+				handler.post(new Runnable() {
+					@Override
+					public void run() {
+						ModernCameraView.this.releaseResources();
+					}
+				});
 			}
 		}
 
@@ -1536,8 +1653,13 @@ public final class 摄像框Impl extends 视图组件 implements 摄像框,
 				return "";
 			}
 			List<Size> ordered = new ArrayList<>(Arrays.asList(sizes));
-			Collections.sort(ordered, (first, second) -> Long.compare(
-					(long) first.getWidth() * first.getHeight(), (long) second.getWidth() * second.getHeight()));
+			Collections.sort(ordered, new Comparator<Size>() {
+				@Override
+				public int compare(Size first, Size second) {
+					return Long.compare(
+							(long) first.getWidth() * first.getHeight(), (long) second.getWidth() * second.getHeight());
+				}
+			});
 			StringBuilder result = new StringBuilder();
 			for (Size size : ordered) {
 				if (result.length() > 0) {

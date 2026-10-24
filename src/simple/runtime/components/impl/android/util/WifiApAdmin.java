@@ -131,7 +131,12 @@ public final class WifiApAdmin {
 	 */
 	public void startWifiAp() {
 		if (Looper.myLooper() != Looper.getMainLooper()) {
-			handler.post(this::startWifiAp);
+			handler.post(new Runnable() {
+				@Override
+				public void run() {
+					WifiApAdmin.this.startWifiAp();
+				}
+			});
 			return;
 		}
 
@@ -188,7 +193,12 @@ public final class WifiApAdmin {
 	public void release() {
 		released = true;
 		if (Looper.myLooper() != Looper.getMainLooper()) {
-			handler.post(this::release);
+			handler.post(new Runnable() {
+				@Override
+				public void run() {
+					WifiApAdmin.this.release();
+				}
+			});
 			return;
 		}
 

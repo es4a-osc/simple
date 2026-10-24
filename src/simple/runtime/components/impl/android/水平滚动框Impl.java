@@ -20,7 +20,12 @@ public class 水平滚动框Impl extends 视图组件 implements 水平滚动框
 
 	// -1 表示布局完成后的末端；排队期间多次请求只执行最后一次。
 	private Integer pendingPosition;
-	private final Runnable scrollAction = this::performScroll;
+	private final Runnable scrollAction = new Runnable() {
+		@Override
+		public void run() {
+			水平滚动框Impl.this.performScroll();
+		}
+	};
 	private boolean destroyed;
 
 	/**

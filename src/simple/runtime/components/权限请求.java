@@ -29,14 +29,6 @@ public interface 权限请求 extends 组件 {
 	/* 组件方法 */
 
 	/**
-	 * 是否需要自行请求权限，只有当安卓版本号为23以上时才需要动态请求权限
-	 *
-	 * @return 成功返回所有权限列表，否则返回{@code null}。
-	 */
-	@SimpleFunction
-	public boolean 需要请求();
-
-	/**
 	 * 取当前应用所有权限列表。
 	 *
 	 * @return 成功返回所有权限列表，否则返回{@code null}。
@@ -54,8 +46,6 @@ public interface 权限请求 extends 组件 {
 
 	/**
 	 * 检验当前应用请求权限是否授权。
-	 *
-	 * <p>注意API等级小于23始终返回{@code true}
 	 *
 	 * @param permission 请求权限名。
 	 * @return 已授权返回{@code true}，未授权返回{@code false}。
@@ -77,7 +67,7 @@ public interface 权限请求 extends 组件 {
 	 * <p>谷歌不推荐一次请求大量权限，会使用户感到无所适。
 	 *
 	 * @param requestMark 请求标记，可为{@code null}。
-	 * @return 发起请求返回 {@code true}，辅助返回{@code false}。
+	 * @return 发起请求返回 {@code true}；未授权权限列表为空或获取失败时返回 {@code false}。
 	 */
 	@SimpleFunction
 	boolean 请求权限(String requestMark);
@@ -89,7 +79,7 @@ public interface 权限请求 extends 组件 {
 	 *
 	 * @param permissions 权限列表名，注意仅可为清单中声明的权限。
 	 * @param requestMark 请求标记，可为{@code null}。
-	 * @return 发起请求返回 {@code true}，辅助返回{@code false}。
+	 * @return 发起请求返回 {@code true}，不表示权限已获授权。
 	 */
 	@SimpleFunction
 	boolean 请求权限(String[] permissions, String requestMark);

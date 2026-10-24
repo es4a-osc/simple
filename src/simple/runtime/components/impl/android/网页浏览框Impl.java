@@ -7,10 +7,12 @@ import android.os.Looper;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.webkit.DownloadListener;
 import android.webkit.JavascriptInterface;
 import android.webkit.JsPromptResult;
 import android.webkit.JsResult;
 import android.webkit.RenderProcessGoneDetail;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -18,8 +20,10 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 import simple.runtime.android.MainActivity;
 import simple.runtime.components.网页浏览框;
 import simple.runtime.components.组件容器;
@@ -125,9 +129,14 @@ public class 网页浏览框Impl extends 视图组件 implements 网页浏览框
 			}
 		};
 		// API 26 类型仅在该版本分支创建，API 24、25 沿用普通客户端。
-		browser.setWebViewClient(Build.VERSION.SDK_INT >= 26 ? new Api26Client() : new BrowserClient());
+		browser.setWebViewClient(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? new Api26Client() : new BrowserClient());
 		browser.setWebChromeClient(new ScriptClient());
-		browser.setDownloadListener((url, userAgent, disposition, mimeType, length) -> 开始下载(url, length));
+		browser.setDownloadListener(new DownloadListener() {
+			@Override
+			public void onDownloadStart(String url, String userAgent, String disposition, String mimeType, long length) {
+				开始下载(url, length);
+			}
+		});
 
 		WebSettings settings = browser.getSettings();
 		settings.setDefaultTextEncodingName("UTF-8");
@@ -425,7 +434,7 @@ public class 网页浏览框Impl extends 视图组件 implements 网页浏览框
 	}
 
 	@Override
-	public boolean 调用接口(String script, boolean withResult) {
+	public boolean 调用接口(final String script, boolean withResult) {
 		requireMainThread();
 		if (destroyed) {
 			lastError = "网页浏览框已销毁";
@@ -438,11 +447,14 @@ public class 网页浏览框Impl extends 视图组件 implements 网页浏览框
 		}
 		try {
 			browser.getSettings().setJavaScriptEnabled(true);
-			long generation = documentGeneration;
+			final long generation = documentGeneration;
 			if (Build.VERSION.SDK_INT >= 19) {
-				browser.evaluateJavascript(source, withResult ? result -> {
-					if (!destroyed && generation == documentGeneration) {
-						接口返回(script, result == null ? "null" : result);
+				browser.evaluateJavascript(source, withResult ? new ValueCallback<String>() {
+					@Override
+					public void onReceiveValue(String result) {
+						if (!destroyed && generation == documentGeneration) {
+							接口返回(script, result == null ? "null" : result);
+						}
 					}
 				} : null);
 			} else if (!withResult) {
@@ -612,8 +624,8 @@ public class 网页浏览框Impl extends 视图组件 implements 网页浏览框
 			super();
 		}
 
+		@Deprecated
 		@Override
-		@SuppressWarnings("deprecation")
 		public boolean shouldOverrideUrlLoading(WebView view, String url) {
 			// API 24 以前只能收到字符串回调；新系统若回退到此入口也不能无条件吞掉导航。
 			return interceptNavigation(url);
@@ -639,11 +651,11 @@ public class 网页浏览框Impl extends 视图组件 implements 网页浏览框
 			载入完毕(url);
 		}
 
+		@Deprecated
 		@Override
-		@SuppressWarnings("deprecation")
 		public void onReceivedError(WebView view, int code, String description, String url) {
 			// API 23 以前只有旧回调；新回调自行处理，避免主页面错误重复通知。
-			if (!destroyed && Build.VERSION.SDK_INT < 23) {
+			if (!destroyed && Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
 				lastError = description == null ? "页面加载失败" : description;
 				载入失败(code, url);
 			}
@@ -821,14 +833,17 @@ public class 网页浏览框Impl extends 视图组件 implements 网页浏览框
 		 * @param param 脚本消息
 		 */
 		@JavascriptInterface
-		public void call(String param) {
+		public void call(final String param) {
 			if (destroyed) {
 				return;
 			}
-			long generation = documentGeneration;
-			handler.post(() -> {
-				if (!destroyed && generation == documentGeneration && interfaces.get(name) == this) {
-					接口调用(name, param);
+			final long generation = documentGeneration;
+			handler.post(new Runnable() {
+				@Override
+				public void run() {
+					if (!destroyed && generation == documentGeneration && interfaces.get(name) == WebAppInterface.this) {
+						接口调用(name, param);
+					}
 				}
 			});
 		}

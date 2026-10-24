@@ -3,6 +3,8 @@ package simple.runtime.components.impl.android;
 import android.os.Handler;
 import android.os.Looper;
 
+import java.util.concurrent.Executor;
+
 import simple.runtime.android.MainActivity;
 import simple.runtime.components.UDP数据报;
 import simple.runtime.components.组件容器;
@@ -32,7 +34,12 @@ public final class UDP数据报Impl extends 组件Impl implements UDP数据报, 
 		super(container);
 		activity = MainActivity.getContext();
 		handler = new Handler(Looper.getMainLooper());
-		transport = new UdpTransport(action -> handler.post(action), new UdpTransport.Listener() {
+		transport = new UdpTransport(new Executor() {
+			@Override
+			public void execute(Runnable action) {
+				handler.post(action);
+			}
+		}, new UdpTransport.Listener() {
 			@Override
 			public void started(boolean result, int port) {
 				启动完毕(result, port);
@@ -58,14 +65,17 @@ public final class UDP数据报Impl extends 组件Impl implements UDP数据报, 
 				操作失败(operation, message);
 			}
 		});
-		handler.post(() -> {
-			if (!destroyed) {
-				if (activity.isFinishing() || activity.isDestroyed()) {
-					销毁();
-					return;
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				if (!destroyed) {
+					if (activity.isFinishing() || activity.isDestroyed()) {
+						销毁();
+						return;
+					}
+					activity.addOnDestroyListener(UDP数据报Impl.this);
+					attached = true;
 				}
-				activity.addOnDestroyListener(this);
-				attached = true;
 			}
 		});
 	}
@@ -140,7 +150,12 @@ public final class UDP数据报Impl extends 组件Impl implements UDP数据报, 
 	public void 销毁() {
 		if (Looper.myLooper() != Looper.getMainLooper()) {
 			transport.destroy();
-			handler.post(this::销毁);
+			handler.post(new Runnable() {
+				@Override
+				public void run() {
+					UDP数据报Impl.this.销毁();
+				}
+			});
 			return;
 		}
 		if (destroyed) {
@@ -148,10 +163,13 @@ public final class UDP数据报Impl extends 组件Impl implements UDP数据报, 
 		}
 		destroyed = true;
 		transport.destroy();
-		handler.post(() -> {
-			if (attached) {
-				activity.removeOnDestroyListener(this);
-				attached = false;
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				if (attached) {
+					activity.removeOnDestroyListener(UDP数据报Impl.this);
+					attached = false;
+				}
 			}
 		});
 		super.销毁();

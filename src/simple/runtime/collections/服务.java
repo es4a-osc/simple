@@ -97,7 +97,12 @@ public class 服务 extends Service {
 	 */
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		if (destroyed || requests == null || !requests.post(() -> handleRequest(intent, startId))) {
+		if (destroyed || requests == null || !requests.post(new Runnable() {
+			@Override
+			public void run() {
+				handleRequest(intent, startId);
+			}
+		})) {
 			日志输出.warning("服务工作队列不可用；启动编号=%d", startId);
 			stopSelfResult(startId);
 		}

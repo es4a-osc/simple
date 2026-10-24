@@ -20,6 +20,7 @@ import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
 import android.os.Handler;
 import android.os.Looper;
@@ -57,9 +58,12 @@ public final class 邮箱选择器Impl extends 文本视图组件 implements 邮
 		super.单行模式(true);
 		activity = MainActivity.getContext();
 		handler = new Handler(Looper.getMainLooper());
-		suggestions = new EmailAddressAdapter(activity, message -> {
-			if (!destroyed) {
-				操作失败(message);
+		suggestions = new EmailAddressAdapter(activity, new EmailAddressAdapter.FailureListener() {
+			@Override
+			public void failed(String message) {
+				if (!destroyed) {
+					操作失败(message);
+				}
 			}
 		});
 		AutoCompleteTextView view = input();
@@ -67,10 +71,13 @@ public final class 邮箱选择器Impl extends 文本视图组件 implements 邮
 		view.addTextChangedListener(this);
 		view.setOnFocusChangeListener(this);
 		view.addOnAttachStateChangeListener(this);
-		view.setOnItemClickListener((parent, itemView, position, id) -> {
-			EmailAddressAdapter.Item item = suggestions.getItem(position);
-			if (!destroyed && item != null) {
-				选择完毕(item.name, item.address);
+		view.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> parent, View itemView, int position, long id) {
+				EmailAddressAdapter.Item item = suggestions.getItem(position);
+				if (!destroyed && item != null) {
+					选择完毕(item.name, item.address);
+				}
 			}
 		});
 	}
@@ -87,22 +94,25 @@ public final class 邮箱选择器Impl extends 文本视图组件 implements 邮
 	@Override
 	public void 初始化() {
 		initialized = true;
-		handler.post(() -> {
-			if (destroyed) {
-				return;
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				if (destroyed) {
+					return;
+				}
+				if (activity.isFinishing() || activity.isDestroyed()) {
+					销毁();
+					return;
+				}
+				if (!attached) {
+					activity.addOnResumeListener(邮箱选择器Impl.this);
+					activity.addOnPauseListener(邮箱选择器Impl.this);
+					activity.addOnDestroyListener(邮箱选择器Impl.this);
+					activity.addOnRequestPermissionsResultListener(邮箱选择器Impl.this);
+					attached = true;
+				}
+				refresh(true);
 			}
-			if (activity.isFinishing() || activity.isDestroyed()) {
-				销毁();
-				return;
-			}
-			if (!attached) {
-				activity.addOnResumeListener(this);
-				activity.addOnPauseListener(this);
-				activity.addOnDestroyListener(this);
-				activity.addOnRequestPermissionsResultListener(this);
-				attached = true;
-			}
-			refresh(true);
 		});
 		super.初始化();
 	}
@@ -167,7 +177,12 @@ public final class 邮箱选择器Impl extends 文本视图组件 implements 邮
 	@Override
 	public void 销毁() {
 		if (Looper.myLooper() != Looper.getMainLooper()) {
-			handler.post(this::销毁);
+			handler.post(new Runnable() {
+				@Override
+				public void run() {
+					邮箱选择器Impl.this.销毁();
+				}
+			});
 			return;
 		}
 		if (destroyed) {
@@ -184,13 +199,16 @@ public final class 邮箱选择器Impl extends 文本视图组件 implements 邮
 		view.setAdapter((EmailAddressAdapter) null);
 		view.setEnabled(false);
 		view.setFocusable(false);
-		handler.post(() -> {
-			if (attached) {
-				activity.removeOnResumeListener(this);
-				activity.removeOnPauseListener(this);
-				activity.removeOnDestroyListener(this);
-				activity.removeOnRequestPermissionsResultListener(this);
-				attached = false;
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				if (attached) {
+					activity.removeOnResumeListener(邮箱选择器Impl.this);
+					activity.removeOnPauseListener(邮箱选择器Impl.this);
+					activity.removeOnDestroyListener(邮箱选择器Impl.this);
+					activity.removeOnRequestPermissionsResultListener(邮箱选择器Impl.this);
+					attached = false;
+				}
 			}
 		});
 		super.销毁();
@@ -232,7 +250,12 @@ public final class 邮箱选择器Impl extends 文本视图组件 implements 邮
 
 	@Override
 	public void onViewAttachedToWindow(View view) {
-		handler.post(() -> refresh(true));
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				refresh(true);
+			}
+		});
 	}
 
 	@Override

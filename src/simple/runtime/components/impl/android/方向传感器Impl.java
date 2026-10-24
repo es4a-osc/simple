@@ -186,12 +186,15 @@ public final class 方向传感器Impl extends 组件Impl implements 方向传�
 		enabled = false;
 		handler.removeCallbacksAndMessages(null);
 		stopListening();
-		handler.post(() -> {
-			if (attached) {
-				activity.removeOnResumeListener(this);
-				activity.removeOnPauseListener(this);
-				activity.removeOnDestroyListener(this);
-				attached = false;
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				if (attached) {
+					activity.removeOnResumeListener(方向传感器Impl.this);
+					activity.removeOnPauseListener(方向传感器Impl.this);
+					activity.removeOnDestroyListener(方向传感器Impl.this);
+					attached = false;
+				}
 			}
 		});
 		super.销毁();
@@ -223,9 +226,12 @@ public final class 方向传感器Impl extends 组件Impl implements 方向传�
 	private void queueRefresh() {
 		if (!destroyed && !refreshQueued) {
 			refreshQueued = true;
-			handler.post(() -> {
-				refreshQueued = false;
-				refresh();
+			handler.post(new Runnable() {
+				@Override
+				public void run() {
+					refreshQueued = false;
+					refresh();
+				}
 			});
 		}
 	}

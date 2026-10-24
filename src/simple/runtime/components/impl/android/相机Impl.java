@@ -222,16 +222,24 @@ public final class 相机Impl extends 组件Impl implements 相机,
 		}
 		try {
 			MediaScannerConnection.scanFile(activity, new String[] {request.destination.getPath()}, null,
-					(scannedPath, uri) -> postResult(request, () -> {
-						if (uri == null) {
-							fail(request, "系统没有为该文件建立媒体索引");
-						} else {
-							pending = null;
-							lastError = "";
-							cleanup(request, true);
-							相册更新完毕(scannedPath, uri.toString());
+					new MediaScannerConnection.OnScanCompletedListener() {
+						@Override
+						public void onScanCompleted(String scannedPath, Uri uri) {
+							postResult(request, new Runnable() {
+						@Override
+						public void run() {
+							if (uri == null) {
+								fail(request, "系统没有为该文件建立媒体索引");
+							} else {
+								pending = null;
+								lastError = "";
+								cleanup(request, true);
+								相册更新完毕(scannedPath, uri.toString());
+							}
 						}
-					}));
+					});
+						}
+					});
 			return true;
 		} catch (RuntimeException error) {
 			pending = null;
@@ -335,7 +343,12 @@ public final class 相机Impl extends 组件Impl implements 相机,
 			torchId = id;
 			lastError = "";
 			// 注册延后执行，避免事件处理程序重入时修改宿主正在遍历的监听集合。
-			if (!handler.post(this::ensureListeners)) {
+			if (!handler.post(new Runnable() {
+				@Override
+				public void run() {
+					相机Impl.this.ensureListeners();
+				}
+			})) {
 				stopTorch();
 				return reject("无法登记照明的生命周期监听");
 			}
@@ -382,15 +395,18 @@ public final class 相机Impl extends 组件Impl implements 相机,
 			previous.cancelled = true;
 		}
 		worker.shutdownNow();
-		Runnable dispose = () -> {
-			cleanup(previous, false);
-			stopTorch();
-			if (listenersRegistered) {
-				listenersRegistered = false;
-				activity.removeOnActivityResultListener(this);
-				activity.removeOnPauseListener(this);
+		Runnable dispose = new Runnable() {
+			@Override
+			public void run() {
+				cleanup(previous, false);
+				stopTorch();
+				if (listenersRegistered) {
+					listenersRegistered = false;
+					activity.removeOnActivityResultListener(相机Impl.this);
+					activity.removeOnPauseListener(相机Impl.this);
+				}
+				相机Impl.super.销毁();
 			}
-			super.销毁();
 		};
 		if (!handler.post(dispose)) {
 			dispose.run();
@@ -423,9 +439,17 @@ public final class 相机Impl extends 组件Impl implements 相机,
 		}
 		request.processing = true;
 		if (request.output != null) {
-			execute(request, () -> {
-				copyToFile(request, request.output, request.destination);
-				postResult(request, () -> complete(request, request.destination));
+			execute(request, new 相机Impl.MediaWork() {
+				@Override
+				public void run() throws IOException {
+					copyToFile(request, request.output, request.destination);
+					postResult(request, new Runnable() {
+						@Override
+						public void run() {
+							complete(request, request.destination);
+						}
+					});
+				}
 			});
 			return;
 		}
@@ -441,12 +465,25 @@ public final class 相机Impl extends 组件Impl implements 相机,
 		}
 		final Uri source = selected;
 		if (request.crop) {
-			execute(request, () -> prepareCrop(request, source));
+			execute(request, new 相机Impl.MediaWork() {
+				@Override
+				public void run() throws IOException {
+					prepareCrop(request, source);
+				}
+			});
 		} else {
-			execute(request, () -> {
-				File result = newCacheFile(request, extension(source, request.video));
-				copyToFile(request, source, result);
-				postResult(request, () -> complete(request, result));
+			execute(request, new 相机Impl.MediaWork() {
+				@Override
+				public void run() throws IOException {
+					File result = newCacheFile(request, extension(source, request.video));
+					copyToFile(request, source, result);
+					postResult(request, new Runnable() {
+						@Override
+						public void run() {
+							complete(request, result);
+						}
+					});
+				}
 			});
 		}
 	}
@@ -567,7 +604,12 @@ public final class 相机Impl extends 组件Impl implements 相机,
 			cleanup(request, false);
 			return false;
 		}
-		if (!handler.post(() -> launch(request, intent))) {
+		if (!handler.post(new Runnable() {
+			@Override
+			public void run() {
+				launch(request, intent);
+			}
+		})) {
 			pending = null;
 			cleanup(request, false);
 			return reject("主线程未接受相机请求");
@@ -727,7 +769,12 @@ public final class 相机Impl extends 组件Impl implements 相机,
 		Intent crop = new Intent("com.android.camera.action.CROP").setDataAndType(input, "image/*");
 		crop.putExtra("scale", true);
 		crop.putExtra("return-data", false);
-		postResult(request, () -> launch(request, withOutput(crop, output)));
+		postResult(request, new Runnable() {
+			@Override
+			public void run() {
+				launch(request, withOutput(crop, output));
+			}
+		});
 	}
 
 	/**
@@ -883,14 +930,22 @@ public final class 相机Impl extends 组件Impl implements 相机,
 	 */
 	private void execute(Request request, MediaWork work) {
 		try {
-			worker.execute(() -> {
-				try {
-					work.run();
-				} catch (IOException | RuntimeException error) {
-					postResult(request, () -> fail(request, errorMessage(error)));
-				} finally {
-					if (destroyed || request.cancelled) {
-						cleanup(request, false);
+			worker.execute(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						work.run();
+					} catch (IOException | RuntimeException error) {
+						postResult(request, new Runnable() {
+							@Override
+							public void run() {
+								fail(request, errorMessage(error));
+							}
+						});
+					} finally {
+						if (destroyed || request.cancelled) {
+							cleanup(request, false);
+						}
 					}
 				}
 			});
@@ -906,11 +961,14 @@ public final class 相机Impl extends 组件Impl implements 相机,
 	 * @param completion 主线程处理动作
 	 */
 	private void postResult(Request request, Runnable completion) {
-		if (!handler.post(() -> {
-			if (active(request)) {
-				completion.run();
-			} else {
-				cleanup(request, false);
+		if (!handler.post(new Runnable() {
+			@Override
+			public void run() {
+				if (active(request)) {
+					completion.run();
+				} else {
+					cleanup(request, false);
+				}
 			}
 		})) {
 			cleanup(request, false);

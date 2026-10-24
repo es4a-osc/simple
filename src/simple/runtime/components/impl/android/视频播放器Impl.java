@@ -34,7 +34,6 @@ public class 视频播放器Impl extends 视图组件 implements 视频播放器
 		videoView = new CustomVideoView(MainActivity.getContext());
 		videoView.setFocusable(true);
 		videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-
 			@Override
 			public void onCompletion(MediaPlayer mp) {
 				播放完毕();
@@ -45,8 +44,10 @@ public class 视频播放器Impl extends 视图组件 implements 视频播放器
 		layout.setOrientation(LinearLayout.VERTICAL);
 		layout.setHorizontalGravity(1);
 		layout.setBackgroundColor(颜色_黑);
-		LinearLayout.LayoutParams param = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
-				LinearLayout.LayoutParams.MATCH_PARENT);
+		LinearLayout.LayoutParams param = new LinearLayout.LayoutParams(
+			LinearLayout.LayoutParams.MATCH_PARENT,
+			LinearLayout.LayoutParams.MATCH_PARENT
+		);
 		layout.addView(videoView, param);
 		layout.setFocusable(true);
 		return layout;
@@ -141,6 +142,7 @@ public class 视频播放器Impl extends 视图组件 implements 视频播放器
 			super(context, attrs, defStyle);
 		}
 
+		@Override
 		protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 			int width = getDefaultSize(mVideoWidth, widthMeasureSpec);
 			int height = getDefaultSize(mVideoHeight, heightMeasureSpec);

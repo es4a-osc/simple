@@ -78,9 +78,7 @@ public final class Compiler {
 	/* 运行时 */
 	/** 最低API级别：API24对应系统版本为Android 7.0 发布于 2016-08-22 */
 	private static final int ANDROID_MIN_SDK_VERSION = 24;
-	/** 目标API级别：API30对应系统版本为Android 11 发布于 2020-09-08，将以改API等级做向下兼容处理 */
-	public static final int ANDROID_TARGET_SDK_VERSION = 30;
-	private static final String ANDROID_RUNTIME = ANDROID_HOME + "/platforms/android-" + ANDROID_TARGET_SDK_VERSION + "/android.jar";
+	private static final String ANDROID_RUNTIME = ANDROID_HOME + "/platforms/android-" + Toolchain.API_LEVEL + "/android.jar";
 	private static final String SIMPLE_ANDROID_RUNTIME = SIMPLE_HOME + "/SimpleAndroidRuntime.jar";
 
 	// 签名APK文件的密钥库
@@ -458,7 +456,6 @@ public final class Compiler {
 		try {
 			// 创建UTF8输出流
 			OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(manifest), "UTF-8");
-
 			out.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
 
 			// 清单头
@@ -478,7 +475,7 @@ public final class Compiler {
 					// 指定应用的目标API级别，该属性添加于API4
 					// 根据《移动应用软件高API等级预置与分发自律公约》自2019年5月1日起，
 					// 新上架应用应基于Android 8.0（API等级26）及以上开发。
-					"android:targetSdkVersion=\"" + ANDROID_TARGET_SDK_VERSION + "\" />\n");
+					"android:targetSdkVersion=\"" + Toolchain.API_LEVEL + "\" />\n");
 
 			// 应用对屏幕大小支持机制，该节点添加于API4
 			out.write("    <supports-screens " +
@@ -549,14 +546,10 @@ public final class Compiler {
 
 			// 意图过滤器，指定该应用将接受那些意图广播
 			out.write("            <intent-filter>\n");
-			out.write("                <action android:name=" +
-					"\"android.intent.action.MAIN\" />\n");
-			out.write("                <category android:name=" +
-					"\"android.intent.category.LAUNCHER\" />\n");
-			out.write("                <category android:name=" +
-					"\"android.intent.category.DEFAULT\" />\n");
-			writeManifestNodes(out, manifestNodes.intentFilterNodes, "                ",
-					"Intent Filter");
+			out.write("                <action android:name=\"android.intent.action.MAIN\" />\n");
+			out.write("                <category android:name=\"android.intent.category.LAUNCHER\" />\n");
+			out.write("                <category android:name=\"android.intent.category.DEFAULT\" />\n");
+			writeManifestNodes(out, manifestNodes.intentFilterNodes, "                ", "Intent Filter");
 			out.write("            </intent-filter>\n");
 			out.write("        </activity>\n");
 
@@ -572,9 +565,7 @@ public final class Compiler {
 			out.append("        <!-- Service End -->\n");
 
 			// max_aspect 属性表示 App 能够支持的最大屏幕比例，官方建议我们将该值设置为 2.1 或者更高的值。
-			out.write("        <meta-data " +
-					"android:name=\"android.max_aspect\" " +
-					"android:value=\"2.1\" />\n");
+			out.write("        <meta-data android:name=\"android.max_aspect\" android:value=\"2.1\" />\n");
 			writeManifestNodes(out, manifestNodes.applicationNodes, "        ", "Application");
 			out.write("    </application>\n");
 			out.write("</manifest>\n");

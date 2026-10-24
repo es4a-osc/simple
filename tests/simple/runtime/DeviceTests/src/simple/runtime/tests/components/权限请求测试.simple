@@ -13,7 +13,7 @@
 
 事件 操作按钮1.被单击()
 	操作结果标签.文本 = "是否授权=" & 权限请求1.是否授权("android.permission.CAMERA") _
-		& "；需要理由=" & 权限请求1.需要理由("android.permission.CAMERA") & "；需要请求=" & 权限请求1.需要请求()
+		& "；需要理由=" & 权限请求1.需要理由("android.permission.CAMERA")
 
 	位于 错误
 		分支 否则

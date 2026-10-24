@@ -6,12 +6,10 @@ import simple.runtime.components.权限请求;
 import simple.runtime.components.组件容器;
 import simple.runtime.components.impl.组件Impl;
 
-import android.annotation.TargetApi;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
-import android.os.Build;
 import android.provider.Settings;
 
 import java.util.ArrayList;
@@ -39,7 +37,6 @@ public final class 权限请求Impl extends 组件Impl implements 权限请求 {
 
 		// 请求权限结果监听器
 		MainActivity.getContext().addOnRequestPermissionsResultListener(new MainActivity.OnRequestPermissionsResultListener() {
-
 			@Override
 			public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
 				// 仅触发当前窗口申请权限的事件
@@ -60,12 +57,6 @@ public final class 权限请求Impl extends 组件Impl implements 权限请求 {
 	/* 组件方法 */
 
 	@Override
-	public boolean 需要请求() {
-		//安卓6.0的版本号是23，只有当安卓版本号为23以上时才需要动态申请权限
-		return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
-	}
-
-	@Override
 	public String[] 取所有权限() {
 		try {
 			MainActivity context = MainActivity.getContext();
@@ -79,39 +70,30 @@ public final class 权限请求Impl extends 组件Impl implements 权限请求 {
 	}
 
 	@Override
-	@TargetApi(Build.VERSION_CODES.M) // 使用API23检查
 	public String[] 取所需权限() {
-		if (需要请求()) {
-			// 取应用使用权限
-			String[] permissions = 取所有权限();
-			if (permissions == null) {
-				return null;
-			} else if (permissions.length > 0) {
-				// 检验应用使用权限是否授权
-				ArrayList<String> list = new ArrayList<String>();
+		// 取应用使用权限
+		String[] permissions = 取所有权限();
+		if (permissions == null) {
+			return null;
+		} else if (permissions.length > 0) {
+			// 检验应用使用权限是否授权
+			ArrayList<String> list = new ArrayList<String>();
 
-				for (String permission : permissions) {
-					if (是否授权(permission) == false) {
-						list.add(permission);
-					}
+			for (String permission : permissions) {
+				if (是否授权(permission) == false) {
+					list.add(permission);
 				}
-
-				return list.toArray(new String[0]);
 			}
+
+			return list.toArray(new String[0]);
 		}
 
 		return new String[0];
 	}
 
 	@Override
-	@TargetApi(Build.VERSION_CODES.M) // 使用API23检查
 	public boolean 是否授权(String permission) {
-		if (需要请求()) {
-			// 添加于API23：ContextWrapper.checkSelfPermission(String)
-			return MainActivity.getContext().checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED;
-		}
-
-		return true;
+		return MainActivity.getContext().checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED;
 	}
 
 	/**
@@ -125,29 +107,10 @@ public final class 权限请求Impl extends 组件Impl implements 权限请求 {
 	}
 
 	@Override
-	@TargetApi(Build.VERSION_CODES.M) // 使用API23检查
 	public boolean 请求权限(String requestMark) {
-		if (需要请求()) {
-			String[] permissions = 取所需权限();
-			if (permissions != null && permissions.length > 0) {
-				requestMarks.add(requestMark);
-
-				// 添加于API23：Activity.requestPermissions(String[], int)
-				MainActivity.getContext().requestPermissions(permissions, hashCode());
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	@Override
-	@TargetApi(Build.VERSION_CODES.M) // 使用API23检查
-	public boolean 请求权限(String[] permissions, String requestMark) {
-		if (需要请求()) {
+		String[] permissions = 取所需权限();
+		if (permissions != null && permissions.length > 0) {
 			requestMarks.add(requestMark);
-
-			// 添加于API23：Activity.requestPermissions(String[], int)
 			MainActivity.getContext().requestPermissions(permissions, hashCode());
 			return true;
 		}
@@ -156,14 +119,15 @@ public final class 权限请求Impl extends 组件Impl implements 权限请求 {
 	}
 
 	@Override
-	@TargetApi(Build.VERSION_CODES.M) // 使用API23检查
-	public boolean 需要理由(String permission) {
-		if (需要请求()) {
-			// 添加于API23：Activity.shouldShowRequestPermissionRationale(String)
-			return MainActivity.getContext().shouldShowRequestPermissionRationale(permission);
-		}
+	public boolean 请求权限(String[] permissions, String requestMark) {
+		requestMarks.add(requestMark);
+		MainActivity.getContext().requestPermissions(permissions, hashCode());
+		return true;
+	}
 
-		return false;
+	@Override
+	public boolean 需要理由(String permission) {
+		return MainActivity.getContext().shouldShowRequestPermissionRationale(permission);
 	}
 
 	@Override

@@ -24,8 +24,18 @@ public final class ConvenienceOverloadsTest extends TestCase {
 		assertEquals("中文", 文本操作.取文本中间("A中文", 1));
 		assertEquals("", 文本操作.取文本中间("abc", 3));
 		assertEquals("", 文本操作.取文本中间("", 0));
-		invalid(() -> 文本操作.取文本中间("abc", -1));
-		invalid(() -> 文本操作.取文本中间("abc", 4));
+		invalid(new Runnable() {
+			@Override
+			public void run() {
+				文本操作.取文本中间("abc", -1);
+			}
+		});
+		invalid(new Runnable() {
+			@Override
+			public void run() {
+				文本操作.取文本中间("abc", 4);
+			}
+		});
 	}
 
 	/**
@@ -39,8 +49,18 @@ public final class ConvenienceOverloadsTest extends TestCase {
 		assertEquals(2, source[1]);
 		assertEquals(0, 字节集操作.取字节集中间(source, source.length).length);
 		assertEquals(0, 字节集操作.取字节集中间(new byte[0], 0).length);
-		invalid(() -> 字节集操作.取字节集中间(source, -1));
-		invalid(() -> 字节集操作.取字节集中间(source, 4));
+		invalid(new Runnable() {
+			@Override
+			public void run() {
+				字节集操作.取字节集中间(source, -1);
+			}
+		});
+		invalid(new Runnable() {
+			@Override
+			public void run() {
+				字节集操作.取字节集中间(source, 4);
+			}
+		});
 	}
 
 	/**

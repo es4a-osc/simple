@@ -51,7 +51,12 @@ public final class 语音处理器Impl extends 组件Impl implements 语音处�
 		super(container);
 		activity = MainActivity.getContext();
 		handler = new Handler(Looper.getMainLooper());
-		handler.post(this::registerListeners);
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				语音处理器Impl.this.registerListeners();
+			}
+		});
 	}
 
 	/* 组件事件 */
@@ -161,9 +166,17 @@ public final class 语音处理器Impl extends 组件Impl implements 语音处�
 
 		final long generation = ++speechGeneration;
 		try {
-			speech = new TextToSpeech(activity, status -> {
-				// 引擎可能在构造期间或后台线程通知；排队后字段已赋值，并能校验释放与重建。
-				handler.post(() -> finishInitialization(generation, status));
+			speech = new TextToSpeech(activity, new TextToSpeech.OnInitListener() {
+				@Override
+				public void onInit(int status) {
+					// 引擎可能在构造期间或后台线程通知；排队后字段已赋值，并能校验释放与重建。
+					handler.post(new Runnable() {
+						@Override
+						public void run() {
+							finishInitialization(generation, status);
+						}
+					});
+				}
 			});
 			lastError = "";
 			return true;
@@ -213,11 +226,14 @@ public final class 语音处理器Impl extends 组件Impl implements 语音处�
 		releaseSpeech();
 
 		// 结果与销毁事件均可能正在遍历宿主集合，移除操作统一延后。
-		handler.post(() -> {
-			if (listenersRegistered) {
-				activity.removeOnActivityResultListener(this);
-				activity.removeOnDestroyListener(this);
-				listenersRegistered = false;
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				if (listenersRegistered) {
+					activity.removeOnActivityResultListener(语音处理器Impl.this);
+					activity.removeOnDestroyListener(语音处理器Impl.this);
+					listenersRegistered = false;
+				}
 			}
 		});
 		super.销毁();
@@ -238,38 +254,41 @@ public final class 语音处理器Impl extends 组件Impl implements 语音处�
 		recognitionRequest = 0;
 
 		// 先消费请求再排队通知，事件中再次识别或销毁不会修改宿主正在遍历的监听集合。
-		handler.post(() -> {
-			if (destroyed) {
-				return;
-			}
-			if (hostDestroyed()) {
-				销毁();
-				return;
-			}
-			if (resultCode == Activity.RESULT_CANCELED) {
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				if (destroyed) {
+					return;
+				}
+				if (hostDestroyed()) {
+					销毁();
+					return;
+				}
+				if (resultCode == Activity.RESULT_CANCELED) {
+					lastError = "";
+					语音识别取消();
+					return;
+				}
+				if (resultCode != Activity.RESULT_OK || data == null) {
+					fail("语音识别", "语音识别未返回有效结果。");
+					return;
+				}
+				ArrayList<String> results;
+				try {
+					results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+				} catch (RuntimeException failure) {
+					fail("语音识别", errorMessage(failure));
+					return;
+				}
+				// 列表是同一段语音的候选文本，不能拼成多段识别内容。
+				if (results == null || results.isEmpty() || results.get(0) == null
+						|| results.get(0).trim().length() == 0) {
+					fail("语音识别", "语音识别未返回有效文本。");
+					return;
+				}
 				lastError = "";
-				语音识别取消();
-				return;
+				语音识别完毕(results.get(0));
 			}
-			if (resultCode != Activity.RESULT_OK || data == null) {
-				fail("语音识别", "语音识别未返回有效结果。");
-				return;
-			}
-			ArrayList<String> results;
-			try {
-				results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
-			} catch (RuntimeException failure) {
-				fail("语音识别", errorMessage(failure));
-				return;
-			}
-			// 列表是同一段语音的候选文本，不能拼成多段识别内容。
-			if (results == null || results.isEmpty() || results.get(0) == null
-					|| results.get(0).trim().length() == 0) {
-				fail("语音识别", "语音识别未返回有效文本。");
-				return;
-			}
-			lastError = "";
-			语音识别完毕(results.get(0));
 		});
 	}
 
