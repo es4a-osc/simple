@@ -1,0 +1,31 @@
+/*
+Simple 编译器的 Gradle 工程设置，所有生成文件位于应用构建目录。
+xhwsd@qq.com 2026-10-27
+*/
+import groovy.json.JsonSlurper
+
+rootProject.name = 'simple-compiler'
+def request = new JsonSlurper().parse(file(providers.gradleProperty('request').get()))
+
+dependencyResolutionManagement {
+	repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+	repositories {
+		// 扩展库元数据只从本轮生成的本地仓库读取，不向线上查询其内部身份。
+		exclusiveContent {
+			forRepository {
+				maven {
+					url = uri(new File(request.work, 'repository'))
+					metadataSources {
+						gradleMetadata()
+					}
+				}
+			}
+			filter {
+				includeGroup 'es4a.extension'
+			}
+		}
+		google()
+		mavenCentral()
+		maven { url = uri('https://jitpack.io/') }
+	}
+}

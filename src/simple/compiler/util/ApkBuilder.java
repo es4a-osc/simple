@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+import java.util.zip.CRC32;
 
 /**
  * 使用 JDK 归档接口组装未签名 APK，不依赖旧版 Android APK 组装库。
@@ -37,16 +38,26 @@ final class ApkBuilder {
 	 *
 	 * @param outputFile 未签名 APK 输出文件，不得与资源包、DEX 或依赖 JAR 相同。
 	 * @param resourcesFile AAPT2 已链接的资源包。
-	 * @param dexFile 已生成的单个 DEX。
+	 * @param dexFiles 本次生成的全部 DEX，文件名须按 classes.dex、classes2.dex 等连续编号。
 	 * @param jars 项目实际使用的扩展库及其依赖 JAR。
 	 * @param nativeDirectories 按 ABI 子目录组织的原生库根目录。
 	 * @throws IOException 输入无法读取、归档条目冲突或输出失败。
 	 */
-	static void build(File outputFile, File resourcesFile, File dexFile,
+	static void build(File outputFile, File resourcesFile, List<File> dexFiles,
 			List<File> jars, List<File> nativeDirectories) throws IOException {
 		// 输出不能覆盖输入；Java 资源也在开始写入 APK 前完成检查。
 		checkDistinct(outputFile, resourcesFile);
-		checkDistinct(outputFile, dexFile);
+		if (dexFiles == null || dexFiles.isEmpty()) {
+			throw new IOException("APK 缺少 DEX 输入。");
+		}
+		for (int index = 0; index < dexFiles.size(); index++) {
+			File dex = dexFiles.get(index);
+			String name = index == 0 ? "classes.dex" : "classes" + (index + 1) + ".dex";
+			if (dex == null || !dex.isFile() || !name.equals(dex.getName())) {
+				throw new IOException("DEX 输入不存在或编号不连续：" + dex);
+			}
+			checkDistinct(outputFile, dex);
+		}
 		for (File jar : jars) {
 			checkDistinct(outputFile, jar);
 		}
@@ -55,10 +66,12 @@ final class ApkBuilder {
 		Path target = outputFile.toPath().toAbsolutePath();
 		Path temporary = Files.createTempFile(target.getParent(), "apk-build-", ".apk");
 		try {
-			// 先组装基础内容；保留资源包的压缩方式，DEX 与新增原生库沿用压缩写入。
+			// 保留资源包的压缩方式，原生库以未压缩条目参与后续页对齐。
 			try (ZipOutputStream output = new ZipOutputStream(Files.newOutputStream(temporary))) {
 				copyResources(resourcesFile, output, owners);
-				addFile(dexFile, "classes.dex", output, owners);
+				for (File dex : dexFiles) {
+					addFile(dex, dex.getName(), output, owners);
+				}
 				for (File directory : nativeDirectories) {
 					addNativeDirectory(directory, output, owners);
 				}
@@ -167,13 +180,31 @@ final class ApkBuilder {
 	 * @param name 目标归档路径。
 	 * @param output 正在组装的归档。
 	 * @param owners 已写入条目及其来源。
-	 * @throws IOException 文件无法读取、路径无效或条目重复。
+	 * @throws IOException 文件无法读取、路径无效或条目内容冲突。
 	 */
 	private static void addFile(File file, String name, ZipOutputStream output, Map<String, File> owners)
 			throws IOException {
+		File previous = owners.get(name);
+		if (previous != null && name.startsWith("lib/")
+				&& Arrays.equals(Files.readAllBytes(previous.toPath()), Files.readAllBytes(file.toPath()))) {
+			return;
+		}
 		remember(name, file, owners);
 		ZipEntry entry = new ZipEntry(name);
 		entry.setTime(file.lastModified());
+		if (name.startsWith("lib/") && name.endsWith(".so")) {
+			// extractNativeLibs=false 时由系统直接映射 SO，必须使用可页对齐的 STORED 条目。
+			CRC32 crc = new CRC32();
+			try (InputStream input = Files.newInputStream(file.toPath())) {
+				byte[] buffer = new byte[8192];
+				for (int count; (count = input.read(buffer)) != -1;) {
+					crc.update(buffer, 0, count);
+				}
+			}
+			entry.setMethod(ZipEntry.STORED);
+			entry.setSize(file.length());
+			entry.setCrc(crc.getValue());
+		}
 		output.putNextEntry(entry);
 		try (InputStream input = Files.newInputStream(file.toPath())) {
 			copy(input, output);

@@ -116,6 +116,8 @@ public final class RuntimeLoaderOverloadTest extends TestCase {
 		assertNotNull(object);
 		assertEquals(libraryDirectory.getAbsoluteFile(),
 				loader.getExtensionLibraryDirectory("simple/runtime/OverloadedRuntimeObject"));
+		assertNotNull(compiler.getGlobalNamespaceSymbol().getScope().lookupShallow("calculate"));
+		assertNotNull(compiler.getGlobalNamespaceSymbol().getScope().lookupShallow("OverloadedRuntimeObject"));
 		assertEquals(0, compiler.getErrorCount());
 	}
 

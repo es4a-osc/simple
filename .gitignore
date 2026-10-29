@@ -1,6 +1,7 @@
+.gradle/
+build/
 _bak/
 _extras/
-build/
 
 /dist
 /reports

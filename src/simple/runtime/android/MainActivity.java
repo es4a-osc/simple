@@ -307,6 +307,12 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 		gestureDetector = new GestureDetector(this, new SimpleOnGestureListener() {
 			@Override
 			public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+				// 子视图可能先消费按下事件，窗口只收到后续触摸片段。
+				// 缺少起止坐标时不推断方向，继续交由后续处理。
+				if (e1 == null || e2 == null) {
+					return false;
+				}
+
 				int direction;
 				int deltaX = (int) (e1.getRawX() - e2.getRawX());
 				int deltaY = (int) (e1.getRawY() - e2.getRawY());

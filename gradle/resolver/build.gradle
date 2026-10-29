@@ -1,0 +1,123 @@
+/*
+Simple 编译器专用的依赖解析工程，生成物统一写入应用构建目录。
+仅解析原生模块声明并返回制品路径，不编译 Java、资源或 APK。
+xhwsd@qq.com 2026-10-27
+*/
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import java.security.MessageDigest
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+import org.gradle.api.artifacts.result.ResolvedDependencyResult
+
+buildscript {
+	repositories {
+		google()
+		mavenCentral()
+	}
+	dependencies {
+		classpath 'com.android.tools.build:gradle:7.4.2'
+	}
+}
+
+apply plugin: 'com.android.library'
+
+def request = new JsonSlurper().parse(file(providers.gradleProperty('request').get()))
+def work = file(request.work)
+layout.buildDirectory = new File(work, 'gradle')
+def manifest = new File(work, 'AndroidManifest.xml')
+manifest.parentFile.mkdirs()
+if (!manifest.isFile()) {
+	manifest.setText('<manifest />\r\n', 'UTF-8')
+}
+
+android {
+	namespace = 'simple.compiler.gradle'
+	compileSdk = 30
+	buildToolsVersion = '36.1.0'
+	defaultConfig {
+		minSdk = 24
+	}
+	sourceSets.main.manifest.srcFile manifest
+}
+
+// 本轮根库声明只暂存到应用的本地仓库，不向远端查询 ES4A 内部模块。
+def roots = []
+request.modules.each { item ->
+	def source = file(item.file)
+	def metadata = new JsonSlurper().parse(source)
+	def component = metadata.component
+	if (component.group != 'es4a.extension' || component.module != item.namespace ||
+		!(component.module ==~ /[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+/) ||
+		!(component.version ==~ /[A-Za-z0-9][A-Za-z0-9._+\-]*/)) {
+		throw new GradleException("扩展库模块身份不匹配：${source}")
+	}
+
+	// 本库的二进制由编译器从交付目录读取，发布元数据只能提供依赖和约束。
+	if (metadata.variants.any { it.files || it['available-at'] }) {
+		throw new GradleException("扩展库依赖元数据不能携带制品或转发地址：${source}")
+	}
+	def target = new File(work, "repository/es4a/extension/${component.module}/${component.version}/${component.module}-${component.version}.module")
+	target.parentFile.mkdirs()
+	if (!target.isFile() || !Arrays.equals(source.bytes, target.bytes)) {
+		target.bytes = source.bytes
+	}
+	roots.add("${component.group}:${component.module}:${component.version}")
+}
+
+// 同版本类库在本机重新发布后，必须重新读取其小型声明；线上固定版本仍复用正常缓存。
+dependencies {
+	roots.each { coordinate ->
+		implementation(coordinate) {
+			changing = true
+		}
+	}
+}
+configurations.configureEach {
+	resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
+tasks.register('resolveApplicationDependencies') {
+	group = 'build'
+	description = '统一解析项目实际引用的扩展库依赖，并输出原始制品路径。'
+	doLast {
+		// 消费 Android 运行变体，保留原始 JAR/AAR，不输出 AGP 转换后的编译占位包。
+		def configuration = configurations.debugRuntimeClasspath
+		def artifacts = configuration.resolvedConfiguration.resolvedArtifacts
+		def entries = artifacts.collect { artifact ->
+			def input = artifact.file
+			if (!(artifact.extension.toLowerCase(Locale.ROOT) in ['jar', 'aar'])) {
+				throw new GradleException("应用运行制品必须为 JAR/AAR：${artifact.moduleVersion.id} / ${input}")
+			}
+			def digest = MessageDigest.getInstance('SHA-256')
+			input.withInputStream { stream ->
+				byte[] buffer = new byte[8192]
+				for (int length; (length = stream.read(buffer)) != -1;) {
+					digest.update(buffer, 0, length)
+				}
+			}
+			[id: artifact.moduleVersion.id.toString(), classifier: artifact.classifier ?: '', file: input.canonicalPath,
+				digest: digest.digest().encodeHex().toString()]
+		}.sort { left, right -> left.id <=> right.id ?: left.file <=> right.file }
+
+		// 模块图与制品来自同一次解析，拒绝将旧 Support 依赖带入统一 AndroidX 的应用。
+		def components = configuration.incoming.resolutionResult.allComponents
+		def legacy = components.findAll { it.id instanceof ModuleComponentIdentifier && it.id.group == 'com.android.support' }
+		if (legacy) {
+			throw new GradleException("应用统一采用 AndroidX，存在旧 Support 依赖：${legacy*.id}")
+		}
+		def graph = components.collect { component ->
+			[id: component.id.displayName, dependencies: component.dependencies.findAll {
+				it instanceof ResolvedDependencyResult
+			}.collect { it.selected.id.displayName }]
+		}
+
+		// 只有完整解析成功后才替换结果文件，失败不会覆盖上一次有效快照。
+		def result = [fingerprint: request.fingerprint, dependencies: entries, graph: graph]
+		def output = file(request.output)
+		def pending = new File(output.parentFile, output.name + '.pending')
+		pending.setText(JsonOutput.prettyPrint(JsonOutput.toJson(result)) + '\r\n', 'UTF-8')
+		Files.move(pending.toPath(), output.toPath(), StandardCopyOption.REPLACE_EXISTING)
+	}
+}

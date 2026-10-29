@@ -61,9 +61,9 @@ public @interface SimpleProperty {
 	String type() default PROPERTY_TYPE_TEXT;
 
 	/**
-	 * Initial property value.
+	 * 初始属性值。
 	 *
-	 * @return  initial property value
+	 * @return 属性值
 	 */
 	String initializer() default "";
 }

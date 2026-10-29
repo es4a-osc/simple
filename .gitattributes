@@ -1,0 +1,3 @@
+# Unix 启动脚本在提交和检出时保持 LF。
+scripts/simplec text eol=lf
+scripts/newsimpleproject text eol=lf

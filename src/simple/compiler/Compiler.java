@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -76,8 +77,6 @@ public final class Compiler {
 	private static final String KEY_PASSWORD = System.getenv("KEY_PASSWORD");
 
 	/* 运行时 */
-	/** 最低API级别：API24对应系统版本为Android 7.0 发布于 2016-08-22 */
-	private static final int ANDROID_MIN_SDK_VERSION = 24;
 	private static final String ANDROID_RUNTIME = ANDROID_HOME + "/platforms/android-" + Toolchain.API_LEVEL + "/android.jar";
 	private static final String SIMPLE_ANDROID_RUNTIME = SIMPLE_HOME + "/SimpleAndroidRuntime.jar";
 
@@ -170,6 +169,35 @@ public final class Compiler {
 	// 当前项目实际引用的扩展库对象，用于只打包需要的扩展库。
 	private Set<ObjectSymbol> simpleNeedingLibraryObjects;
 
+	// 扩展库注解直接来自类文件，不保留必须先解析第三方类型的反射 Class。
+	private final Map<ObjectSymbol, List<Map<String, String>>> libraryPermissions = new HashMap<ObjectSymbol, List<Map<String, String>>>();
+	private final Map<ObjectSymbol, Map<String, String>> libraryManifestNodes = new HashMap<ObjectSymbol, Map<String, String>>();
+	private final Set<ObjectSymbol> usedLibraryAnnotations = new LinkedHashSet<ObjectSymbol>();
+
+	/**
+	 * 保存扩展库对象的权限和清单注解，只有对象实际被使用时才参与生成。
+	 *
+	 * @param object 对象符号。
+	 * @param permissions 可选的批量权限注解字段。
+	 * @param singlePermissions 单项权限注解字段，包含展开后的重复注解。
+	 * @param nodes 可选的清单注解字段。
+	 */
+	void addLibraryAnnotations(ObjectSymbol object, Map<String, String> permissions,
+			List<Map<String, String>> singlePermissions, Map<String, String> nodes) {
+		List<Map<String, String>> declarations = new ArrayList<Map<String, String>>(singlePermissions);
+		if (permissions != null) {
+			Map<String, String> group = new HashMap<String, String>(permissions);
+			group.putIfAbsent("permissionNames", "");
+			declarations.add(group);
+		}
+		if (!declarations.isEmpty()) {
+			libraryPermissions.put(object, declarations);
+		}
+		if (nodes != null) {
+			libraryManifestNodes.put(object, nodes);
+		}
+	}
+
 	/**
 	 * 记录当前项目实际引用的扩展库对象。
 	 *
@@ -243,50 +271,50 @@ public final class Compiler {
 	 * @param objectSymbol the object symbol to check
 	 */
 	public void checkForPermissions(ObjectSymbol objectSymbol) {
+		if (libraryPermissions.containsKey(objectSymbol)) {
+			usedLibraryAnnotations.add(objectSymbol);
+		}
 		if (symbolToClassNeedingPermissionsMap.containsKey(objectSymbol)) {
 			classesNeedingPermissions.add(symbolToClassNeedingPermissionsMap.get(objectSymbol));
 		}
 	}
 
-	/*
-	 * Generate the set of Android permissions needed by this package.
+	/**
+	 * 汇总实际引用对象的批量及单项权限，合并同名权限的适用范围。
 	 *
-	 * Note that we do a bunch of reflection here rather than directly using the
-	 * {@link UsesPermissions} class and its methods. This is because the {@link UsesPermissions}
-	 * class that would be directly referenced here is actually a different class object than the one
-	 * created for the component annotations. This is due to them being from different class
-	 * loaders. Consequently, attempts to do things like 'getAnnotation(UsesPermissions.class)' or
-	 * to cast the annotation objects to UsesPermissions all failed.
+	 * <p>运行库注解来自独立类加载器，通过其自身的注解类型反射读取；扩展库直接消费类文件字段。
+	 *
+	 * @return 已验证并按权限名统一的清单需求。
+	 * @throws IOException 注解定义、权限名称或版本范围无效。
 	 */
-	private Set<String> generatePermissions() {
-		Set<String> permissions = new HashSet<String>();
-		final Class<? extends Annotation> usesPermissionAnnotationClass = runtimeLoader.getAndroidUsesPermission();
-		java.lang.reflect.Method permissionNameMethod = null;
+	private ManifestPermissions generatePermissions() throws IOException {
+		ManifestPermissions permissions = new ManifestPermissions();
+		Class<? extends Annotation> groupType = runtimeLoader.getAndroidUsesPermissions();
+		Class<? extends Annotation> singleType = runtimeLoader.getAndroidUsesPermission();
 		try {
-			permissionNameMethod = usesPermissionAnnotationClass.getMethod("permissionNames");
-		} catch (NoSuchMethodException e) {
-			LOG.log(Level.SEVERE, "Simple compiler doesn't know about UsesPermissions's permissionNames method.");
+			Method names = groupType.getMethod("permissionNames");
+			Method name = singleType.getMethod("permissionName");
+			Method maximum = singleType.getMethod("maxSdkVersion");
+			for (Class<?> type : classesNeedingPermissions) {
+				Annotation group = type.getAnnotation(groupType);
+				if (group != null) {
+					permissions.addNames((String) names.invoke(group));
+				}
+				for (Annotation single : type.getAnnotationsByType(singleType)) {
+					permissions.add((String) name.invoke(single), (Integer) maximum.invoke(single));
+				}
+			}
+		} catch (ReflectiveOperationException failure) {
+			throw new IOException("读取运行库权限注解失败：" + failure.getMessage(), failure);
 		}
 
-		for (Class<?> classNeedingPermission : classesNeedingPermissions) {
-			final Annotation usesPermissionsAnnotation = classNeedingPermission.getAnnotation(usesPermissionAnnotationClass);
-			try {
-				if (usesPermissionsAnnotation != null) {
-					final String permissionsString =
-							(String) permissionNameMethod.invoke(usesPermissionsAnnotation);
-					if (permissionsString != null && permissionsString.length() > 0) {
-						final String[] permissionStrings = permissionsString.split(",");
-						for (String permissionString : permissionStrings) {
-							permissions.add(permissionString.trim());
-						}
-					}
-				} else {
-					LOG.log(Level.SEVERE, "Class doesn't have UsesPermissions annotation: " + classNeedingPermission.getName());
+		// 类文件中的注解仅在所属对象实际使用后验证，未引用的对象不增加权限或触发无关错误。
+		for (ObjectSymbol object : usedLibraryAnnotations) {
+			List<Map<String, String>> declarations = libraryPermissions.get(object);
+			if (declarations != null) {
+				for (Map<String, String> declaration : declarations) {
+					permissions.addAnnotation(declaration);
 				}
-			} catch (InvocationTargetException e) {
-				LOG.log(Level.SEVERE, "Simple compiler doesn't know how to deal with UsesPermissions annotation.");
-			} catch (IllegalAccessException e) {
-				LOG.log(Level.SEVERE, "Simple compiler doesn't know how to deal with UsesPermissions annotation.");
 			}
 		}
 		return permissions;
@@ -308,6 +336,9 @@ public final class Compiler {
 	 * @param objectSymbol 已解析的对象符号
 	 */
 	public void checkForManifestNodes(ObjectSymbol objectSymbol) {
+		if (libraryManifestNodes.containsKey(objectSymbol)) {
+			usedLibraryAnnotations.add(objectSymbol);
+		}
 		Class<?> manifestNodesClass = symbolToClassNeedingManifestNodesMap.get(objectSymbol);
 		if (manifestNodesClass != null) {
 			classesNeedingManifestNodes.add(manifestNodesClass);
@@ -366,12 +397,37 @@ public final class Compiler {
 				error(Scanner.NO_POSITION, "无法读取类 %1 的ManifestNodes注解", manifestNodesClass.getName());
 			}
 		}
+		for (ObjectSymbol object : usedLibraryAnnotations) {
+			Map<String, String> annotation = libraryManifestNodes.get(object);
+			if (annotation != null) {
+				String name = object.getObjectName();
+				addManifestNode(nodes.rootNodes, annotation.get("rootXml"), project, name);
+				addManifestNode(nodes.applicationNodes, annotation.get("applicationXml"), project, name);
+				addManifestNode(nodes.activityNodes, annotation.get("activityXml"), project, name);
+				addManifestNode(nodes.intentFilterNodes, annotation.get("intentFilterXml"), project, name);
+			}
+		}
+
 		return nodes;
 	}
 
+	/**
+	 * 展开节点宏并检查权限声明边界，再保存仍保持原文的 XML 片段。
+	 *
+	 * @param nodes 当前插入位置的节点集合。
+	 * @param xml 注解中的 XML 片段。
+	 * @param project 项目宏配置。
+	 * @param className 声明节点的类型简名。
+	 */
 	private void addManifestNode(Set<String> nodes, String xml, Project project, String className) {
 		if (xml != null && !xml.isEmpty()) {
-			nodes.add(expandManifestMacros(project, className, xml));
+			String expanded = expandManifestMacros(project, className, xml);
+			try {
+				ManifestPermissions.validateManifestNodes(expanded);
+				nodes.add(expanded);
+			} catch (IOException failure) {
+				error(Scanner.NO_POSITION, "类 %1 的清单节点无效：%2", className, failure.getMessage());
+			}
 		}
 	}
 
@@ -439,10 +495,16 @@ public final class Compiler {
 		return escaped.toString();
 	}
 
-	/*
-	 * 创建部署构建的android应用程序所需的Androidmanifest.xml文件。
+	/**
+	 * 根据项目属性及已解析的组件注解生成应用基础清单，供后续类库清单合并使用。
+	 *
+	 * @param compiler 当前编译器及诊断输出。
+	 * @param project 当前项目。
+	 * @param buildDirectory 清单输出目录。
+	 * @param permissionsNeeded 当前已知的运行权限。
+	 * @return 生成成功且未发现无效注解节点时返回 true。
 	 */
-	private static boolean writeAndroidManifest(Compiler compiler, Project project, File buildDirectory, Set<String> permissionsNeeded) {
+	private static boolean writeAndroidManifest(Compiler compiler, Project project, File buildDirectory, ManifestPermissions permissionsNeeded) {
 		// 从项目属性中取主窗口包名
 		String mainForm = project.getMainForm();
 		String appLabel = escapeXmlAttribute(project.getProjectName());
@@ -452,7 +514,7 @@ public final class Compiler {
 		if (compiler.errorCount > errorCountBeforeManifestNodes) {
 			return false;
 		}
-		
+
 		try {
 			// 创建UTF8输出流
 			OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(manifest), "UTF-8");
@@ -471,7 +533,7 @@ public final class Compiler {
 			// 应用对不同版本平台兼容性
 			out.write("    <uses-sdk " +
 					// 指定应用运行所需最低API级别
-					"android:minSdkVersion=\"" + ANDROID_MIN_SDK_VERSION + "\" " +
+					"android:minSdkVersion=\"" + Toolchain.MIN_API_LEVEL + "\" " +
 					// 指定应用的目标API级别，该属性添加于API4
 					// 根据《移动应用软件高API等级预置与分发自律公约》自2019年5月1日起，
 					// 新上架应用应基于Android 8.0（API等级26）及以上开发。
@@ -492,8 +554,12 @@ public final class Compiler {
 
 			// 使用权限
 			out.write("    <!-- Uses Permission Start -->\n");
-			for (String permission : permissionsNeeded) {
-				out.write("    <uses-permission android:name=\"" + permission + "\" />\n");
+			for (Map.Entry<String, Integer> permission : permissionsNeeded.getPermissions().entrySet()) {
+				out.write("    <uses-permission android:name=\"" + escapeXmlAttribute(permission.getKey()) + "\"");
+				if (permission.getValue() > 0) {
+					out.write(" android:maxSdkVersion=\"" + permission.getValue() + "\"");
+				}
+				out.write(" />\n");
 			}
 			out.write("    <!-- Uses Permission End -->\n");
 			writeManifestNodes(out, manifestNodes.rootNodes, "    ", "Root");
@@ -574,6 +640,32 @@ public final class Compiler {
 		} catch (IOException e) {
 			compiler.error(Scanner.NO_POSITION, Error.errWriteError, manifest.toString());
 			return false;
+		}
+	}
+
+	/**
+	 * 在资源链接前发现类库引用，避免应用主题和布局只能引用项目自身资源。
+	 *
+	 * <p>发现阶段使用独立语义树，允许尚未建立的资源名称产生诊断；其树与折叠结果
+	 * 均不参与代码生成。两轮只共用本次构建读取的源码文本，语法树及语义状态互不复用。
+	 *
+	 * @param platform 目标平台。
+	 * @param sourceTexts 本轮按项目单元顺序读取的只读源码快照。
+	 * @param dependencyDirectory 本次依赖展开目录。
+	 * @return 引用的扩展库目录。
+	 */
+	private static List<File> discoverLibraryDirectories(Platform platform,
+			Map<Project.SourceDescriptor, String> sourceTexts, File dependencyDirectory) {
+		try (PrintStream sink = new PrintStream(java.io.OutputStream.nullOutputStream())) {
+			Compiler discovery = new Compiler(platform, sink, sink, dependencyDirectory);
+			for (Map.Entry<Project.SourceDescriptor, String> entry : sourceTexts.entrySet()) {
+				Project.SourceDescriptor source = entry.getKey();
+				String fileName = source.getQualifiedName().replace('.', '/') + Project.SOURCEFILE_EXTENSION;
+				new Parser(discovery, new Scanner(discovery, discovery.createFileIndex(fileName),
+						entry.getValue()), source.getQualifiedName()).parse();
+			}
+			discovery.resolve();
+			return discovery.getSimpleNeedingLibraryDirectories();
 		}
 	}
 
@@ -668,20 +760,23 @@ public final class Compiler {
 	public static boolean compile(Platform platform, Project project, PrintStream out, PrintStream err) {
 		// 创建本次构建独立使用的编译器实例，并记录总耗时起点。
 		long start = System.currentTimeMillis();
-		final Compiler compiler = new Compiler(platform, out, err);
+		final Compiler compiler = new Compiler(platform, out, err, new File(project.getBuildDirectory(), "dependencies"));
 		if (compiler.errorCount > 0) {
 			return false;
 		}
 
-		// 读取并解析项目中的全部Simple单元，先建立语法树和符号声明。
+		// 每个单元只读取一次；本轮发现与正式编译共用文本，各自建立语法树和符号状态。
+		Map<Project.SourceDescriptor, String> sourceTexts = new LinkedHashMap<Project.SourceDescriptor, String>();
 		for (Project.SourceDescriptor arg : project.getSources()) {
 			// 编译器内部统一使用“限定名对应的相对路径”标识源码。
 			String fileName = arg.getQualifiedName().replace('.', '/') + Project.SOURCEFILE_EXTENSION;
 			out.println("正在编译单元：" + fileName);
 
 			try {
+				String sourceText = Files.read(arg.getFile(), compiler.encoding);
+				sourceTexts.put(arg, sourceText);
 				new Parser(compiler, new Scanner(compiler, compiler.createFileIndex(fileName),
-						Files.read(arg.getFile(), compiler.encoding)), arg.getQualifiedName()).parse();
+						sourceText), arg.getQualifiedName()).parse();
 			} catch (IOException ioe) {
 				compiler.error(Scanner.NO_POSITION, Error.errReadError, arg.getFile().toString());
 			}
@@ -730,7 +825,8 @@ public final class Compiler {
 			}
 
 			// 集中定义后续资源链接、类生成和APK组装所需的输入输出位置。
-			File manifestFile = new File(buildDir, "AndroidManifest.xml");
+			File manifestDirectory = Files.createDirectory(buildDir, "manifests");
+			File manifestFile = new File(manifestDirectory, "AndroidManifest.xml");
 			String applicationPackageName = Signatures.getPackageName(project.getMainForm());
 			String androidResourceQualifiedName = applicationPackageName + ".R";
 			String simpleResourceQualifiedName = applicationPackageName + "." + SIMPLE_RESOURCE_OBJECT_NAME;
@@ -740,63 +836,35 @@ public final class Compiler {
 			File stableResourceIdsFile = new File(resourceBuildDirectory, "resource-ids.txt");
 			File androidResourceSourceFile = new File(resourceBuildDirectory, androidResourceQualifiedName.replace('.', '/') + ".java");
 			File assetsDir = Files.createDirectory(project.getAssetsDirectory()).getAbsoluteFile().toPath().normalize().toFile();
-			File deployDir = Files.createDirectory(buildDir, "deploy");
-			File apFile = new File(deployDir, project.getProjectName() + ".ap_");
+			File apFile = new File(resourceBuildDirectory, "resources.ap_");
+			File apkDirectory = Files.createDirectory(buildDir, "apks");
+			File apkFile = new File(apkDirectory, "signed.apk");
+			File unsignedApkFile = new File(apkDirectory, "unsigned.apk");
+			File alignedApkFile = new File(apkDirectory, "aligned.apk");
 
 			// 先写入基础清单。此时Simple符号尚未解析，暂时还不能收集组件声明的权限和服务。
 			out.println("正在生成清单：" + manifestFile.getName());
-			if (!writeAndroidManifest(compiler, project, buildDir, new HashSet<String>())) {
+			if (!writeAndroidManifest(compiler, project, manifestDirectory, new ManifestPermissions())) {
 				return false;
 			}
 
-			// AAPT2第一阶段：把项目res目录编译成可重复参与链接的resources.zip。
-			out.println("正在编译资源：" + compiledResourcesFile.getName());
-			if (!Toolchain.compileResources(buildDir, resDir, compiledResourcesFile, System.out, System.err)) {
-				internalError();
-				return false;
-			}
-
-			// AAPT2首次链接：一次生成R.txt、标准R.java和稳定资源编号。
-			// Simple索引与Android资源类共用本次编号，最终链接不再重复生成它们。
-			out.println("正在生成资源索引：" + resourceSymbolsFile.getName());
-			if (!Toolchain.generateResourceIndex(buildDir, apFile, manifestFile,
-					ANDROID_RUNTIME, assetsDir, resourceSymbolsFile, resourceBuildDirectory,
-					stableResourceIdsFile, compiledResourcesFile, System.out, System.err)) {
-				internalError();
-				return false;
-			}
-
-			// 将R.txt转换为内存SimpleResources.simple，并以全局名称R提供给所有Simple单元。
-			String resourceIndexSource;
-			try {
-				resourceIndexSource = Resource.toSimpleSource(resourceSymbolsFile);
-				String resourceIndexFileName = simpleResourceQualifiedName.replace('.', '/') + Project.SOURCEFILE_EXTENSION;
-				new Parser(compiler, new Scanner(compiler,
-						compiler.createFileIndex(resourceIndexFileName), resourceIndexSource),
-						simpleResourceQualifiedName).parse();
-				// 实际对象名与全局名称分离，避免和Android标准R类或用户的Res单元冲突。
-				if (!exposeGlobalObject(compiler, SIMPLE_RESOURCE_GLOBAL_NAME, simpleResourceQualifiedName)) {
-					return false;
-				}
-			} catch (IOException ioe) {
-				compiler.error(Scanner.NO_POSITION, ioe.getMessage());
-				return false;
-			}
-
-			// 统一解析用户源码和SimpleResources.simple之间的类型、成员及引用关系。
-			compiler.resolve();
-			if (compiler.errorCount > 0) {
-				compiler.out.println("编译发生错误计数：" + compiler.errorCount);
-				return false;
-			}
-
-			// 解析完成后才能确定项目实际引用了哪些扩展库。
+			// 资源链接前先解析一份独立语义树，发现项目引用的扩展库。
 			// 每个被引用的类库以自身classes.jar为整体打包，并携带其可选目录。
-			List<File> libraryDirectories = compiler.getSimpleNeedingLibraryDirectories();
+			List<File> libraryDirectories;
 			List<File> compiledLibraryResourceFiles = new ArrayList<File>();
 			List<File> assetsDirectories = new ArrayList<File>();
 			List<File> dexInputFiles = new ArrayList<File>();
-			List<File> dependencyFiles = compiler.runtimeLoader.getDependenciesForLibraries(libraryDirectories);
+			List<File> dependencyFiles;
+			List<LibraryArtifacts.AndroidLibrary> androidLibraries;
+			try {
+				libraryDirectories = discoverLibraryDirectories(platform, Collections.unmodifiableMap(sourceTexts),
+						new File(buildDir, "dependencies"));
+				dependencyFiles = compiler.runtimeLoader.getDependenciesForLibraries(libraryDirectories);
+				androidLibraries = compiler.runtimeLoader.getAndroidLibrariesForLibraries(libraryDirectories);
+			} catch (IOException failure) {
+				compiler.error(Scanner.NO_POSITION, failure.getMessage());
+				return false;
+			}
 			dexInputFiles.addAll(dependencyFiles);
 
 			// Java 资源与 DEX 共用已选依赖；后续只追加项目实际使用的扩展库实现。
@@ -813,91 +881,159 @@ public final class Compiler {
 				}
 				dexInputFiles.add(classesFile);
 				resourceJars.add(classesFile);
+			}
 
-				File resourceDirectory = new File(libraryDirectory, "res").getAbsoluteFile();
+			// AAR 与扩展库本体共用 Android 输入收集流程，代码归档不混入这些目录。
+			for (int libraryIndex = 0; libraryIndex < androidLibraries.size(); libraryIndex++) {
+				File libraryDirectory = androidLibraries.get(libraryIndex).directory;
+				File resourceDirectory = new File(libraryDirectory, "res");
 				if (hasFiles(resourceDirectory)) {
 					File compiledLibraryResources = new File(libraryResourceBuildDirectory, "library-" + libraryIndex + ".zip");
-					out.println("正在编译扩展库资源：" + libraryDirectory.getName());
-					if (!Toolchain.compileResources(buildDir, resourceDirectory,
-							compiledLibraryResources, System.out, System.err)) {
-						internalError();
+					out.println("正在编译类库资源：" + androidLibraries.get(libraryIndex).source.getName());
+					if (!Toolchain.compileResources(buildDir, resourceDirectory, compiledLibraryResources, out, err)) {
 						return false;
 					}
 					compiledLibraryResourceFiles.add(compiledLibraryResources);
 				}
-
-				File libraryAssetsDirectory = new File(libraryDirectory, "assets").getAbsoluteFile();
-				if (hasFiles(libraryAssetsDirectory)) {
-					assetsDirectories.add(libraryAssetsDirectory);
+				File assets = new File(libraryDirectory, "assets");
+				if (hasFiles(assets)) {
+					assetsDirectories.add(assets);
 				}
-
-				File nativeDirectory = new File(libraryDirectory, "jni").getAbsoluteFile();
-				if (hasFiles(nativeDirectory)) {
-					nativeDirectories.add(nativeDirectory);
+				File natives = new File(libraryDirectory, "jni");
+				if (hasFiles(natives)) {
+					nativeDirectories.add(natives);
 				}
 			}
+
 			// 项目资产最后加入；项目资源在链接时单独作为覆盖输入。
 			assetsDirectories.add(assetsDir);
 
-			// 根据解析结果补齐权限和服务，再使用第一次保存的稳定资源编号生成最终资源包。
-			if (!writeAndroidManifest(compiler, project, buildDir, compiler.generatePermissions())) {
-				return false;
-			}
-			out.println("正在打包资源：" + apFile.getName());
-			if (!Toolchain.packageResources(buildDir, apFile, manifestFile,
-					ANDROID_RUNTIME, assetsDirectories, stableResourceIdsFile,
-					compiledLibraryResourceFiles, compiledResourcesFile, System.out, System.err)) {
-				internalError();
-				return false;
-			}
+			// 清单与资产副本只保留至 APK 组装完成，后续签名和发布使用已组装的产物。
+			try (AndroidLibraries androidInputs = new AndroidLibraries(manifestDirectory)) {
+				assetsDirectories = androidInputs.mergeAssets(assetsDirectories);
+				androidInputs.mergeManifest(manifestFile, androidLibraries, project.getManifestPlaceholders(),
+						applicationPackageName, out, err);
 
-			if (!prepareClassOutputDirectory(compiler, buildDir)) {
-				return false;
-			}
+				// AAPT2第一阶段：把项目res目录编译成可重复参与链接的resources.zip。
+				out.println("正在编译资源：" + compiledResourcesFile.getName());
+				if (!Toolchain.compileResources(buildDir, resDir, compiledResourcesFile, System.out, System.err)) {
+					internalError();
+					return false;
+				}
 
-			// 编译AAPT2原生的分层R.java，供Android代码及第三方依赖访问R.class和R$*.class。
-			out.println("正在编译Android资源索引：" + androidResourceQualifiedName);
-			if (!Toolchain.compileJava(buildDir, classesDir,
-					androidResourceSourceFile, System.out, System.err)) {
-				internalError();
-				return false;
-			}
+				// AAPT2首次链接：一次生成R.txt、标准R.java和稳定资源编号。
+				// Simple 常量使用本次编号；最终链接刷新完整符号时复用同一组稳定编号。
+				out.println("正在生成资源索引：" + resourceSymbolsFile.getName());
+				if (!Toolchain.generateResourceIndex(buildDir, apFile, manifestFile,
+						ANDROID_RUNTIME, assetsDirectories, resourceSymbolsFile, resourceBuildDirectory,
+						stableResourceIdsFile, compiledLibraryResourceFiles, compiledResourcesFile, out, err)) {
+					internalError();
+					return false;
+				}
 
-			// 生成全部Simple类；内存中的SimpleResources.simple会在这里生成平铺的SimpleResources.class。
-			out.println("正在编译Simple资源索引：" + simpleResourceQualifiedName);
-			compiler.generate(classesDir);
+				// 将R.txt转换为内存SimpleResources.simple，并以全局名称R提供给所有Simple单元。
+				String resourceIndexSource;
+				try {
+					resourceIndexSource = Resource.toSimpleSource(resourceSymbolsFile);
+					String resourceIndexFileName = simpleResourceQualifiedName.replace('.', '/') + Project.SOURCEFILE_EXTENSION;
+					new Parser(compiler, new Scanner(compiler,
+							compiler.createFileIndex(resourceIndexFileName), resourceIndexSource),
+							simpleResourceQualifiedName).parse();
+					// 实际对象名与全局名称分离，避免和Android标准R类或用户的Res单元冲突。
+					if (!exposeGlobalObject(compiler, SIMPLE_RESOURCE_GLOBAL_NAME, simpleResourceQualifiedName)) {
+						return false;
+					}
+				} catch (IOException ioe) {
+					compiler.error(Scanner.NO_POSITION, ioe.getMessage());
+					return false;
+				}
 
-			// 把项目类、标准R类、SimpleResources类和Simple Android运行库统一转换为classes.dex。
-			File dexFile = new File(buildDir, "classes.dex");
-			out.println("正在生成可执行类：" + dexFile.getName());
-			dexInputFiles.add(0, new File(SIMPLE_ANDROID_RUNTIME).getAbsoluteFile());
-			dexInputFiles.add(0, classesDir.getAbsoluteFile());
-			try {
-				Dependencies.validateClasses(dexInputFiles);
+				// 统一解析用户源码和SimpleResources.simple之间的类型、成员及引用关系。
+				compiler.resolve();
+				if (compiler.errorCount > 0) {
+					compiler.out.println("编译发生错误计数：" + compiler.errorCount);
+					return false;
+				}
+
+				if (!libraryDirectories.containsAll(compiler.getSimpleNeedingLibraryDirectories())) {
+					compiler.error(Scanner.NO_POSITION, "资源准备与正式语义解析得到的扩展库引用不一致。");
+					return false;
+				}
+
+				// 根据解析结果补齐权限和服务，再使用第一次保存的稳定资源编号生成最终资源包。
+				if (!writeAndroidManifest(compiler, project, manifestDirectory, compiler.generatePermissions())) {
+					return false;
+				}
+				try {
+					androidInputs.mergeManifest(manifestFile, androidLibraries, project.getManifestPlaceholders(),
+							applicationPackageName, out, err);
+				} catch (IOException failure) {
+					compiler.error(Scanner.NO_POSITION, failure.getMessage());
+					return false;
+				}
+				out.println("正在打包资源：" + apFile.getName());
+				if (!Toolchain.packageResources(buildDir, apFile, manifestFile,
+						ANDROID_RUNTIME, assetsDirectories, stableResourceIdsFile,
+						compiledLibraryResourceFiles, compiledResourcesFile, System.out, System.err)) {
+					internalError();
+					return false;
+				}
+
+				if (!prepareClassOutputDirectory(compiler, buildDir)) {
+					return false;
+				}
+
+				// 编译AAPT2原生的分层R.java，供Android代码及第三方依赖访问R.class和R$*.class。
+				out.println("正在编译Android资源索引：" + androidResourceQualifiedName);
+				List<File> resourceSources;
+				try {
+					resourceSources = AndroidLibraries.generateResourceSources(androidLibraries,
+							resourceSymbolsFile, applicationPackageName, resourceBuildDirectory, dexInputFiles);
+					resourceSources.add(androidResourceSourceFile);
+				} catch (IOException failure) {
+					compiler.error(Scanner.NO_POSITION, failure.getMessage());
+					return false;
+				}
+				if (!Toolchain.compileJava(buildDir, classesDir, resourceSources, out, err)) {
+					internalError();
+					return false;
+				}
+
+				// 生成全部Simple类；内存中的SimpleResources.simple会在这里生成平铺的SimpleResources.class。
+				out.println("正在编译Simple资源索引：" + simpleResourceQualifiedName);
+				compiler.generate(classesDir);
+
+				// 统一转换项目类、资源索引及运行库；DEX 输出目录由本次构建独立管理。
+				File dexDirectory = new File(buildDir, "dexs");
+				dexInputFiles.add(0, new File(SIMPLE_ANDROID_RUNTIME).getAbsoluteFile());
+				dexInputFiles.add(0, classesDir.getAbsoluteFile());
+				try {
+					Dependencies.validateClasses(dexInputFiles);
+				} catch (IOException failure) {
+					compiler.error(Scanner.NO_POSITION, failure.getMessage());
+					return false;
+				}
+				List<File> dexFiles = Toolchain.generateDex(dexDirectory, dexInputFiles, new File(ANDROID_RUNTIME),
+						Toolchain.MIN_API_LEVEL, System.out, System.err);
+				if (dexFiles == null) {
+					internalError();
+					return false;
+				}
+
+				// 只打包本次 D8 返回的全部 DEX，不扫描构建目录中的历史文件。
+				compiler.out.println("正在生成应用：" + unsignedApkFile.getName());
+				if (!Toolchain.buildApplication(unsignedApkFile, apFile, dexFiles,
+						resourceJars, nativeDirectories, System.err)) {
+					internalError();
+					return false;
+				}
 			} catch (IOException failure) {
 				compiler.error(Scanner.NO_POSITION, failure.getMessage());
 				return false;
 			}
-			if (!Toolchain.generateDex(dexFile, dexInputFiles, new File(ANDROID_RUNTIME),
-					ANDROID_MIN_SDK_VERSION, System.out, System.err)) {
-				internalError();
-				return false;
-			}
-
-			// 将最终资源包和classes.dex组装为尚未签名的APK。
-			File apkFile = new File(deployDir, project.getProjectName() + ".apk");
-			File unsignedApkFile = new File(buildDir, "application-unsigned.apk");
-			File alignedApkFile = new File(buildDir, "application-aligned.apk");
-			File signedApkFile = new File(buildDir, "application-signed.apk");
-			compiler.out.println("正在生成应用：" + apkFile.getName());
-			if (!Toolchain.buildApplication(unsignedApkFile, apFile, dexFile,
-					resourceJars, nativeDirectories, System.err)) {
-				internalError();
-				return false;
-			}
 
 			// V2 签名保护 APK 的整体结构，所有对齐操作必须先于签名完成。
-			out.println("正在对齐应用：" + apkFile.getName());
+			out.println("正在对齐应用：" + alignedApkFile.getName());
 			if (!Toolchain.alignApplication(unsignedApkFile, alignedApkFile, System.err)) {
 				internalError();
 				return false;
@@ -935,24 +1071,10 @@ public final class Compiler {
 				signingStoreType = "PKCS12";
 			}
 
-			// 先在构建目录签名和校验，全部成功后才替换最终交付 APK。
+			// 签名直接写入最终应用路径；工具失败时立即中断，不再复制或单独校验。
 			if (!Toolchain.signApplication(signingKeystoreLocation, signingPasswordSource,
-					alignedApkFile, signedApkFile, signingAlias, signingStoreType, System.err)) {
+					alignedApkFile, apkFile, signingAlias, signingStoreType, System.err)) {
 				internalError();
-				return false;
-			}
-
-			out.println("正在校验签名：" + apkFile.getName());
-			if (!Toolchain.verifyApplication(signedApkFile, out, System.err)) {
-				internalError();
-				return false;
-			}
-
-			try {
-				java.nio.file.Files.copy(signedApkFile.toPath(), apkFile.toPath(),
-						java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-			} catch (IOException failure) {
-				compiler.error(Scanner.NO_POSITION, "无法写入已签名应用：" + apkFile + "（" + failure.getMessage() + "）");
 				return false;
 			}
 			break;
@@ -1014,6 +1136,18 @@ public final class Compiler {
 	 * @param err  stderr stream for compiler messages
 	 */
 	public Compiler(Platform platform, PrintStream out, PrintStream err) {
+		this(platform, out, err, null);
+	}
+
+	/**
+	 * 创建编译器并指定本次依赖展开位置，不读取开发目录的 IDE 产物。
+	 *
+	 * @param platform 目标平台。
+	 * @param out 普通诊断输出。
+	 * @param err 错误输出。
+	 * @param dependencyDirectory 项目构建目录中的依赖展开目录。
+	 */
+	private Compiler(Platform platform, PrintStream out, PrintStream err, File dependencyDirectory) {
 		this.out = out;
 		this.err = err;
 		// xhwsd@qq.com 2021-5-22 指定源文件（.simple）字符编码
@@ -1035,7 +1169,7 @@ public final class Compiler {
 		this.platform = platform;
 		if (platform != Platform.None) {
 			runtimeLoader = new RuntimeLoader(this, ANDROID_RUNTIME,
-					platform.getRuntimeLibrary(), LIBRARIES_HOME);
+					platform.getRuntimeLibrary(), LIBRARIES_HOME, dependencyDirectory);
 			runtimeLoader.loadSimpleObjects();
 		}
 

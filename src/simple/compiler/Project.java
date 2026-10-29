@@ -401,6 +401,22 @@ public final class Project {
 		return properties.getProperty(className + "." + macroName, defaultValue);
 	}
 
+	/**
+	 * 读取显式配置的 Android 清单占位符，不与组件注解宏共用命名规则。
+	 *
+	 * @return 去除 manifest.placeholder. 前缀的名称和值。
+	 */
+	public java.util.Map<String, Object> getManifestPlaceholders() {
+		java.util.Map<String, Object> values = new java.util.LinkedHashMap<String, Object>();
+		for (String name : properties.stringPropertyNames()) {
+			String prefix = "manifest.placeholder.";
+			if (name.startsWith(prefix)) {
+				values.put(name.substring(prefix.length()), properties.getProperty(name));
+			}
+		}
+		return values;
+	}
+
 	/*
 	 * 递归访问源目录并将找到的Simple源文件添加到源文件列表中。
 	 */

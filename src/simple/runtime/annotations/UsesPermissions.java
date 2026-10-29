@@ -22,7 +22,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to indicate Android permissions required by components.
+ * 注释用于指示组件所需的Android权限。
+ *
+ * <p>各项权限均不设版本上限；单项权限需要版本限制时使用 {@link UsesPermission}。
  *
  * @author Mark Friedman
  */
@@ -31,9 +33,9 @@ import java.lang.annotation.Target;
 public @interface UsesPermissions {
 
 	/**
-	 * The names of the permissions separated by commas.
+	 * 权限的名称，以逗号分隔。
 	 *
-	 * @return  the permission name
+	 * @return 权限名称
 	 */
 	String permissionNames() default "";
 }

@@ -4,271 +4,123 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import org.apache.maven.artifact.versioning.ComparableVersion;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import simple.compiler.util.ClassFiles;
 
 /**
  * 为一次编译选择扩展库依赖；加载、DEX 和 JAR 资源打包共用同一选择结果。
  *
- * <p>版本只取文件名末尾的数字段，不改写依赖，也不推断其二进制兼容性。
+ * <p>仓库模块由 SDK Gradle 解析；独立本地 JAR 共用身份及版本规则，不改写原包。
  *
  * @author 树先生 xhwsd@qq.com
  */
 public final class Dependencies {
 
-	// 只有文件名末尾的数字版本参与选版，预发布后缀等名称按普通依赖处理。
-	private static final Pattern VERSIONED_JAR =
-			Pattern.compile("^(.+)-([0-9]+(?:\\.[0-9]+)*)\\.jar$", Pattern.CASE_INSENSITIVE);
+	/** 本轮依赖制品及其全局版本选择。 */
+	private final LibraryArtifacts artifacts;
 
-	// 路径排序保持输入稳定；忽略大小写相同时再按原始路径区分。
-	private static final Comparator<File> FILE_ORDER = new Comparator<File>() {
-		/**
-		 * 按绝对路径比较两个依赖文件，使选择结果不依赖目录枚举顺序。
-		 *
-		 * @param left 左侧文件。
-		 * @param right 右侧文件。
-		 * @return 负数表示左侧在前，零表示路径相同，正数表示右侧在前。
-		 */
-		@Override
-		public int compare(File left, File right) {
-			int result = left.getAbsolutePath().compareToIgnoreCase(right.getAbsolutePath());
-			return result != 0 ? result : left.getAbsolutePath().compareTo(right.getAbsolutePath());
-		}
-	};
+	/** 构造时的规范化根库顺序，不受调用方后续修改列表影响。 */
+	private final List<File> libraries;
 
-	// 保存各类库原始依赖，供项目筛选时追溯到全局已选文件。
-	private final Map<File, List<File>> libraryFiles = new LinkedHashMap<File, List<File>>();
-
-	// 将每个候选路径映射到选版和内容去重后的最终路径。
-	private final Map<File, File> selectedFiles = new HashMap<File, File>();
-
-	// 全部已选依赖的只读列表，按首次出现的稳定顺序保留。
+	/** 本轮根库顺序对应的只读代码依赖快照。 */
 	private final List<File> files;
 
 	/**
-	 * 按已安装类库建立稳定的依赖选择快照。
+	 * 为不指定构建目录的调用者建立依赖选择快照。
 	 *
-	 * @param libraries 含 classes.jar 的类库目录。
-	 * @throws IOException 读取失败或最高版本存在内容不同的副本。
+	 * @param libraries 含 classes.jar 的已安装扩展库。
+	 * @throws IOException 依赖描述、归档或版本选择无效。
 	 */
 	public Dependencies(List<File> libraries) throws IOException {
-		// 固定类库顺序，再按依赖名称收集版本组和原始路径。
-		List<File> orderedLibraries = new ArrayList<File>(libraries);
-		Collections.sort(orderedLibraries, FILE_ORDER);
-
-		Map<String, List<File>> groups = new LinkedHashMap<String, List<File>>();
-		List<File> candidates = new ArrayList<File>();
-
-		for (File library : orderedLibraries) {
-			List<File> dependencies = listJars(new File(library, "libs"));
-			libraryFiles.put(library.getAbsoluteFile(), dependencies);
-
-			for (File file : dependencies) {
-				candidates.add(file);
-				Matcher matcher = VERSIONED_JAR.matcher(file.getName());
-
-				if (matcher.matches()) {
-					String name = matcher.group(1);
-					List<File> group = groups.get(name);
-					if (group == null) {
-						group = new ArrayList<File>();
-						groups.put(name, group);
-					}
-					group.add(file);
-				} else {
-					selectedFiles.put(file, file);
-				}
-			}
-		}
-
-		// 每组先确定最高数字版本，再核对同版本副本；不因已淘汰的旧版本产生冲突。
-		Map<File, String> hashes = new HashMap<File, String>();
-		for (List<File> group : groups.values()) {
-			File highest = group.get(0);
-			for (File file : group) {
-				if (compareVersion(version(file), version(highest)) > 0) {
-					highest = file;
-				}
-			}
-
-			for (File file : group) {
-				if (compareVersion(version(file), version(highest)) == 0
-						&& !hash(file, hashes).equals(hash(highest, hashes))) {
-					throw new IOException("扩展库依赖版本相同但内容不同：\n" + highest + "\n" + file);
-				}
-
-				selectedFiles.put(file, highest);
-			}
-		}
-
-		// 相同内容的 JAR 只保留一份；原始路径仍映射到最终文件，供项目打包追溯。
-		Map<String, File> byHash = new LinkedHashMap<String, File>();
-		for (File candidate : candidates) {
-			File selected = selectedFiles.get(candidate);
-			String digest = hash(selected, hashes);
-			File canonical = byHash.get(digest);
-
-			if (canonical == null) {
-				canonical = selected;
-				byHash.put(digest, selected);
-			}
-
-			selectedFiles.put(candidate, canonical);
-		}
-
-		files = Collections.unmodifiableList(new ArrayList<File>(byHash.values()));
+		this(libraries, null);
 	}
 
 	/**
-	 * 返回加载器与后续打包共用的全部已选依赖。
+	 * 统一读取 JAR 与 AAR，供加载器和后续构建复用同一选择结果。
 	 *
-	 * @return 按稳定顺序排列的只读依赖列表。
+	 * @param libraries 本项目实际使用的扩展库目录。
+	 * @param workDirectory AAR 展开目录；为空时使用系统临时目录。
+	 * @throws IOException 描述无效、输入缺失或依赖冲突。
+	 */
+	public Dependencies(List<File> libraries, File workDirectory) throws IOException {
+		this.libraries = canonicalLibraries(libraries);
+		artifacts = new LibraryArtifacts(this.libraries, workDirectory);
+		files = Collections.unmodifiableList(artifacts.getJars(this.libraries));
+	}
+
+	/**
+	 * 返回按本轮根库顺序装配、展开和去重的 JAR。
+	 *
+	 * @return 稳定排序的只读类路径。
 	 */
 	public List<File> getFiles() {
 		return files;
 	}
 
 	/**
-	 * 只收集项目所需依赖组，但沿用加载器已经使用的版本和文件。
+	 * 同一组有序根库复用本轮快照，其它查询按指定库及顺序筛选代码依赖。
 	 *
-	 * @param libraries 项目实际引用的类库目录。
-	 * @return 去重后的 JAR，不重新扫描 libs 或重新选版。
+	 * @param libraries 项目实际引用的扩展库；为 null 时使用本轮全部根库。
+	 * @return 全量查询返回只读快照，其它查询返回所选依赖的 JAR。
+	 * @throws IOException 路径无法规范化或子集依赖无法读取。
 	 */
-	public List<File> getFilesForLibraries(List<File> libraries) {
-		// 复用全局选版结果，仅筛选项目需要的依赖，并保持首次引用顺序。
-		Set<File> needed = new LinkedHashSet<File>();
+	public List<File> getFilesForLibraries(List<File> libraries) throws IOException {
+		// 常规构建的资源与 DEX 请求使用同一批根库，无需重复读取归档和计算摘要。
+		if (libraries == null || this.libraries.equals(canonicalLibraries(libraries))) {
+			return files;
+		}
+		return artifacts.getJars(libraries);
+	}
 
+	/**
+	 * 复制并规范化根库路径，保留输入顺序和重复项，不建立跨构建缓存。
+	 *
+	 * @param libraries 待核对的有序根库列表。
+	 * @return 与调用方列表相互独立的只读路径列表。
+	 * @throws IOException 路径无法规范化。
+	 */
+	private static List<File> canonicalLibraries(List<File> libraries) throws IOException {
+		List<File> result = new ArrayList<File>();
 		for (File library : libraries) {
-			List<File> dependencies = libraryFiles.get(library.getAbsoluteFile());
-			if (dependencies == null) {
-				continue;
-			}
-
-			for (File dependency : dependencies) {
-				needed.add(selectedFiles.get(dependency));
-			}
+			result.add(library.getCanonicalFile());
 		}
-
-		return new ArrayList<File>(needed);
+		return Collections.unmodifiableList(result);
 	}
 
 	/**
-	 * 从已经归入版本组的依赖文件名中提取数字版本。
+	 * 返回项目所选的清单、资源、资产及原生库输入。
 	 *
-	 * @param file 符合数字版本命名规则的依赖文件。
-	 * @return 文件名末尾的数字版本字符串。
-	 * @throws IllegalArgumentException 文件名不符合版本规则。
+	 * @param libraries 项目实际引用的扩展库。
+	 * @return 依赖在前、使用者在后的 Android 类库输入。
+	 * @throws IOException 路径或清单无效。
 	 */
-	private static String version(File file) {
-		Matcher matcher = VERSIONED_JAR.matcher(file.getName());
-		if (!matcher.matches()) {
-			throw new IllegalArgumentException(file.toString());
-		}
-
-		return matcher.group(2);
+	public List<LibraryArtifacts.AndroidLibrary> getAndroidLibraries(List<File> libraries) throws IOException {
+		return artifacts.getAndroidLibraries(libraries);
 	}
 
 	/**
-	 * 按数字段逐段比较版本，缺少的尾段按零处理。
+	 * 使用 Maven 成熟的版本比较实现，支持数字段和 rc、SNAPSHOT 等限定符。
 	 *
-	 * <p>使用任意精度整数，避免长版本段溢出，也不按字符串或浮点数比较。
+	 * <p>所有独立本地 JAR 共用该规则，不在各个归档来源重复实现版本算法。
 	 *
-	 * @param left 左侧数字版本。
-	 * @param right 右侧数字版本。
+	 * @param left 左侧版本。
+	 * @param right 右侧版本。
 	 * @return 负数表示左侧较旧，零表示等价，正数表示左侧较新。
 	 */
 	static int compareVersion(String left, String right) {
-		String[] a = left.split("\\.");
-		String[] b = right.split("\\.");
-
-		for (int i = 0; i < Math.max(a.length, b.length); i++) {
-			BigInteger x = i < a.length ? new BigInteger(a[i]) : BigInteger.ZERO;
-			BigInteger y = i < b.length ? new BigInteger(b[i]) : BigInteger.ZERO;
-			int result = x.compareTo(y);
-			if (result != 0) {
-				return result;
-			}
-		}
-
-		return 0;
-	}
-
-	/**
-	 * 按稳定顺序收集依赖目录第一层的 JAR，不递归扫描源码包等附加目录。
-	 *
-	 * @param directory 类库的依赖目录。
-	 * @return JAR 绝对路径列表；目录不存在时返回空列表。
-	 * @throws IOException 目录存在但无法枚举。
-	 */
-	private static List<File> listJars(File directory) throws IOException {
-		if (!directory.exists()) {
-			return Collections.emptyList();
-		}
-
-		File[] children = directory.listFiles();
-		if (children == null) {
-			throw new IOException("无法读取扩展库依赖目录：" + directory);
-		}
-
-		Arrays.sort(children, FILE_ORDER);
-		List<File> result = new ArrayList<File>();
-		for (File child : children) {
-			if (child.isFile() && child.getName().toLowerCase(java.util.Locale.ROOT).endsWith(".jar")) {
-				result.add(child.getAbsoluteFile());
-			}
-		}
-
-		return result;
-	}
-
-	/**
-	 * 计算依赖内容的 SHA-256 标识，并复用本次选择过程中的已计算结果。
-	 *
-	 * @param file 要读取的依赖文件。
-	 * @param hashes 本次选择使用的内容标识缓存。
-	 * @return 内容摘要的字符串表示，仅用于内容相等性比较。
-	 * @throws IOException 文件无法读取。
-	 */
-	private static String hash(File file, Map<File, String> hashes) throws IOException {
-		String cached = hashes.get(file);
-		if (cached != null) {
-			return cached;
-		}
-
-		// 同一文件在版本冲突检查和最终去重之间只读取一次。
-		try {
-			MessageDigest digest = MessageDigest.getInstance("SHA-256");
-			try (InputStream input = new FileInputStream(file)) {
-				byte[] buffer = new byte[8192];
-				for (int count; (count = input.read(buffer)) != -1;) {
-					digest.update(buffer, 0, count);
-				}
-			}
-
-			String result = Arrays.toString(digest.digest());
-			hashes.put(file, result);
-			return result;
-		} catch (NoSuchAlgorithmException impossible) {
-			throw new IllegalStateException(impossible);
-		}
+		return new ComparableVersion(left).compareTo(new ComparableVersion(right));
 	}
 
 	/**
@@ -326,7 +178,7 @@ public final class Dependencies {
 			throw new IOException("无法读取类目录：" + directory);
 		}
 
-		Arrays.sort(children, FILE_ORDER);
+		Arrays.sort(children);
 		for (File child : children) {
 			if (child.isDirectory()) {
 				validateDirectory(root, child, owners);

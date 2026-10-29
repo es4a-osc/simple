@@ -164,6 +164,7 @@ public final class RuntimeLoader {
 
 	// 本次加载和项目打包共用的依赖选择结果。
 	private Dependencies dependencies;
+	private final File dependencyDirectory;
 
 	// 类名到来源文件的映射，用于按项目实际引用收集扩展库
 	private final Map<String, File> classOriginFiles;
@@ -182,6 +183,7 @@ public final class RuntimeLoader {
 	private Class<? extends Annotation> simpleFunction;
 	private Class<? extends Annotation> simpleProperty;
 	private Class<? extends Annotation> androidUsesPermission;
+	private Class<? extends Annotation> androidUsesPermissions;
 	private Class<? extends Annotation> androidManifestNodes;
 
 	private Class<?> simpleReferenceParameter;
@@ -202,12 +204,21 @@ public final class RuntimeLoader {
 	}
 
 	/**
-	 * 获取此类加载器的 UsesPermission 属性
+	 * 获取当前运行库的单项可重复权限注解类型。
 	 *
-	 * @return  来自运行库的类 {@code UsesPermissions}
+	 * @return 来自运行库的 {@code UsesPermission} 类型。
 	 */
 	public Class<? extends Annotation> getAndroidUsesPermission() {
 		return androidUsesPermission;
+	}
+
+	/**
+	 * 获取当前运行库的批量权限注解类型。
+	 *
+	 * @return 来自运行库的 {@code UsesPermissions} 类型。
+	 */
+	public Class<? extends Annotation> getAndroidUsesPermissions() {
+		return androidUsesPermissions;
 	}
 
 	/**
@@ -233,6 +244,21 @@ public final class RuntimeLoader {
 	 */
 	public RuntimeLoader(Compiler compiler, String platformRuntime, String simpleRuntime,
 			String librariesHome) {
+		this(compiler, platformRuntime, simpleRuntime, librariesHome, null);
+	}
+
+	/**
+	 * 创建加载器并为 AAR 指定项目构建目录。
+	 *
+	 * @param compiler 当前编译器。
+	 * @param platformRuntime 平台类库。
+	 * @param simpleRuntime Simple 运行库。
+	 * @param librariesHome 已安装扩展库根目录。
+	 * @param dependencyDirectory AAR 展开输出目录。
+	 */
+	public RuntimeLoader(Compiler compiler, String platformRuntime, String simpleRuntime,
+			String librariesHome, File dependencyDirectory) {
+		this.dependencyDirectory = dependencyDirectory;
 		this.compiler = compiler;
 		runtimeRoot = new File(simpleRuntime).getAbsoluteFile();
 		librariesRoot = librariesHome == null || librariesHome.trim().isEmpty()
@@ -262,7 +288,8 @@ public final class RuntimeLoader {
 			simpleEvent = loadAnnotationClass("SimpleEvent");
 			simpleFunction = loadAnnotationClass("SimpleFunction");
 			simpleProperty = loadAnnotationClass("SimpleProperty");
-			androidUsesPermission = loadAnnotationClass("UsesPermissions");
+			androidUsesPermission = loadAnnotationClass("UsesPermission");
+			androidUsesPermissions = loadAnnotationClass("UsesPermissions");
 			androidManifestNodes = loadAnnotationClass("ManifestNodes");
 
 			// 加载Simple参考参数超类
@@ -349,32 +376,36 @@ public final class RuntimeLoader {
 			originLibraryDirectories.put(classesFile, directory.getAbsoluteFile());
 		}
 
-		dependencies = new Dependencies(extensionLibraryDirectories);
-		List<File> inputs = new ArrayList<File>();
-		inputs.add(runtimeRoot);
-		for (File directory : extensionLibraryDirectories) {
-			inputs.add(new File(directory, "classes.jar"));
-		}
-		inputs.addAll(dependencies.getFiles());
-		Dependencies.validateClasses(inputs);
-
-		// 依赖先于类库实现装配，加载器和后续打包不能分别选择不同版本。
-		for (File dependency : dependencies.getFiles()) {
-			runtimeClassLoader.addURL(dependency.toURI().toURL());
-		}
+		// 这里只装配本库归档；符号发现直接读类文件，不预先解析全部已安装库的依赖。
 		for (File directory : extensionLibraryDirectories) {
 			runtimeClassLoader.addURL(new File(directory, "classes.jar").toURI().toURL());
 		}
 	}
 
 	/**
-	 * 返回项目实际使用的类库在加载阶段已经选定的依赖 JAR。
+	 * 为项目实际使用的类库按需建立统一依赖结果，后续请求复用同一结果。
 	 *
 	 * @param libraries 项目实际引用的扩展库目录。
-	 * @return 稳定有序的已选依赖；尚未装配扩展库时返回空列表。
+	 * @return 稳定有序的已选依赖。
+	 * @throws IOException 已选依赖无法读取。
 	 */
-	public List<File> getDependenciesForLibraries(List<File> libraries) {
-		return dependencies == null ? Collections.<File>emptyList() : dependencies.getFilesForLibraries(libraries);
+	public List<File> getDependenciesForLibraries(List<File> libraries) throws IOException {
+		if (dependencies == null) {
+			dependencies = new Dependencies(libraries, dependencyDirectory);
+		}
+		return dependencies.getFilesForLibraries(libraries);
+	}
+
+	/**
+	 * 获取与所选代码依赖一致的 Android 类库输入。
+	 *
+	 * @param libraries 项目实际使用的扩展库。
+	 * @return 清单、资源及附加目录的有序输入。
+	 * @throws IOException 依赖输入无法读取。
+	 */
+	public List<LibraryArtifacts.AndroidLibrary> getAndroidLibrariesForLibraries(List<File> libraries) throws IOException {
+		getDependenciesForLibraries(libraries);
+		return dependencies.getAndroidLibraries(libraries);
 	}
 
 	/*
@@ -662,7 +693,8 @@ public final class RuntimeLoader {
 					// TODO: 这里放错地方了。
 					//       我们在这里加载所有的运行时库类，不仅仅是应用程序使用的类。
 					//       我们应该只关心我们编译的应用程序使用的类
-					if (cls.isAnnotationPresent(androidUsesPermission)) {
+					if (cls.isAnnotationPresent(androidUsesPermissions)
+							|| cls.getAnnotationsByType(androidUsesPermission).length > 0) {
 						compiler.addToPermissions(cls, objectSymbol);
 					}
 					if (cls.isAnnotationPresent(androidManifestNodes)) {
@@ -758,7 +790,7 @@ public final class RuntimeLoader {
 		}
 	}
 
-	private void rememberClassOrigin(String className, File originFile) {
+	void rememberClassOrigin(String className, File originFile) {
 		File previous = classOriginFiles.get(className);
 		if (previous != null && !previous.equals(originFile)) {
 			compiler.error(Scanner.NO_POSITION, "运行库类重复：%1", className);
@@ -804,6 +836,20 @@ public final class RuntimeLoader {
 	}
 
 	/**
+	 * 登记直接从扩展库字节码发现的组件实现，不加载其第三方父类。
+	 *
+	 * @param component 组件的 JVM 内部名称。
+	 * @param implementation 实现类的 JVM 内部名称。
+	 */
+	void registerLibraryComponent(String component, String implementation) {
+		ObjectSymbol symbol = ObjectSymbol.getObjectSymbol(compiler, component);
+		String previous = componentMap.putIfAbsent(symbol, implementation);
+		if (previous != null && !previous.equals(implementation)) {
+			compiler.error(Scanner.NO_POSITION, "组件存在多个实现：%1 / %2", previous, implementation);
+		}
+	}
+
+	/**
 	 * 返回给定组件对象类型的实现的内部名称。
 	 *
 	 * @param type  组件对象类型
@@ -823,12 +869,16 @@ public final class RuntimeLoader {
 		classList = new ArrayList<Class<?>>();
 		classMap = new HashMap<Class<?>, ObjectSymbol>();
 		visitClassDirectories(runtimeRoot, runtimeRoot);
-		for (File directory : extensionLibraryDirectories) {
-			visitClassArchive(new File(directory, "classes.jar").getAbsoluteFile());
-		}
 
 		// 查找Simple的组件实现
 		if (compiler.getErrorCount() == 0) findComponentImplementations();
+		if (compiler.getErrorCount() == 0 && !extensionLibraryDirectories.isEmpty()) {
+			try {
+				new LibrarySymbols(compiler, this, runtimeRoot, extensionLibraryDirectories).load();
+			} catch (IOException failure) {
+				compiler.error(Scanner.NO_POSITION, "读取扩展库符号失败：%1", failure.getMessage());
+			}
+		}
 		classList = null;
 		classMap = null;
 	}

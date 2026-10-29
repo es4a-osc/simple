@@ -22,7 +22,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Map;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import simple.util.Execution;
 
@@ -36,6 +37,9 @@ public final class Toolchain {
 	 * Android 编译平台 API 等级，同时作为生成应用的目标 SDK 等级。
 	 */
 	public static final int API_LEVEL = 30;
+
+	/** 应用清单与 D8 共用的最低 Android API 等级。 */
+	public static final int MIN_API_LEVEL = 24;
 
 	// 外部工具路径统一由工具链根据构建环境解析，调用方不关心可执行文件位置。
 	private static final String EXECUTABLE_EXTENSION = System.getProperty("os.name").startsWith("Windows") ? ".exe" : "";
@@ -132,9 +136,37 @@ public final class Toolchain {
 	}
 
 	/**
+	 * 将实际引用的类库资源纳入首次链接，为项目主题及布局中的跨库引用分配编号。
+	 *
+	 * @param workingDirectory 构建工作目录。
+	 * @param outputFile 首次链接资源包。
+	 * @param manifestFile 合并后的应用清单。
+	 * @param platformFile 平台 android.jar。
+	 * @param assetsDirectories 已选资产目录。
+	 * @param resourceSymbolsFile 完整 R.txt 输出。
+	 * @param javaSourceDirectory 应用 R.java 输出根目录。
+	 * @param emittedIdsFile 稳定资源编号输出。
+	 * @param compiledLibraryResources 依赖在前、使用者在后的类库资源。
+	 * @param compiledProjectResources 项目资源，覆盖优先级最高。
+	 * @param out 普通输出。
+	 * @param err 错误输出。
+	 * @return 资源链接成功时返回 true。
+	 */
+	public static boolean generateResourceIndex(File workingDirectory, File outputFile, File manifestFile,
+			String platformFile, List<File> assetsDirectories, File resourceSymbolsFile,
+			File javaSourceDirectory, File emittedIdsFile, List<File> compiledLibraryResources,
+			File compiledProjectResources, PrintStream out, PrintStream err) {
+		List<File> overlays = new ArrayList<File>(compiledLibraryResources);
+		overlays.add(compiledProjectResources);
+		return linkResources(workingDirectory, outputFile, manifestFile, platformFile, assetsDirectories,
+				resourceSymbolsFile, javaSourceDirectory, emittedIdsFile, null,
+				Collections.<File>emptyList(), overlays, out, err);
+	}
+
+	/**
 	 * 使用完整Android清单和首次链接保存的稳定资源编号生成最终资源包。
 	 *
-	 * <p>该步骤只更新{@code .ap_}资源包，不重复生成{@code R.txt}或{@code R.java}。
+	 * <p>该步骤使用稳定编号生成最终资源包，并刷新完整的资源符号及应用 R.java。
 	 *
 	 * @param workingDirectory 命令运行目录
 	 * @param outputFile 最终{@code .ap_}资源包
@@ -143,7 +175,7 @@ public final class Toolchain {
 	 * @param assetsDirectories 项目及扩展库资产目录
 	 * @param stableIdsFile 首次链接生成的稳定资源编号文件
 	 * @param compiledLibraryResources AAPT2已编译的扩展库资源文件，按稳定顺序加入；
-	 *        扩展库之间的同名资源仍由AAPT2报告冲突
+	 *        依赖在前、使用者在后，按 Android 资源覆盖语义合并
 	 * @param compiledProjectResources AAPT2已编译的项目资源文件，按AAPT2覆盖语义处理同名资源；
 	 *        同名样式默认合并条目
 	 * @param out 标准输出
@@ -155,13 +187,12 @@ public final class Toolchain {
 			List<File> assetsDirectories, File stableIdsFile,
 			List<File> compiledLibraryResources, File compiledProjectResources,
 			PrintStream out, PrintStream err) {
-		// 没有扩展库资源时，项目资源必须作为普通输入；否则作为最后的覆盖输入。
-		List<File> regularResources = compiledLibraryResources.isEmpty()
-				? Collections.singletonList(compiledProjectResources) : compiledLibraryResources;
-		List<File> overlayResources = compiledLibraryResources.isEmpty()
-				? Collections.<File>emptyList() : Collections.singletonList(compiledProjectResources);
+		// 依赖在前、项目在后，全部显式作为覆盖输入，保持与首次资源链接相同的优先级。
+		List<File> regularResources = Collections.emptyList();
+		List<File> overlayResources = new ArrayList<File>(compiledLibraryResources);
+		overlayResources.add(compiledProjectResources);
 		return linkResources(workingDirectory, outputFile, manifestFile, platformFile,
-				assetsDirectories, null, null, null, stableIdsFile,
+				assetsDirectories, new File(stableIdsFile.getParentFile(), "R.txt"), stableIdsFile.getParentFile(), null, stableIdsFile,
 				regularResources, overlayResources, out, err);
 	}
 
@@ -261,6 +292,21 @@ public final class Toolchain {
 	 */
 	public static boolean compileJava(File workingDirectory,
 			File outputDirectory, File sourceFile, PrintStream out, PrintStream err) {
+		return compileJava(workingDirectory, outputDirectory, Collections.singletonList(sourceFile), out, err);
+	}
+
+	/**
+	 * 一次编译应用与各类库的资源类，使所有包使用同一次链接的资源编号。
+	 *
+	 * @param workingDirectory 当前项目构建目录。
+	 * @param outputDirectory 类文件输出目录。
+	 * @param sourceFiles 生成的资源 Java 文件。
+	 * @param out 普通输出。
+	 * @param err 错误输出。
+	 * @return Java 编译成功时返回 true。
+	 */
+	public static boolean compileJava(File workingDirectory, File outputDirectory,
+			List<File> sourceFiles, PrintStream out, PrintStream err) {
 		List<String> commandline = new ArrayList<String>();
 		// javac可执行文件。
 		commandline.add(JAVAC_BINARY);
@@ -271,25 +317,27 @@ public final class Toolchain {
 		commandline.add("-d");
 		commandline.add(outputDirectory.getAbsolutePath());
 		// 最后的无选项参数是要编译的R.java源码文件。
-		commandline.add(sourceFile.getAbsolutePath());
+		for (File sourceFile : sourceFiles) {
+			commandline.add(sourceFile.getAbsolutePath());
+		}
 		return Execution.execute(workingDirectory, commandline.toArray(new String[0]), out, err);
 	}
 
 	/**
-	 * 使用 D8 转换项目类、运行库及依赖，生成单个 {@code classes.dex}。
+	 * 使用 D8 转换项目类、运行库及依赖，按索引输出一个或多个 DEX。
 	 *
-	 * <p>按最低 API 转换受支持的 Java 语言特性并保留调试信息。只在转换成功且仅生成一个 DEX 时写入文件，
-	 * 不通过拆分 DEX 绕过方法数限制；最低 API 必须与应用清单一致。
+	 * <p>按最低 API 转换受支持的 Java 语言特性并保留调试信息；最低 API 必须与应用清单一致。
+	 * D8 整体成功后才写入本次结果，返回值只包含本次输出，不混入旧构建留下的次级 DEX。
 	 *
-	 * @param outputFile 要生成的{@code classes.dex}文件
+	 * @param outputDirectory 专用于本次 DEX 输出的生成目录
 	 * @param inputFiles 项目类目录、Simple运行库、扩展库及其依赖
 	 * @param platformFile 编译平台的 {@code android.jar}，只用于解析系统类型，不打入应用
 	 * @param minApiLevel 应用最低支持的 Android API 等级
 	 * @param out 标准输出
 	 * @param err 错误输出
-	 * @return 执行成功返回{@code true}，否则返回{@code false}
+	 * @return 按 DEX 索引排序的本次输出；失败时返回 {@code null}
 	 */
-	public static boolean generateDex(File outputFile, List<File> inputFiles, File platformFile, int minApiLevel,
+	public static List<File> generateDex(File outputDirectory, List<File> inputFiles, File platformFile, int minApiLevel,
 			PrintStream out, PrintStream err) {
 		try {
 			// 保留输入来源，便于从编译日志定位出错的类或依赖。
@@ -327,7 +375,7 @@ public final class Toolchain {
 			};
 
 			// 先接收转换结果；D8 整体成功前不覆盖已有文件。
-			final AtomicReference<byte[]> dex = new AtomicReference<byte[]>();
+			final Map<Integer, byte[]> dex = new ConcurrentSkipListMap<Integer, byte[]>();
 
 			// 最低 API 与应用清单保持一致，启用语言特性转换并保留调试信息。
 			D8Command.Builder command = D8Command.builder(diagnostics);
@@ -337,22 +385,20 @@ public final class Toolchain {
 			command.addLibraryFiles(platformFile.toPath());
 			command.setProgramConsumer(new DexIndexedConsumer() {
 				/**
-				 * 接收唯一 DEX 的数据视图，复制输出供转换整体成功后写入。
+				 * 按索引保存 DEX 数据副本；D8 可能并发回调且顺序不固定。
 				 *
 				 * @param index DEX 索引。
 				 * @param data 仅在本次回调期间有效的 DEX 数据视图。
 				 * @param descriptors 本 DEX 的类描述符。
 				 * @param handler D8 诊断接收器。
-				 * @throws IllegalStateException 工具尝试输出多个 DEX。
+				 * @throws IllegalStateException D8 提供重复或负数索引。
 				 */
 				@Override
 				public void accept(int index, ByteDataView data, Set<String> descriptors, DiagnosticsHandler handler) {
-					if (index != 0) {
-						throw new IllegalStateException("当前编译器只支持单个 classes.dex，不能输出多个 DEX。");
+					if (index < 0 || dex.putIfAbsent(index, data.copyByteData()) != null) {
+						throw new IllegalStateException("D8 输出了无效或重复的 DEX 索引：" + index);
 					}
 
-					// 回调结束后视图会失效，必须保存独立的字节副本。
-					dex.set(data.copyByteData());
 				}
 
 				/**
@@ -410,37 +456,60 @@ public final class Toolchain {
 
 			D8.run(command.build());
 
-			// 无有效输出时报告失败，避免后续打包沿用旧的 classes.dex。
-			if (dex.get() == null) {
-				err.println("D8 未生成 classes.dex。");
-				return false;
+			// 输出必须从 0 连续编号；先检查全部结果，再改动已有构建文件。
+			if (dex.isEmpty()) {
+				throw new IOException("D8 未生成 DEX。");
+			}
+			for (int index = 0; index < dex.size(); index++) {
+				if (!dex.containsKey(index)) {
+					throw new IOException("D8 输出的 DEX 索引不连续。");
+				}
 			}
 
-			Files.write(outputFile.toPath(), dex.get());
-			return true;
+			Files.createDirectories(outputDirectory.toPath());
+			List<File> outputs = new ArrayList<File>();
+			for (int index = 0; index < dex.size(); index++) {
+				String name = index == 0 ? "classes.dex" : "classes" + (index + 1) + ".dex";
+				File output = new File(outputDirectory, name);
+				out.println("正在生成 DEX：" + output.getName());
+				Files.write(output.toPath(), dex.get(index));
+				outputs.add(output);
+			}
+
+			// 多 DEX 变为单 DEX 时清除旧次级文件，不触碰目录中的其它生成物。
+			File[] previous = outputDirectory.listFiles();
+			if (previous == null) {
+				throw new IOException("无法枚举 DEX 输出目录：" + outputDirectory);
+			}
+			for (File file : previous) {
+				if (file.isFile() && file.getName().matches("classes[0-9]*\\.dex") && !outputs.contains(file)) {
+					Files.delete(file.toPath());
+				}
+			}
+			return outputs;
 		} catch (Exception failure) {
 			failure.printStackTrace(err);
-			return false;
+			return null;
 		}
 	}
 
 	/**
-	 * 组装资源包与 {@code classes.dex}，补入所选 JAR 的 Java 资源，生成未签名 APK。
+	 * 组装资源包与全部 DEX，补入所选 JAR 的 Java 资源，生成未签名 APK。
 	 *
 	 * @param outputFile 要生成的APK文件
 	 * @param resourcesFile AAPT2生成的{@code .ap_}资源包
-	 * @param dexFile D8生成的{@code classes.dex}文件
+	 * @param dexFiles D8 本次生成的全部 DEX，按索引排序
 	 * @param dependencyFiles 实际引用的扩展库 classes.jar 及已选依赖 JAR
 	 * @param nativeDirectories 扩展库原生库目录
 	 * @param err 错误输出
 	 * @return 执行成功返回{@code true}，否则返回{@code false}
 	 */
 	public static boolean buildApplication(File outputFile, File resourcesFile,
-			File dexFile, List<File> dependencyFiles,
+			List<File> dexFiles, List<File> dependencyFiles,
 			List<File> nativeDirectories, PrintStream err) {
 		try {
 			// 组装、Java 资源合并全部成功后，才发布新的未签名 APK。
-			ApkBuilder.build(outputFile, resourcesFile, dexFile, dependencyFiles, nativeDirectories);
+			ApkBuilder.build(outputFile, resourcesFile, dexFiles, dependencyFiles, nativeDirectories);
 			return true;
 		} catch (Exception failure) {
 			failure.printStackTrace(err);
@@ -516,6 +585,18 @@ public final class Toolchain {
 	public static boolean signApplication(String keystoreLocation,
 			String passwordSource, File inputFile, File outputFile, String alias,
 			String storeType, PrintStream err) {
+		try {
+			if (inputFile.getCanonicalFile().equals(outputFile.getCanonicalFile())) {
+				throw new IOException("签名输出不能覆盖输入 APK。");
+			}
+
+			// 清除上次输出，避免 apksigner 复用文件时保留旧长度或把旧 APK 当成本次结果。
+			Files.deleteIfExists(outputFile.toPath());
+			Files.deleteIfExists(new File(outputFile.getPath() + ".idsig").toPath());
+		} catch (IOException failure) {
+			failure.printStackTrace(err);
+			return false;
+		}
 		List<String> commandline = new ArrayList<String>();
 		commandline.add(JAVA_BINARY);
 		commandline.add("-jar");
@@ -527,6 +608,9 @@ public final class Toolchain {
 		commandline.add("true");
 		commandline.add("--v2-signing-enabled");
 		commandline.add("true");
+		// 当前采用普通 APK 安装，不生成仅供增量安装使用的独立 .idsig 文件。
+		commandline.add("--v4-signing-enabled");
+		commandline.add("false");
 
 		commandline.add("--ks");
 		commandline.add(keystoreLocation);
@@ -545,22 +629,15 @@ public final class Toolchain {
 		commandline.add("--out");
 		commandline.add(outputFile.getAbsolutePath());
 		commandline.add(inputFile.getAbsolutePath());
-		return Execution.execute(null, commandline.toArray(new String[0]), null, err);
-	}
-
-	/**
-	 * 按 APK 清单声明的最低 API 校验签名，校验过程不修改文件。
-	 *
-	 * @param applicationFile 已签名的 APK 文件
-	 * @param out 标准输出
-	 * @param err 错误输出
-	 * @return 所声明版本范围内的签名校验通过时返回 {@code true}，否则返回 {@code false}
-	 */
-	public static boolean verifyApplication(File applicationFile, PrintStream out, PrintStream err) {
-		String[] commandline = {
-			JAVA_BINARY, "-jar", APKSIGNER_JAR, "verify",
-			applicationFile.getAbsolutePath()
-		};
-		return Execution.execute(null, commandline, out, err);
+		if (!Execution.execute(null, commandline.toArray(new String[0]), null, err)) {
+			// 签名失败不能留下可能不完整的最终 APK，调用方据此终止构建。
+			try {
+				Files.deleteIfExists(outputFile.toPath());
+			} catch (IOException failure) {
+				failure.printStackTrace(err);
+			}
+			return false;
+		}
+		return true;
 	}
 }

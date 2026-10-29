@@ -1,0 +1,248 @@
+/*
+Simple 编译器、Android 运行库、JVM 测试及各平台分发的源码构建。
+解析工程源码随本仓库维护，分发及发布时复制到编译器旁的 gradle/ 目录。
+xhwsd@qq.com 2026-10-29
+*/
+import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.testing.Test
+
+plugins {
+	id 'base'
+}
+
+version = '0.1.1.dev-build'
+def simpleRoot = file('..').canonicalFile
+def sdkRoot = new File(simpleRoot, '../sdk').canonicalFile
+def outputRoot = new File(simpleRoot, 'build')
+def librariesRoot = new File(simpleRoot, 'libs')
+def distributionRoot = new File(simpleRoot, 'dist')
+def reportsRoot = new File(simpleRoot, 'reports')
+def javaHome = new File(sdkRoot, 'tools/jdk-11.0.32.1')
+def androidHome = new File(sdkRoot, 'tools/android-sdk')
+def androidJar = new File(androidHome, 'platforms/android-30/android.jar')
+def d8Jar = providers.gradleProperty('d8.jar').map { file(it) }
+	.orElse(new File(androidHome, 'platforms/android-30/tools/lib/d8.jar'))
+def junitJar = new File(simpleRoot, 'third_party/junit-4.12.jar')
+// 应用依赖解析脚本属于 Simple 源码，不能从 SDK 发布目录反向读取。
+def resolverRoot = new File(simpleRoot, 'gradle/resolver')
+def resolverFiles = ['settings.gradle', 'build.gradle', 'gradle.properties']
+def manifestNames = ['SimpleCompiler.json', 'SimpleAndroidRuntime.json']
+def iconsRoot = new File(simpleRoot, 'icons')
+layout.buildDirectory = outputRoot
+
+repositories {
+	google()
+	mavenCentral()
+}
+
+configurations {
+	compilerTools {
+		canBeConsumed = false
+	}
+	testLibraries {
+		canBeConsumed = false
+	}
+}
+
+dependencies {
+	compilerTools 'com.android.tools.build:manifest-merger:30.4.2'
+	compilerTools 'com.android.tools:sdk-common:30.4.2'
+	compilerTools 'com.google.code.gson:gson:2.10.1'
+	compilerTools 'org.ow2.asm:asm:9.7.1'
+	compilerTools 'org.apache.maven:maven-artifact:3.9.9'
+
+	// 沿用本地 JUnit 4.12；Hamcrest 1.3 是该版本既有的运行依赖。
+	testLibraries files(junitJar)
+	testLibraries 'org.hamcrest:hamcrest-core:1.3'
+}
+
+// 在执行构建前明确检查本地工具，不下载 JDK 或 Android 平台。
+def validateTools = tasks.register('validateTools') {
+	group = 'verification'
+	description = '检查源码构建所需的 JDK 11、Android API 30 和配套文件。'
+	doLast {
+		if (JavaVersion.current() != JavaVersion.VERSION_11) {
+			throw new GradleException('请使用 SDK 的 JDK 11 启动 Gradle。')
+		}
+		def executable = System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows') ? '.exe' : ''
+		def required = [new File(javaHome, "bin/javac${executable}"), androidJar, d8Jar.get(), junitJar]
+		required.addAll(resolverFiles.collect { new File(resolverRoot, it) })
+		required.addAll(manifestNames.collect { new File(simpleRoot, it) })
+		required.each { input ->
+			if (!input.isFile()) {
+				throw new GradleException("缺少源码构建文件：${input}")
+			}
+		}
+		if (!iconsRoot.isDirectory() || fileTree(iconsRoot) { include '*.svg' }.isEmpty()) {
+			throw new GradleException("缺少交付图标：${iconsRoot}")
+		}
+	}
+}
+
+// 将编译器依赖集中到源码项目的 libs/；clean 不删除，编译、测试与分发共用。
+def prepare = tasks.register('prepare', Sync) {
+	dependsOn validateTools
+	from configurations.compilerTools
+	into librariesRoot
+	// 只同步 Gradle 管理的 JAR，保留目录中已有的其它附件。
+	preserve { exclude '*.jar' }
+}
+
+def compilerLibraries = fileTree(librariesRoot) { include '*.jar' }
+compilerLibraries.builtBy(prepare)
+
+tasks.withType(JavaCompile).configureEach {
+	dependsOn validateTools
+	sourceCompatibility = '11'
+	targetCompatibility = '11'
+	options.encoding = 'UTF-8'
+	options.debug = true
+	options.deprecation = true
+	options.compilerArgs.add('-Xlint:unchecked')
+	// 使用当前 SDK JDK 的编译接口，避免 Windows 外部 javac 参数文件的字符集差异。
+}
+
+def compileRuntime = tasks.register('compileRuntime', JavaCompile) {
+	description = '使用 Android API 30 编译运行库。'
+	source fileTree(new File(simpleRoot, 'src')) { include 'simple/runtime/**/*.java' }
+	classpath = files(androidJar)
+	destinationDirectory = new File(outputRoot, 'runtime/android/classes')
+}
+
+def compileCompiler = tasks.register('compileCompiler', JavaCompile) {
+	dependsOn prepare
+	description = '编译 Simple 语言编译器。'
+	source fileTree(new File(simpleRoot, 'src')) {
+		include 'simple/classfiles/**/*.java', 'simple/compiler/**/*.java', 'simple/tools/**/*.java', 'simple/util/**/*.java'
+	}
+	classpath = compilerLibraries + files(d8Jar)
+	destinationDirectory = new File(outputRoot, 'compiler/classes')
+}
+
+def compilerJar = tasks.register('compilerJar', Jar) {
+	dependsOn compileCompiler
+	archiveFileName = 'SimpleCompiler.jar'
+	destinationDirectory = new File(outputRoot, 'jars')
+	from compileCompiler.flatMap { it.destinationDirectory }
+	from(new File(simpleRoot, 'src')) { include 'simple/compiler/resources/simple.png' }
+	manifest { attributes 'Main-Class': 'simple.compiler.Main' }
+}
+
+def runtimeJar = tasks.register('runtimeJar', Jar) {
+	dependsOn compileRuntime
+	archiveFileName = 'SimpleAndroidRuntime.jar'
+	destinationDirectory = new File(outputRoot, 'jars')
+	from compileRuntime.flatMap { it.destinationDirectory }
+}
+
+// Sync 只保留当前交付内容，旧依赖和已取消的脚本配置不会残留在分发目录。
+def commonDistribution = tasks.register('commonDistribution', Sync) {
+	dependsOn compilerJar, runtimeJar, prepare
+	into new File(distributionRoot, 'common')
+	from compilerJar
+	from runtimeJar
+	// 清单和图标作为外置交付文件复制，不进入编译器或运行库 JAR。
+	from(simpleRoot) {
+		include manifestNames
+		include 'icons/**'
+	}
+	from(prepare) { into 'libs' }
+	from(resolverRoot) {
+		include resolverFiles
+		into 'gradle'
+	}
+}
+
+def distribution = tasks.register('distribution') {
+	group = 'distribution'
+	description = '生成 common、Windows、Linux、macOS 分发及 ZIP 包。'
+	dependsOn commonDistribution
+}
+['windows': ['simplec.bat', 'newsimpleproject.bat'], 'linux': ['simplec', 'newsimpleproject'],
+	'mac': ['simplec', 'newsimpleproject']].each { platform, scripts ->
+	def platformDirectory = new File(distributionRoot, platform)
+	def platformDistribution = tasks.register("${platform}Distribution", Sync) {
+		dependsOn commonDistribution
+		into platformDirectory
+		from commonDistribution
+		from(new File(simpleRoot, 'scripts')) {
+			include scripts
+			if (platform != 'windows') {
+				filePermissions { unix('rwxr-xr-x') }
+			}
+		}
+	}
+	def platformZip = tasks.register("${platform}Zip", Zip) {
+		dependsOn platformDistribution
+		archiveFileName = "Simple-${platform}-${project.version}.zip"
+		destinationDirectory = new File(distributionRoot, 'zips')
+		from platformDistribution
+		// Windows 文件系统不保存执行位，必须在 ZIP 条目中明确设置脚本权限。
+		if (platform != 'windows') {
+			filesMatching(scripts) { permissions { unix('rwxr-xr-x') } }
+		}
+	}
+	distribution.configure { dependsOn platformZip }
+}
+
+def compileTests = tasks.register('compileTests', JavaCompile) {
+	dependsOn compileCompiler, compileRuntime
+	description = '编译现有 JVM 回归测试。'
+	source fileTree(new File(simpleRoot, 'tests')) { include '**/*.java' }
+	classpath = files(compileCompiler.flatMap { it.destinationDirectory },
+		compileRuntime.flatMap { it.destinationDirectory }, d8Jar) + compilerLibraries + configurations.testLibraries
+	destinationDirectory = new File(outputRoot, 'tests/classes')
+}
+
+// 测试从本次编译器 JAR 读取代码与图标；保留相对路径及子进程的完整运行条件。
+def test = tasks.register('test', Test) {
+	dependsOn compileTests, distribution
+	group = 'verification'
+	description = '逐类隔离执行现有 JUnit JVM 测试，失败立即使构建失败。'
+	testClassesDirs = files(compileTests.flatMap { it.destinationDirectory })
+	classpath = testClassesDirs + files(compilerJar, compileRuntime.flatMap { it.destinationDirectory }, d8Jar) +
+		compilerLibraries + configurations.testLibraries
+	useJUnit()
+	include '**/*Test*.class'
+	exclude '**/AllTests.class', '**/*$*'
+	workingDir = simpleRoot
+	maxParallelForks = 1
+	forkEvery = 1
+	maxHeapSize = '512m'
+	environment 'JAVA_HOME', javaHome.path
+	environment 'ANDROID_HOME', androidHome.path
+	environment 'SIMPLE_HOME', new File(distributionRoot, 'windows').path
+	systemProperty 'file.encoding', 'UTF-8'
+	systemProperty 'user.language', 'zh'
+	systemProperty 'user.region', 'CN'
+	binaryResultsDirectory = new File(outputRoot, 'tests/results')
+	reports.junitXml.outputLocation = new File(reportsRoot, 'tests')
+	reports.html.outputLocation = new File(reportsRoot, 'tests/html')
+	inputs.files(commonDistribution)
+	inputs.files(fileTree(new File(simpleRoot, 'tests')) { exclude '**/build/**' })
+	testLogging {
+		events 'failed', 'skipped'
+		exceptionFormat = 'full'
+	}
+	doFirst {
+		// Gradle 测试工作进程的引导类路径不包含业务类；为既有子进程调用提供完整输入。
+		systemProperty 'java.class.path', classpath.asPath
+	}
+	afterSuite { descriptor, result ->
+		if (!descriptor.parent) {
+			logger.lifecycle("JVM 测试：${result.testCount} 项，失败 ${result.failedTestCount} 项，跳过 ${result.skippedTestCount} 项。")
+		}
+	}
+}
+
+tasks.named('assemble') { dependsOn distribution }
+tasks.named('check') { dependsOn test }
+
+// Gradle 项目缓存不属于构建结果；clean 保留它，避免删除当前进程持有的缓存锁。
+tasks.named('clean', Delete) {
+	setDelete(provider {
+		((outputRoot.listFiles() ?: []) as List).findAll { it.name != 'cache' } + [distributionRoot, reportsRoot]
+	})
+}
+
+defaultTasks 'build'

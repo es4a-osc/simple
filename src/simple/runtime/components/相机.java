@@ -6,6 +6,7 @@ import simple.runtime.annotations.SimpleEvent;
 import simple.runtime.annotations.SimpleFunction;
 import simple.runtime.annotations.SimpleObject;
 import simple.runtime.annotations.SimpleProperty;
+import simple.runtime.annotations.UsesPermission;
 import simple.runtime.annotations.UsesPermissions;
 
 /**
@@ -22,9 +23,12 @@ import simple.runtime.annotations.UsesPermissions;
 	// 系统拍摄和持续照明需要相机权限；媒体选择使用用户授予的单项访问权限。
 	"android.permission.CAMERA"
 )
+// 旧系统的临时拍摄输出需要共享存储写入权限，新系统不再请求它。
+@UsesPermission(
+	permissionName = "android.permission.WRITE_EXTERNAL_STORAGE",
+	maxSdkVersion = 28
+)
 @ManifestNodes(rootXml =
-	// 旧系统的临时拍摄输出需要共享存储写入权限，新系统不再请求它。
-	"<uses-permission android:name=\"android.permission.WRITE_EXTERNAL_STORAGE\" android:maxSdkVersion=\"28\" />" +
 	"<uses-feature android:name=\"android.hardware.camera\" android:required=\"false\" />" +
 	"<uses-feature android:name=\"android.hardware.camera.autofocus\" android:required=\"false\" />"
 )
