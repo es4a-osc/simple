@@ -4,6 +4,7 @@ import junit.framework.TestCase;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -82,11 +83,10 @@ public final class CompilerAarBuildTest extends TestCase {
 		writeJar(embedded, classes, "fixture/embedded/Helper.class", "fixture/embedded.txt");
 		File aar = new File(installed, "aars/feature.aar");
 		Files.createDirectories(aar.getParentFile().toPath());
-		// 编译后的完整目录不依赖 build；处理后的清单独立于作者输入，消费时只使用声明的清单。
-		write(installed, "AndroidManifest.generated.xml", "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\" package=\"fixture.library\">"
+		// 完整交付无需开发目录，以标准名称携带处理后的清单。
+		write(installed, "AndroidManifest.xml", "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\" package=\"fixture.library\">"
 				+ "<uses-sdk android:minSdkVersion=\"24\"/><application><meta-data android:name=\"fixture.generated\" android:value=\"used\"/></application></manifest>");
-		write(installed, "AndroidManifest.xml", "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\" package=\"fixture.author\">"
-				+ "<application><meta-data android:name=\"fixture.author\" android:value=\"unused\"/></application></manifest>");
+
 		try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(aar.toPath()))) {
 			entry(zip, "AndroidManifest.xml", "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\" package=\"fixture.aar\"><uses-permission android:name=\"android.permission.INTERNET\"/><application android:extractNativeLibs=\"false\"/></manifest>".getBytes(StandardCharsets.UTF_8));
 			entry(zip, "R.txt", "int string message 0x0\n".getBytes(StandardCharsets.UTF_8));
@@ -97,8 +97,7 @@ public final class CompilerAarBuildTest extends TestCase {
 			entry(zip, "libs/helper.jar", Files.readAllBytes(embedded.toPath()));
 		}
 		// 新式交付只有本地原包和无线上依赖的原生声明，应用构建不应因此启动 Gradle。
-		write(installed, "dependencies.json", "{\"schemaVersion\":2,\"namespace\":\"fixture.library\",\"java\":11,\"minSdk\":24,"
-				+ "\"module\":\"dependencies.module\",\"manifest\":\"AndroidManifest.generated.xml\",\"files\":[{\"file\":\"aars/feature.aar\"}]}");
+
 		write(installed, "dependencies.module", "{\"formatVersion\":\"1.1\",\"component\":{\"group\":\"es4a.extension\","
 				+ "\"module\":\"fixture.library\",\"version\":\"1.0\"},\"variants\":[{\"name\":\"runtime\","
 				+ "\"attributes\":{\"org.gradle.usage\":\"java-runtime\"}}]}");
@@ -107,7 +106,7 @@ public final class CompilerAarBuildTest extends TestCase {
 		writeJar(new File(second, "classes.jar"), classes, "fixture/library/Extra.class", "fixture/second.txt");
 		Files.createDirectories(new File(second, "aars").toPath());
 		Files.copy(aar.toPath(), new File(second, "aars/feature.aar").toPath());
-		// 未引用的库既缺第三方父类，又有损坏的依赖索引；两者都不能阻断本项目。
+		// 未引用的库既缺第三方父类，又有损坏的模块声明；两者都不能阻断本项目。
 		File unused = new File(root, "installed/unused");
 		Files.createDirectories(unused.toPath());
 		ClassWriter writer = new ClassWriter(0);
@@ -116,7 +115,7 @@ public final class CompilerAarBuildTest extends TestCase {
 		try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(new File(unused, "classes.jar").toPath()))) {
 			entry(output, "unused/Feature.class", writer.toByteArray());
 		}
-		write(unused, "dependencies.json", "故意损坏的未使用依赖索引");
+		write(unused, "dependencies.module", "故意损坏的未使用模块声明");
 
 		File project = new File(root, "project");
 		write(project, "project.properties", "main=fixture.app.Main\nname=AAR构建测试\nsource=./src\nres=./res\nassets=./assets\nbuild=./build\n");
@@ -141,6 +140,9 @@ public final class CompilerAarBuildTest extends TestCase {
 		String successfulOutput = Files.readString(new File(root, "compiler-0.log").toPath());
 		assertTrue(successfulOutput.contains("构建完成"));
 		assertTrue(successfulOutput.contains("正在生成 DEX：classes.dex"));
+		assertTrue(successfulOutput.contains("正在生成 Simple 类文件"));
+		assertTrue(successfulOutput.indexOf("正在生成 Simple 类文件") < successfulOutput.indexOf("正在转换字节码：D8"));
+		assertTrue(successfulOutput.indexOf("正在转换字节码：D8") < successfulOutput.indexOf("正在生成 DEX：classes.dex"));
 		assertTrue(successfulOutput.contains("正在生成应用：unsigned.apk"));
 		assertTrue(successfulOutput.contains("正在对齐应用：aligned.apk"));
 		assertTrue(successfulOutput.contains("正在调试签名：signed.apk -AndroidDebugKey"));
@@ -195,6 +197,16 @@ public final class CompilerAarBuildTest extends TestCase {
 			assertTrue(Arrays.equals(payload, zip.getInputStream(zip.getEntry("assets/second-build.bin")).readAllBytes()));
 		}
 
+		// AAPT2 的正常输入错误应带阶段诊断退出，不抛内部异常或误报构建成功。
+		File invalidResource = write(project, "res/values/invalid.xml", "<resources><string>");
+		assertEquals(1, runCompiler(root, properties, new File(root, "installed"), false, null));
+		String resourceFailure = Files.readString(new File(root, "compiler-1.log").toPath());
+		assertTrue(resourceFailure, resourceFailure.contains("项目资源编译失败"));
+		assertFalse(resourceFailure.contains("IllegalStateException"));
+		assertFalse(resourceFailure.contains("构建完成"));
+		assertFalse(resourceFailure.contains("正在生成 DEX"));
+		Files.delete(invalidResource.toPath());
+
 		// 依赖发现阶段不能吞掉正式语义错误；签名前失败仍保留此前成功构建的 APK。
 		byte[] previous = Files.readAllBytes(apk.toPath());
 		write(project, "src/fixture/app/Main.simple", "事件 Main.初始化()\n\t断言真(fixture.library.Dependency.Value() = R.string_message)\n\t不存在的函数()\n结束 事件\n$属性\n\t$资源 $窗口\n\t$定义 Main $为 窗口\n\t$结束 $定义\n$结束 $属性\n");
@@ -210,6 +222,8 @@ public final class CompilerAarBuildTest extends TestCase {
 		assertEquals(1, runCompiler(root, properties, new File(root, "installed"), false, "incorrect-password"));
 		String failedOutput = Files.readString(new File(root, "compiler-1.log").toPath());
 		assertTrue(failedOutput.contains("正在发布签名"));
+		assertTrue(failedOutput.contains("APK 签名失败"));
+		assertFalse(failedOutput.contains("IllegalStateException"));
 		assertFalse(failedOutput.contains("构建完成"));
 		assertFalse(apk.exists());
 		assertTrue(Arrays.equals(originalKeystore, Files.readAllBytes(keystore.toPath())));
@@ -234,6 +248,30 @@ public final class CompilerAarBuildTest extends TestCase {
 	}
 
 	/**
+	 * 类文件无法写入时立即停止，不能继续生成 DEX、签名或输出成功提示。
+	 *
+	 * @throws Exception 测试项目准备、故障注入或子进程核对失败。
+	 */
+	public void testClassWriteFailureStopsBeforeDex() throws Exception {
+		File parent = new File("build/tests/aar");
+		Files.createDirectories(parent.toPath());
+		File root = Files.createTempDirectory(parent.toPath(), "class-failure-").toFile().getCanonicalFile();
+		File project = new File(root, "project");
+		File properties = write(project, "project.properties", "main=fixture.failure.Main\nname=Failure\nsource=./src\nres=./res\nassets=./assets\nbuild=./build\n");
+		write(project, "src/fixture/failure/Main.simple", "$属性\n\t$资源 $窗口\n\t$定义 Main $为 窗口\n\t$结束 $定义\n$结束 $属性\n");
+		File libraries = new File(root, "installed");
+		Files.createDirectories(libraries.toPath());
+		assertEquals(1, runCompiler(root, properties, libraries, ClassWriteFailureProbe.class.getName(), null));
+		String output = Files.readString(new File(root, "compiler-1.log").toPath());
+		assertTrue(output, output.contains("Main.class"));
+		assertFalse(output.contains("正在转换字节码"));
+		assertFalse(output.contains("正在生成应用"));
+		assertFalse(output.contains("正在调试签名"));
+		assertFalse(output.contains("构建完成"));
+		assertFalse(new File(project, "build/apks/signed.apk").exists());
+	}
+
+	/**
 	 * 在独立进程中设置安装目录，避免 JVM 静态环境变量或类加载器影响测试结果。
 	 *
 	 * @param root 测试根目录。
@@ -245,8 +283,24 @@ public final class CompilerAarBuildTest extends TestCase {
 	 * @throws Exception 进程无法执行或输出无法读取。
 	 */
 	private int runCompiler(File root, File project, File libraries, boolean rewriteSource, String signingPassword) throws Exception {
+		return runCompiler(root, project, libraries,
+				rewriteSource ? SourceSnapshotProbe.class.getName() : "simple.compiler.Main", signingPassword);
+	}
+
+	/**
+	 * 执行正式入口或指定故障探针，复用环境、日志及临时输入清理断言。
+	 *
+	 * @param root 测试根目录。
+	 * @param project 项目属性文件。
+	 * @param libraries 测试扩展库安装目录。
+	 * @param entry 子进程入口类名。
+	 * @param signingPassword 发布签名口令，为 null 时使用调试签名。
+	 * @return 子进程真实退出码。
+	 * @throws Exception 进程执行、输出读取或清理断言失败。
+	 */
+	private int runCompiler(File root, File project, File libraries, String entry, String signingPassword) throws Exception {
 		String java = new File(System.getProperty("java.home"), "bin/java").toString();
-		String entry = rewriteSource ? SourceSnapshotProbe.class.getName() : "simple.compiler.Main";
+		boolean rewriteSource = SourceSnapshotProbe.class.getName().equals(entry);
 		ProcessBuilder builder = new ProcessBuilder(java, "-Dfile.encoding=UTF-8", "-classpath", System.getProperty("java.class.path"),
 				entry, project.toString());
 		if (rewriteSource) {
@@ -307,7 +361,11 @@ public final class CompilerAarBuildTest extends TestCase {
 			final File source = new File(arguments[1]);
 			final boolean[] rewritten = {false};
 			boolean compiled;
-			try (PrintStream output = new PrintStream(System.out, true, "UTF-8") {
+			PrintStream processOut = System.out;
+			PrintStream processErr = System.err;
+			ByteArrayOutputStream escaped = new ByteArrayOutputStream();
+			try (PrintStream global = new PrintStream(escaped, true, "UTF-8");
+					PrintStream output = new PrintStream(processOut, true, "UTF-8") {
 				/**
 				 * 以构建阶段输出作为夹具触发点，不向编译器增加测试钩子或全局状态。
 				 *
@@ -327,12 +385,62 @@ public final class CompilerAarBuildTest extends TestCase {
 					}
 				}
 			}) {
-				compiled = Compiler.compile(Compiler.Platform.Android, new Project(new File(arguments[0])), output, System.err);
+				// 所有阶段必须使用调用方日志流，不能绕过它写入全局标准输出或错误流。
+				System.setOut(global);
+				System.setErr(global);
+				try {
+					compiled = Compiler.compile(Compiler.Platform.Android, new Project(new File(arguments[0])), output, processErr);
+				} finally {
+					System.setOut(processOut);
+					System.setErr(processErr);
+				}
+			}
+			if (escaped.size() != 0) {
+				throw new IOException("构建输出绕过调用方日志流：" + escaped.toString("UTF-8"));
 			}
 			if (!rewritten[0]) {
 				throw new IOException("源码快照测试未到达预期的改写阶段。");
 			}
 			System.exit(compiled ? 0 : 1);
+		}
+	}
+
+	/**
+	 * 在类输出位置创建同名目录，模拟真实类文件写入失败。
+	 *
+	 * @author 树先生 xhwsd@qq.com
+	 */
+	public static final class ClassWriteFailureProbe {
+
+		/**
+		 * 禁止实例化故障探针。
+		 */
+		private ClassWriteFailureProbe() {
+		}
+
+		/**
+		 * 仅在资源类编译完成后注入故障，不向产品代码添加测试开关。
+		 *
+		 * @param arguments 项目属性文件。
+		 * @throws IOException 项目或故障位置无法准备。
+		 */
+		public static void main(String[] arguments) throws IOException {
+			final Project project = new Project(new File(arguments[0]));
+			try (PrintStream output = new PrintStream(System.out, true, "UTF-8") {
+				@Override
+				public void println(String message) {
+					super.println(message);
+					if (message.startsWith("正在生成 Simple 类文件")) {
+						try {
+							Files.createDirectories(new File(project.getBuildDirectory(), "classes/fixture/failure/Main.class").toPath());
+						} catch (IOException failure) {
+							throw new IllegalStateException("无法注入类写入故障。", failure);
+						}
+					}
+				}
+			}) {
+				System.exit(Compiler.compile(Compiler.Platform.Android, project, output, System.err) ? 0 : 1);
+			}
 		}
 	}
 

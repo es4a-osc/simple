@@ -7,4 +7,6 @@
 ::   SIMPLE_HOME     root directory of Simple distribution (same as directory of this script)
 :: ------------------------------------------------------------------------------------------
 
+@SETLOCAL
 "%JAVA_HOME%\bin\java.exe" -classpath "%ANDROID_HOME%\platforms\android-30\tools\lib\d8.jar;%SIMPLE_HOME%\SimpleCompiler.jar;%SIMPLE_HOME%\libs\*" simple.compiler.Main %*
+@EXIT /B %ERRORLEVEL%

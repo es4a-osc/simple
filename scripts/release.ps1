@@ -28,9 +28,9 @@ try {
 		}
 	}
 	$sourceLibraries = Join-Path $sourceRoot 'libs'
-	$libraries = @(Get-ChildItem -LiteralPath $sourceLibraries -File)
-	if (@($libraries | Where-Object { $_.Extension -eq '.jar' }).Count -eq 0) {
-		throw "缺少编译器依赖 JAR：$sourceLibraries"
+	$libraries = @(Get-ChildItem -LiteralPath $sourceLibraries -File -Filter '*.jar')
+	if ($libraries.Count -eq 0) {
+		throw "缺少编译器依赖，请先执行构建：$sourceLibraries"
 	}
 	$sourceIcons = Join-Path $sourceRoot 'icons'
 	if (-not (Test-Path -LiteralPath $sourceIcons -PathType Container) -or
@@ -55,13 +55,12 @@ try {
 	foreach ($name in $jarNames + $manifestNames) {
 		Copy-Item -LiteralPath (Join-Path $sourceRoot $name) -Destination (Join-Path $targetRoot $name) -Force
 	}
+	# 依赖随同一轮构建分发发布；只清理 libs 第一层已淘汰的 JAR，不影响其它附件。
 	$targetLibraries = Join-Path $targetRoot 'libs'
 	[IO.Directory]::CreateDirectory($targetLibraries) | Out-Null
 	foreach ($file in $libraries) {
 		Copy-Item -LiteralPath $file.FullName -Destination (Join-Path $targetLibraries $file.Name) -Force
 	}
-
-	# 只清理目标 libs 第一层已不再交付的 JAR，保留其它已有文件。
 	foreach ($file in Get-ChildItem -LiteralPath $targetLibraries -File -Filter '*.jar') {
 		if (-not (Test-Path -LiteralPath (Join-Path $sourceLibraries $file.Name) -PathType Leaf)) {
 			Remove-Item -LiteralPath $file.FullName -Force

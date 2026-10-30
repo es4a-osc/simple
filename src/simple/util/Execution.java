@@ -26,8 +26,6 @@ import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * 用于命令执行和 I/O 重定向的实用程序类。
@@ -37,9 +35,6 @@ import java.util.logging.Logger;
  */
 public final class Execution {
 
-	// 日志记录支持
-	private static final Logger LOG = Logger.getLogger(Execution.class.getName());
-
 	/**
 	 * 用于标准输出流和错误输出流重定向的输入流处理程序。
 	 */
@@ -48,6 +43,7 @@ public final class Execution {
 		private final InputStream input;
 		private final PrintWriter output;
 		private final Charset charset;
+		private IOException failure;
 
 		/**
 		 * 按调用方指定的工具输出编码转发输入流。
@@ -58,26 +54,27 @@ public final class Execution {
 		 */
 		RedirectStreamHandler(PrintWriter output, InputStream input, Charset charset) {
 			this.input = Preconditions.checkNotNull(input);
-			this.output = Preconditions.checkNotNull(output);
+			this.output = output;
 			this.charset = Preconditions.checkNotNull(charset);
-			start();
 		}
 
 		/**
-		 * 解码并逐行转发工具输出，沿用现有的重定向失败处理。
+		 * 持续排空管道；不显示的输出也必须读取，避免外部工具因管道写满而阻塞。
 		 */
 		@Override
 		public void run() {
-			try {
-				// 工具输出编码与 JVM 默认编码可能不同，由调用方明确指定。
-				BufferedReader reader = new BufferedReader(new InputStreamReader(input, charset));
+			try (BufferedReader reader = new BufferedReader(new InputStreamReader(input, charset))) {
 				String line;
 				while ((line = reader.readLine()) != null) {
-					output.println(line);
+					if (output != null) {
+						output.println(line);
+					}
 				}
-			} catch (IOException ioe) {
-				// 可以忽略...
-				LOG.log(Level.WARNING, "____I/O 重定向失败：", ioe);
+				if (output != null && output.checkError()) {
+					failure = new IOException("无法转发工具输出。");
+				}
+			} catch (IOException exception) {
+				failure = exception;
 			}
 		}
 	}
@@ -125,24 +122,71 @@ public final class Execution {
 	 * @return 命令退出码为零时返回 {@code true}，执行失败时返回 {@code false}。
 	 */
 	public static boolean execute(File workingDir, String[] command, PrintStream out, PrintStream err, Charset charset) {
-		//LOG.log(Level.INFO, "____执行 " + Strings.join(" ", command));
-
+		Process process = null;
+		RedirectStreamHandler standard = null;
+		RedirectStreamHandler errors = null;
 		try {
-			Process process = Runtime.getRuntime().exec(command, null, workingDir);
+			process = new ProcessBuilder(command).directory(workingDir).start();
+			standard = new RedirectStreamHandler(
+					out == null ? null : new PrintWriter(out, true), process.getInputStream(), charset);
+			errors = new RedirectStreamHandler(
+					err == null ? null : new PrintWriter(err, true), process.getErrorStream(), charset);
+			standard.start();
+			errors.start();
+			// 此入口不提供交互输入，立即关闭标准输入，让等待 EOF 的工具正常结束。
+			process.getOutputStream().close();
 
-			// 支持标准输出为空
-			if (out != null) {
-				new RedirectStreamHandler(new PrintWriter(out, true), process.getInputStream(), charset);
+			// 子进程退出不代表日志已转发完；返回前等待两路输出都读到 EOF。
+			int exitCode = process.waitFor();
+			standard.join();
+			errors.join();
+			if (standard.failure != null || errors.failure != null) {
+				throw standard.failure != null ? standard.failure : errors.failure;
 			}
-			// 支持错误输出为空
+			return exitCode == 0;
+		} catch (InterruptedException failure) {
+			stopProcess(process, standard, errors);
+			Thread.currentThread().interrupt();
 			if (err != null) {
-				new RedirectStreamHandler(new PrintWriter(err, true), process.getErrorStream(), charset);
+				err.println("工具执行已中断。");
 			}
-
-			return process.waitFor() == 0;
-		} catch (Exception e) {
-			LOG.log(Level.WARNING, "____执行失败：", e);
 			return false;
+		} catch (IOException failure) {
+			stopProcess(process, standard, errors);
+			if (err != null) {
+				err.println("工具执行失败：" + failure.getMessage());
+			}
+			return false;
+		}
+	}
+
+	/**
+	 * 失败或取消时结束子进程并回收输出线程，保留调用线程原有及等待期间收到的中断。
+	 *
+	 * @param process 已启动的子进程，可以为空。
+	 * @param standard 普通输出线程，可以为空。
+	 * @param errors 错误输出线程，可以为空。
+	 */
+	private static void stopProcess(Process process, Thread standard, Thread errors) {
+		if (process == null) {
+			return;
+		}
+		process.destroyForcibly();
+		boolean interrupted = Thread.interrupted();
+		for (Thread reader : new Thread[] {standard, errors}) {
+			if (reader == null) {
+				continue;
+			}
+			while (reader.isAlive()) {
+				try {
+					reader.join();
+				} catch (InterruptedException failure) {
+					interrupted = true;
+				}
+			}
+		}
+		if (interrupted) {
+			Thread.currentThread().interrupt();
 		}
 	}
 }

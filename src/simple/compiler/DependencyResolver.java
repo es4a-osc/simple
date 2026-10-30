@@ -6,22 +6,28 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import simple.compiler.util.MavenRepository;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
 /**
  * 在项目引用确定后调用 SDK 的 Gradle，消费扩展库原生模块声明并复用有效解析结果。
  *
- * <p>解析脚本由 SDK 的 simple/gradle 目录提供，编译器直接调用，不在应用目录复制脚本。
+ * <p>源码调试优先使用源码的脚本与 libs，安装版使用配套交付；不在应用目录复制脚本。
  * 模块选版、排除、约束及 Android 变体由 Gradle 与 SDK 已有 AGP 处理。
  * 归档始终引用解析结果中的路径，不猜测个人缓存的内部布局。
  *
@@ -29,7 +35,7 @@ import java.util.Locale;
  */
 final class DependencyResolver {
 
-	/** SDK 提供的依赖解析工程文件；内容共同参与解析缓存指纹。 */
+	/** 配套依赖解析工程文件；内容共同参与解析缓存指纹。 */
 	private static final String[] PROJECT_FILES = {
 		"settings.gradle", "build.gradle", "gradle.properties"
 	};
@@ -41,7 +47,7 @@ final class DependencyResolver {
 	}
 
 	/**
-	 * 统一解析本轮所用模块。无新式模块声明时不启动 Gradle，纯本地库可离线消费。
+	 * 统一解析本轮所用模块。无仓库模块依赖时不启动 Gradle，纯本地库可离线消费。
 	 *
 	 * @param libraries 项目实际使用的扩展库。
 	 * @param directory 项目的依赖构建目录。
@@ -54,23 +60,21 @@ final class DependencyResolver {
 		boolean runtimeModules = false;
 		MessageDigest fingerprint = sha256();
 		for (File library : libraries) {
-			File index = new File(library, "dependencies.json");
-			if (!index.isFile()) {
+			File metadata = new File(library, "dependencies.module");
+			if (!metadata.isFile()) {
 				continue;
 			}
-			JsonObject description = read(index);
-			if (description.get("schemaVersion").getAsInt() != 2) {
-				continue;
-			}
-			File metadata = contained(library, description.get("module").getAsString());
-			runtimeModules |= hasRuntimeDependencies(metadata, description.get("namespace").getAsString());
+			metadata = contained(library, metadata.getName());
+			File manifest = contained(library, "AndroidManifest.xml");
+			String namespace = AndroidLibraries.readNamespace(library);
+			runtimeModules |= hasRuntimeDependencies(metadata, namespace);
 
 			JsonObject module = new JsonObject();
 			module.addProperty("file", metadata.getCanonicalPath());
-			module.addProperty("namespace", description.get("namespace").getAsString());
+			module.addProperty("namespace", namespace);
 			modules.add(module);
-			fingerprint.update(index.getCanonicalPath().getBytes(StandardCharsets.UTF_8));
-			fingerprint.update(Files.readAllBytes(index.toPath()));
+			fingerprint.update(metadata.getCanonicalPath().getBytes(StandardCharsets.UTF_8));
+			fingerprint.update(Files.readAllBytes(manifest.toPath()));
 			fingerprint.update(Files.readAllBytes(metadata.toPath()));
 		}
 		if (modules.size() == 0 || !runtimeModules) {
@@ -86,6 +90,39 @@ final class DependencyResolver {
 		File javaHome = new File(sdk, "tools/jdk-11.0.32.1").getCanonicalFile();
 		File gradle = new File(sdk, "tools/gradle-8.14.6").getCanonicalFile();
 		File android = new File(sdk, "tools/android-sdk").getCanonicalFile();
+		File compilerLocation;
+		try {
+			compilerLocation = new File(DependencyResolver.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getCanonicalFile();
+		} catch (URISyntaxException failure) {
+			throw new IOException("无法定位当前编译器：" + failure.getMessage(), failure);
+		}
+		File compilerDirectory = compilerLocation.isDirectory() ? compilerLocation : compilerLocation.getParentFile();
+		File librariesDirectory = new File(compilerDirectory, "libs");
+		// 源码调试使用源码自己的脚本和 libs；安装版使用当前编译器旁的交付依赖。
+		for (File parent = compilerDirectory; parent != null; parent = parent.getParentFile()) {
+			File sourceProject = new File(parent, "gradle/resolver");
+			if (new File(sourceProject, "settings.gradle").isFile() && new File(parent, "libs").isDirectory()) {
+				project = sourceProject.getCanonicalFile();
+				librariesDirectory = new File(parent, "libs");
+				break;
+			}
+		}
+		librariesDirectory = librariesDirectory.getCanonicalFile();
+		fingerprint.update(compilerLocation.getPath().getBytes(StandardCharsets.UTF_8));
+		fingerprint.update(librariesDirectory.getPath().getBytes(StandardCharsets.UTF_8));
+		File[] librariesJars = librariesDirectory.listFiles();
+		if (librariesJars == null) {
+			throw new IOException("缺少当前编译器依赖目录：" + librariesDirectory);
+		}
+
+		// 统一依赖的实际内容参与指纹，更换依赖后不得复用旧解析结果。
+		Arrays.sort(librariesJars);
+		for (File jar : librariesJars) {
+			if (jar.isFile() && jar.getName().endsWith(".jar")) {
+				fingerprint.update(jar.getName().getBytes(StandardCharsets.UTF_8));
+				fingerprint.update(LibraryArtifacts.digest(jar).getBytes(StandardCharsets.UTF_8));
+			}
+		}
 		for (File tool : new File[] {javaHome, gradle, android}) {
 			fingerprint.update(tool.getPath().getBytes(StandardCharsets.UTF_8));
 		}
@@ -97,11 +134,18 @@ final class DependencyResolver {
 			fingerprint.update(name.getBytes(StandardCharsets.UTF_8));
 			fingerprint.update(Files.readAllBytes(script.toPath()));
 		}
-		String identity = hex(fingerprint.digest());
+		String baseIdentity = hex(fingerprint.digest());
+		File dependencyDirectory = directory == null ? Files.createTempDirectory("simple-dependencies-").toFile() : directory;
+		File repository = new File(dependencyDirectory, "repository").getAbsoluteFile();
+		List<File> repositories = new ArrayList<File>();
+		repositories.add(repository);
+		for (File library : libraries) {
+			repositories.add(new File(library, "dependencies").getAbsoluteFile());
+		}
+		String identity = repositoryIdentity(baseIdentity, repositories);
 
 		// 只复用声明和归档内容都有效的结果；显式刷新时仍交给 Gradle 重新解析。
-		File work = directory == null ? Files.createTempDirectory("simple-dependencies-").toFile()
-				: new File(directory, "resolution").getCanonicalFile();
+		File work = new File(dependencyDirectory, "resolution").getCanonicalFile();
 		Files.createDirectories(work.toPath());
 		File output = new File(work, "resolved.json");
 		boolean refresh = "1".equals(System.getenv("ES4A_REFRESH_DEPENDENCIES"));
@@ -109,11 +153,15 @@ final class DependencyResolver {
 			return read(output);
 		}
 
+		// 一个本地仓库合并各来源，既保留跨目录互补，也在解析前发现同坐标内容冲突。
+		MavenRepository.merge(repositories, new File(work, "repository"));
+
 		// 执行工程位于 SDK；请求、结果和项目缓存全部进入应用构建目录，SDK 保持只读。
 		JsonObject request = new JsonObject();
 		request.addProperty("fingerprint", identity);
 		request.addProperty("work", work.getCanonicalPath());
 		request.addProperty("output", output.getCanonicalPath());
+		request.addProperty("repository", repository.getCanonicalPath());
 		request.add("modules", modules);
 		File requestFile = new File(work, "request.json");
 		Files.writeString(requestFile.toPath(), new GsonBuilder().setPrettyPrinting().create().toJson(request), StandardCharsets.UTF_8);
@@ -136,6 +184,9 @@ final class DependencyResolver {
 		command.add("--project-cache-dir");
 		command.add(new File(work, "cache").getPath());
 		command.add("-Prequest=" + requestFile.getPath());
+		command.add("-PsdkDir=" + sdk.getPath());
+		command.add("-PcompilerPath=" + compilerLocation.getPath());
+		command.add("-PlibrariesDir=" + librariesDirectory.getPath());
 		if ("1".equals(System.getenv("ES4A_OFFLINE"))) {
 			command.add("--offline");
 		}
@@ -153,7 +204,28 @@ final class DependencyResolver {
 		if (!valid(output, identity)) {
 			throw new IOException("Gradle 未生成完整有效的应用依赖结果：" + output + "。完整日志：" + log);
 		}
-		return read(output);
+		// 联网补齐的原包与元数据已进入应用仓库；缓存指纹以补齐后的实际内容为准。
+		JsonObject result = read(output);
+		result.addProperty("fingerprint", repositoryIdentity(baseIdentity, repositories));
+		File pending = new File(work, "resolved.json.pending");
+		Files.writeString(pending.toPath(), new GsonBuilder().setPrettyPrinting().create().toJson(result), StandardCharsets.UTF_8);
+		Files.move(pending.toPath(), output.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		return result;
+	}
+
+	/**
+	 * 将根声明和补充仓库内容共同纳入指纹。
+	 *
+	 * @param baseIdentity 已核对的根声明、工具与脚本指纹。
+	 * @param repositories 实际参与本轮的补充仓库。
+	 * @return 本轮完整缓存身份。
+	 * @throws IOException 仓库内容无法读取。
+	 */
+	private static String repositoryIdentity(String baseIdentity, List<File> repositories) throws IOException {
+		MessageDigest digest = sha256();
+		digest.update(baseIdentity.getBytes(StandardCharsets.UTF_8));
+		digest.update(MavenRepository.fingerprint(repositories).getBytes(StandardCharsets.UTF_8));
+		return hex(digest.digest());
 	}
 
 	/**
@@ -218,7 +290,7 @@ final class DependencyResolver {
 	 * 核对原生模块身份及交付边界，纯本地库不需要启动 Gradle。
 	 *
 	 * @param metadata Gradle 原生模块描述。
-	 * @param namespace 交付描述中的资源命名空间。
+	 * @param namespace 标准 Android 清单中的资源命名空间。
 	 * @return 是否存在运行模块依赖或约束。
 	 * @throws IOException 描述不完整、身份不符或夹带制品引用。
 	 */
@@ -298,11 +370,16 @@ final class DependencyResolver {
 	 * @throws IOException 文件引用无效或规范化失败。
 	 */
 	static File contained(File root, String relative) throws IOException {
-		File target = new File(root, relative).getCanonicalFile();
-		if (new File(relative).isAbsolute() || !target.toPath().startsWith(root.getCanonicalFile().toPath()) || !target.isFile()) {
+		File target = new File(root, relative);
+		if (new File(relative).isAbsolute() || !target.isFile()) {
 			throw new IOException("扩展库文件引用无效：" + relative + "\n来源：" + root);
 		}
-		return target;
+		// Windows 目录联接不会由 getCanonicalFile 完整展开，必须比较实际文件系统位置。
+		Path actual = target.toPath().toRealPath();
+		if (!actual.startsWith(root.toPath().toRealPath())) {
+			throw new IOException("扩展库文件引用无效：" + relative + "\n来源：" + root);
+		}
+		return actual.toFile();
 	}
 
 	/**
@@ -321,10 +398,10 @@ final class DependencyResolver {
 	}
 
 	/**
-	 * 沿调用者提供的 SDK 或工具环境定位统一工具配置。
+	 * 沿调用者提供的 SDK 或工具环境定位 SDK 根目录，不要求源码调试先发布编译器。
 	 *
-	 * @return 包含编译器配套 Gradle 工程的 SDK 根目录。
-	 * @throws IOException 未找到配置或 SDK 路径无法规范化。
+	 * @return 提供 tools 目录的 SDK 根目录。
+	 * @throws IOException 未找到 SDK 或路径无法规范化。
 	 */
 	private static File sdkDirectory() throws IOException {
 		List<File> candidates = new ArrayList<File>();
@@ -344,11 +421,11 @@ final class DependencyResolver {
 			}
 		}
 		for (File candidate : candidates) {
-			if (candidate != null && new File(candidate, "simple/gradle").isDirectory()) {
+			if (candidate != null && new File(candidate, "tools").isDirectory()) {
 				return candidate.getCanonicalFile();
 			}
 		}
-		throw new IOException("未找到 SDK 编译器配套目录 simple/gradle，请使用完整 SDK 的 project.ps1 编译。");
+		throw new IOException("未找到 SDK 工具目录 tools，请使用 SDK 项目工具或配置 ES4A_SDK_HOME。");
 	}
 
 	/**

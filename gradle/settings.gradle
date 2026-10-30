@@ -1,5 +1,5 @@
 /*
-Simple 源码构建入口；scripts/build.ps1 将生成文件和项目缓存集中放入 simple/build/。
+Simple 源码构建入口；生成文件和项目缓存统一放入 simple/build/。
 xhwsd@qq.com 2026-10-29
 */
 rootProject.name = 'simple-build'

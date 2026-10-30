@@ -250,20 +250,20 @@ public final class AndroidLibrariesTest extends TestCase {
 	}
 
 	/**
-	 * 同资源包名的两个无 package 扩展库清单必须分别合并，不能共用同一个临时文件。
+	 * 同资源包名的两份扩展库清单必须分别合并，不能共用同一个临时文件。
 	 *
 	 * @throws Exception 输入创建或合并失败。
 	 */
 	public void testSeparateManifestsWithSameNamespace() throws Exception {
 		File first = new File(root, "manifest-first");
 		File second = new File(root, "manifest-second");
-		String index = "{\"schemaVersion\":1,\"namespace\":\"test.shared\",\"minSdk\":24,\"java\":11,\"dependencies\":[],\"graph\":[]}";
-		write(new File(first, "dependencies.json"), index);
-		write(new File(second, "dependencies.json"), index);
-		write(new File(first, "AndroidManifest.xml"), "<manifest" + ANDROID + "><uses-permission android:name=\"android.permission.INTERNET\"/></manifest>");
-		write(new File(second, "AndroidManifest.xml"), "<manifest" + ANDROID + "><uses-permission android:name=\"android.permission.VIBRATE\"/></manifest>");
+		write(new File(first, "AndroidManifest.xml"), "<manifest" + ANDROID + " package=\"test.shared\"><uses-permission android:name=\"android.permission.INTERNET\"/></manifest>");
+		write(new File(second, "AndroidManifest.xml"), "<manifest" + ANDROID + " package=\"test.shared\"><uses-permission android:name=\"android.permission.VIBRATE\"/></manifest>");
 		List<LibraryArtifacts.AndroidLibrary> libraries = new LibraryArtifacts(Arrays.asList(first, second), new File(root, "expanded"))
 				.getAndroidLibraries(Arrays.asList(first, second));
+		// 模型已从标准清单取得相同包名；移除输入 package，单独验证合并层的副本隔离。
+		write(new File(first, "AndroidManifest.xml"), "<manifest" + ANDROID + "><uses-permission android:name=\"android.permission.INTERNET\"/></manifest>");
+		write(new File(second, "AndroidManifest.xml"), "<manifest" + ANDROID + "><uses-permission android:name=\"android.permission.VIBRATE\"/></manifest>");
 		File manifest = applicationManifest();
 		android.mergeManifest(manifest, libraries, Collections.<String, Object>emptyMap(), "test.app", System.out, System.err);
 		String merged = Files.readString(manifest.toPath());

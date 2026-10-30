@@ -45,6 +45,8 @@ configurations {
 }
 
 dependencies {
+	// 同一依赖图统一处理 AGP 与编译器的公共模块，不复制各工具自己的整套依赖。
+	compilerTools 'com.android.tools.build:gradle:7.4.2'
 	compilerTools 'com.android.tools.build:manifest-merger:30.4.2'
 	compilerTools 'com.android.tools:sdk-common:30.4.2'
 	compilerTools 'com.google.code.gson:gson:2.10.1'
@@ -56,7 +58,18 @@ dependencies {
 	testLibraries 'org.hamcrest:hamcrest-core:1.3'
 }
 
-// 在执行构建前明确检查本地工具，不下载 JDK 或 Android 平台。
+// 下载和选版由 Gradle 负责；源码构建及调试优先使用本仓库的 libs，不依赖 SDK 旧交付。
+def prepare = tasks.register('prepare', Sync) {
+	group = 'build setup'
+	description = '统一解析编译器和 AGP 依赖，并生成源码目录下的 libs。'
+	from configurations.compilerTools
+	into librariesRoot
+	preserve { exclude '*.jar' }
+}
+def compilerLibraries = fileTree(librariesRoot) { include '*.jar' }
+compilerLibraries.builtBy(prepare)
+
+// 保留源码输入和基础环境检查；第三方 JAR 直接交给实际编译和加载处理。
 def validateTools = tasks.register('validateTools') {
 	group = 'verification'
 	description = '检查源码构建所需的 JDK 11、Android API 30 和配套文件。'
@@ -79,18 +92,6 @@ def validateTools = tasks.register('validateTools') {
 	}
 }
 
-// 将编译器依赖集中到源码项目的 libs/；clean 不删除，编译、测试与分发共用。
-def prepare = tasks.register('prepare', Sync) {
-	dependsOn validateTools
-	from configurations.compilerTools
-	into librariesRoot
-	// 只同步 Gradle 管理的 JAR，保留目录中已有的其它附件。
-	preserve { exclude '*.jar' }
-}
-
-def compilerLibraries = fileTree(librariesRoot) { include '*.jar' }
-compilerLibraries.builtBy(prepare)
-
 tasks.withType(JavaCompile).configureEach {
 	dependsOn validateTools
 	sourceCompatibility = '11'
@@ -110,7 +111,6 @@ def compileRuntime = tasks.register('compileRuntime', JavaCompile) {
 }
 
 def compileCompiler = tasks.register('compileCompiler', JavaCompile) {
-	dependsOn prepare
 	description = '编译 Simple 语言编译器。'
 	source fileTree(new File(simpleRoot, 'src')) {
 		include 'simple/classfiles/**/*.java', 'simple/compiler/**/*.java', 'simple/tools/**/*.java', 'simple/util/**/*.java'
@@ -141,12 +141,12 @@ def commonDistribution = tasks.register('commonDistribution', Sync) {
 	into new File(distributionRoot, 'common')
 	from compilerJar
 	from runtimeJar
+	from(prepare) { include '*.jar'; into 'libs' }
 	// 清单和图标作为外置交付文件复制，不进入编译器或运行库 JAR。
 	from(simpleRoot) {
 		include manifestNames
 		include 'icons/**'
 	}
-	from(prepare) { into 'libs' }
 	from(resolverRoot) {
 		include resolverFiles
 		into 'gradle'

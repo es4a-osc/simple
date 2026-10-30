@@ -1,7 +1,5 @@
 package simple.compiler;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import junit.framework.TestCase;
 
 import java.io.File;
@@ -17,7 +15,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 /**
- * 验证交付依赖描述、AAR 展开、共享选择和失败诊断，不依赖仓库或个人 Gradle 缓存。
+ * 验证固定交付目录、AAR 展开、共享选择和失败诊断，不依赖仓库或个人 Gradle 缓存。
  *
  * @author 树先生 xhwsd@qq.com
  */
@@ -57,31 +55,24 @@ public final class LibraryArtifactsTest extends TestCase {
 	}
 
 	/**
-	 * 编译后清单按库内相对路径选择，损坏路径不能退回作者清单而掩盖缺失产物。
+	 * 资源包名来自标准清单，不随目录改名变化，旧式生成清单不再参与选择。
 	 *
-	 * @throws Exception 测试文件无法写入或清单选择不符合预期。
+	 * @throws Exception 测试文件无法写入或清单读取不符合预期。
 	 */
-	public void testGeneratedManifestReferenceIsValidated() throws Exception {
-		File library = directory("portable");
-		File generated = new File(library, "AndroidManifest.generated.xml");
-		write(generated, "<manifest package=\"test.portable\" />");
-		write(new File(library, "AndroidManifest.xml"), "<manifest package=\"test.author\" />");
-		write(new File(library, "dependencies.module"), "{\"formatVersion\":\"1.1\",\"component\":{"
-				+ "\"group\":\"es4a.extension\",\"module\":\"test.portable\",\"version\":\"1.0\"},"
-				+ "\"variants\":[{\"attributes\":{\"org.gradle.usage\":\"java-runtime\"}}]}");
-		String index = "{\"schemaVersion\":2,\"namespace\":\"test.portable\",\"java\":11,\"minSdk\":24,"
-				+ "\"module\":\"dependencies.module\",\"files\":[],\"manifest\":\"%s\"}";
-		write(new File(library, "dependencies.json"), String.format(index, generated.getName()));
+	public void testNamespaceComesFromStandardManifest() throws Exception {
+		File library = directory("任意目录名称");
+		File manifest = new File(library, "AndroidManifest.xml");
+		write(manifest, "<manifest package=\"test.portable\" />");
 		LibraryArtifacts artifacts = new LibraryArtifacts(Collections.singletonList(library), new File(root, "expanded"));
-		assertEquals(generated, artifacts.getAndroidLibraries(Collections.singletonList(library)).get(0).manifest);
-		for (String invalid : new String[] {"missing.xml", "../outside.xml"}) {
-			write(new File(library, "dependencies.json"), String.format(index, invalid));
-			try {
-				new LibraryArtifacts(Collections.singletonList(library), new File(root, "expanded"));
-				fail("接受了无效编译后清单：" + invalid);
-			} catch (IOException expected) {
-				assertTrue(expected.getMessage().contains("文件引用无效"));
-			}
+		LibraryArtifacts.AndroidLibrary input = artifacts.getAndroidLibraries(Collections.singletonList(library)).get(0);
+		assertEquals("test.portable", input.namespace);
+		assertEquals(manifest, input.manifest);
+		write(manifest, "<manifest />");
+		try {
+			artifacts.getAndroidLibraries(Collections.singletonList(library));
+			fail("存在的清单不能缺少资源包名。");
+		} catch (IOException expected) {
+			assertTrue(expected.getMessage().contains("读取类库清单失败"));
 		}
 	}
 
@@ -128,12 +119,10 @@ public final class LibraryArtifactsTest extends TestCase {
 	public void testSharedRepositoryAarIsExpandedOnce() throws Exception {
 		File first = directory("first");
 		File second = directory("second");
-		File archive = new File(first, "dependencies/shared.aar");
+		File archive = new File(first, "aars/shared.aar");
 		writeAar(archive, "test.shared", false);
-		Files.createDirectories(new File(second, "dependencies").toPath());
-		Files.copy(archive.toPath(), new File(second, "dependencies/shared.aar").toPath());
-		writeIndex(first, new String[][] {{"example:shared:1.0", "dependencies/shared.aar"}});
-		writeIndex(second, new String[][] {{"example:shared:1.0", "dependencies/shared.aar"}});
+		Files.createDirectories(new File(second, "aars").toPath());
+		Files.copy(archive.toPath(), new File(second, "aars/shared.aar").toPath());
 		LibraryArtifacts artifacts = new LibraryArtifacts(Arrays.asList(first, second), new File(root, "expanded"));
 		assertEquals(artifacts.getJars(Arrays.asList(first)), artifacts.getJars(Arrays.asList(second)));
 		assertEquals(1, artifacts.getJars(null).size());
@@ -155,30 +144,19 @@ public final class LibraryArtifactsTest extends TestCase {
 	}
 
 	/**
-	 * 完整坐标区分同名制品，选中的较高版本同时引入自身的传递依赖。
+	 * 本地 JAR 使用包内 Maven 身份选版，其它独立依赖仍完整保留。
+	 * 仓库传递关系及选版由 DependencyResolverTest 通过原生模块声明验证。
 	 *
-	 * @throws Exception 测试输入准备或读取失败。
+	 * @throws Exception 测试归档无法创建或依赖选择失败。
 	 */
-	public void testCoordinateSelectionCarriesNewTransitiveDependency() throws Exception {
+	public void testLocalMavenSelectionKeepsOtherDependencies() throws Exception {
 		File first = directory("old");
 		File second = directory("new");
-		writeJar(new File(first, "old.jar"), "old");
-		writeJar(new File(second, "new.jar"), "new");
-		writeJar(new File(second, "extra.jar"), "extra");
-		writeIndex(first, new String[][] {{"org.one:shared:1.0", "old.jar"}});
-		JsonObject index = writeIndex(second, new String[][] {
-			{"org.one:shared:1.10", "new.jar"}, {"org.two:shared:1.0", "extra.jar"}
-		});
-		JsonObject relation = new JsonObject();
-		relation.addProperty("id", "org.one:shared:1.10");
-		JsonArray children = new JsonArray();
-		children.add("org.two:shared:1.0");
-		relation.add("dependencies", children);
-		index.getAsJsonArray("graph").add(relation);
-		write(new File(second, "dependencies.json"), index.toString());
-		LibraryArtifacts artifacts = new LibraryArtifacts(Arrays.asList(first, second), new File(root, "expanded"));
-		List<File> chosen = artifacts.getJars(Arrays.asList(first));
-		assertEquals(Arrays.asList(new File(second, "extra.jar"), new File(second, "new.jar")), chosen);
+		writeMavenJar(new File(first, "libs/old.jar"), "1.0", "old");
+		writeMavenJar(new File(second, "libs/new.jar"), "1.10", "new");
+		writeJar(new File(second, "libs/extra.jar"), "extra");
+		List<File> chosen = new LibraryArtifacts(Arrays.asList(first, second), new File(root, "expanded")).getJars(null);
+		assertEquals(Arrays.asList(new File(second, "libs/new.jar"), new File(second, "libs/extra.jar")), chosen);
 	}
 
 	/**
@@ -189,12 +167,10 @@ public final class LibraryArtifactsTest extends TestCase {
 	public void testSameCoordinateDifferentContentFails() throws Exception {
 		File first = directory("conflict-a");
 		File second = directory("conflict-b");
-		writeJar(new File(first, "dependency.jar"), "a");
-		writeJar(new File(second, "dependency.jar"), "b");
-		writeIndex(first, new String[][] {{"example:dependency:1.0", "dependency.jar"}});
-		writeIndex(second, new String[][] {{"example:dependency:1.0", "dependency.jar"}});
+		writeJar(new File(first, "libs/dependency-1.0.jar"), "a");
+		writeJar(new File(second, "libs/dependency-1.0.jar"), "b");
 		try {
-			new LibraryArtifacts(Arrays.asList(first, second), new File(root, "expanded"));
+			new LibraryArtifacts(Arrays.asList(first, second), new File(root, "expanded")).getJars(null);
 			fail("同版不同内容不应通过。");
 		} catch (IOException expected) {
 			assertTrue(expected.getMessage().contains("内容不同"));
@@ -202,22 +178,48 @@ public final class LibraryArtifactsTest extends TestCase {
 	}
 
 	/**
-	 * 描述不得引用交付目录之外的文件，缺失依赖也不能被当作空列表。
+	 * 固定目录只扫描第一层原包，源码附件及其它目录不成为运行依赖。
 	 *
-	 * @throws Exception 测试输入准备或读取失败。
+	 * @throws Exception 测试输入无法创建或扫描结果不符合预期。
 	 */
-	public void testMissingAndEscapingDependencyFail() throws Exception {
-		File library = directory("invalid");
-		writeJar(new File(root, "outside.jar"), "outside");
-		for (String relative : Arrays.asList("missing.jar", "../outside.jar")) {
-			writeIndex(library, new String[][] {{"file:invalid", relative}});
-			try {
-				new LibraryArtifacts(Arrays.asList(library), new File(root, "expanded"));
-				fail("无效依赖路径不应通过。");
-			} catch (IOException expected) {
-				assertTrue(expected.getMessage().contains("路径无效或文件缺失"));
-			}
+	public void testFixedDirectoriesIgnoreSourcesAndOtherFiles() throws Exception {
+		File library = directory("fixed-layout");
+		File binary = new File(library, "libs/dependency.jar");
+		writeJar(binary, "binary");
+		write(new File(library, "libs/dependency-sources.jar"), "非运行归档");
+		write(new File(library, "other.jar"), "不是约定目录");
+		write(new File(library, "libs/nested/ignored.jar"), "不是第一层");
+		assertEquals(Collections.singletonList(binary),
+				new LibraryArtifacts(Arrays.asList(library), new File(root, "expanded")).getJars(null));
+	}
+
+	/**
+	 * 固定目录不能通过目录链接引用交付外部归档，避免复制后依赖丢失。
+	 *
+	 * @throws Exception 输入准备或链接创建失败。
+	 */
+	public void testLocalArchiveCannotEscapeThroughDirectoryLink() throws Exception {
+		File library = directory("linked-library");
+		File outside = directory("outside");
+		writeJar(new File(outside, "helper.jar"), "external");
+		File link = new File(library, "libs");
+		if (File.separatorChar == '\\') {
+			Process process = new ProcessBuilder("cmd.exe", "/d", "/c", "mklink", "/J",
+					link.getPath(), outside.getPath()).redirectErrorStream(true).start();
+			byte[] output = process.getInputStream().readAllBytes();
+			assertEquals(new String(output, StandardCharsets.UTF_8), 0, process.waitFor());
+		} else {
+			Files.createSymbolicLink(link.toPath(), outside.toPath());
 		}
+		try {
+			new LibraryArtifacts(Arrays.asList(library), new File(root, "expanded"));
+			fail("链接不能将运行依赖带出交付目录。");
+		} catch (IOException expected) {
+			assertTrue(expected.getMessage().contains("文件引用无效"));
+		} finally {
+			Files.delete(link.toPath());
+		}
+		assertTrue(new File(outside, "helper.jar").isFile());
 	}
 
 	/**
@@ -327,13 +329,8 @@ public final class LibraryArtifactsTest extends TestCase {
 		assertEquals(1, jars.size());
 		assertEquals("shared-2.0.jar", jars.get(0).getName());
 		File classified = directory("classified");
-		writeJar(new File(classified, "main.jar"), "main");
-		writeJar(new File(classified, "tests.jar"), "tests");
-		JsonObject index = writeIndex(classified, new String[][] {
-			{"test:shared:1.0", "main.jar"}, {"test:shared:1.0", "tests.jar"}
-		});
-		index.getAsJsonArray("dependencies").get(1).getAsJsonObject().addProperty("classifier", "tests");
-		write(new File(classified, "dependencies.json"), index.toString());
+		writeJar(new File(classified, "libs/main.jar"), "main");
+		writeJar(new File(classified, "libs/tests.jar"), "tests");
 		assertEquals(2, new LibraryArtifacts(Arrays.asList(classified), new File(root, "classified-expanded")).getJars(null).size());
 	}
 
@@ -344,8 +341,7 @@ public final class LibraryArtifactsTest extends TestCase {
 	 */
 	public void testNativeModuleRequiresRuntimeVariant() throws Exception {
 		File library = directory("incomplete-module");
-		write(new File(library, "dependencies.json"), "{\"schemaVersion\":2,\"namespace\":\"test.native_module\",\"java\":11,"
-				+ "\"minSdk\":24,\"module\":\"dependencies.module\",\"files\":[]}");
+		write(new File(library, "AndroidManifest.xml"), "<manifest package=\"test.native_module\" />");
 		write(new File(library, "dependencies.module"), "{\"formatVersion\":\"1.1\",\"component\":{\"group\":\"es4a.extension\","
 				+ "\"module\":\"test.native_module\",\"version\":\"1.0\"},\"variants\":[]}");
 		try {
@@ -386,33 +382,6 @@ public final class LibraryArtifactsTest extends TestCase {
 		File directory = new File(root, name);
 		Files.createDirectories(directory.toPath());
 		return directory;
-	}
-
-	/**
-	 * 写入与扩展库工具链一致的最小运行依赖描述。
-	 *
-	 * @param library 交付目录。
-	 * @param dependencies 每项依次为身份和相对路径。
-	 * @return 可继续加入依赖关系的描述对象。
-	 * @throws IOException 描述无法写入。
-	 */
-	private JsonObject writeIndex(File library, String[][] dependencies) throws IOException {
-		JsonObject index = new JsonObject();
-		index.addProperty("schemaVersion", 1);
-		index.addProperty("namespace", "test." + library.getName().replace('-', '_'));
-		index.addProperty("java", 11);
-		index.addProperty("minSdk", 24);
-		JsonArray entries = new JsonArray();
-		for (String[] dependency : dependencies) {
-			JsonObject entry = new JsonObject();
-			entry.addProperty("id", dependency[0]);
-			entry.addProperty("file", dependency[1]);
-			entries.add(entry);
-		}
-		index.add("dependencies", entries);
-		index.add("graph", new JsonArray());
-		write(new File(library, "dependencies.json"), index.toString());
-		return index;
 	}
 
 	/**

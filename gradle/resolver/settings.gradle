@@ -24,6 +24,19 @@ dependencyResolutionManagement {
 				includeGroup 'es4a.extension'
 			}
 		}
+		// 编译器已将随库与应用侧仓库合并；仅元数据声明参与选版，不按 JAR 文件名推断模块。
+		maven {
+			url = uri(new File(request.work, 'repository'))
+			metadataSources {
+				gradleMetadata()
+				mavenPom()
+			}
+			content {
+				excludeGroup 'es4a.extension'
+				// 主图统一选版；缺失原包的独立下载配置只使用远程仓库及 Gradle 缓存。
+				onlyForConfigurations 'debugRuntimeClasspath'
+			}
+		}
 		google()
 		mavenCentral()
 		maven { url = uri('https://jitpack.io/') }

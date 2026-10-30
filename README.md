@@ -11,30 +11,23 @@
 - `SimpleCompiler.json`、`SimpleAndroidRuntime.json`、`icons/`：编译器与运行库清单及组件图标。
 - `samples/`、`tests/`：样例与测试。
 - `gradle/`、`scripts/`：构建配置和工具脚本；`gradle/resolver/` 为随编译器交付的依赖解析工程源码。
-- `libs/`：编译器依赖。
 
 
 ## 构建
 
-将 [SDK 仓库](https://gitee.com/es4a/sdk)与本仓库同级放置，按其自述准备工具。在 Windows 下，于本目录执行：
+将 [SDK 仓库](https://gitee.com/es4a/sdk)与本仓库同级放置，按其自述准备工具。在本目录执行：
 
 ```powershell
 .\scripts\build.bat
 ```
 
-默认增量编译并运行 JVM 测试，可追加 Gradle 任务和参数，如 `clean build`、`test` 或 `--offline`。
+默认增量构建并运行 JVM 测试，支持追加 Gradle 任务和参数，如 `clean build`、`test`、`--offline`。依赖自动准备到 `libs/`，无需提交 Git。
 
-编译器依赖自动准备到 `libs/`，其中的 JAR 不提交 Git。首次构建需要联网，后续复用缓存。
-
-构建产物位于 `build/`，分发位于 `dist/`，测试报告位于 `reports/tests/`。
-
-验证通过后执行：
+分发产物位于 `dist/`，测试报告位于 `reports/tests/`。验证后执行以下命令，将已有产物发布到同级 `sdk/simple/`：
 
 ```powershell
 .\scripts\release.bat
 ```
-
-将 `dist/windows/` 中的已有交付发布到同级 `sdk/simple/`，不重新构建。
 
 
 ## 应用编译流程

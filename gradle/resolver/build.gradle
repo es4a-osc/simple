@@ -3,6 +3,10 @@ Simple 编译器专用的依赖解析工程，生成物统一写入应用构建�
 仅解析原生模块声明并返回制品路径，不编译 Java、资源或 APK。
 xhwsd@qq.com 2026-10-27
 */
+import org.gradle.maven.MavenModule
+import org.gradle.maven.MavenPomArtifact
+import org.gradle.api.artifacts.result.ResolvedArtifactResult
+import simple.compiler.util.MavenRepository
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import java.nio.file.Files
@@ -10,14 +14,14 @@ import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
+import org.gradle.api.artifacts.result.UnresolvedDependencyResult
 
 buildscript {
-	repositories {
-		google()
-		mavenCentral()
-	}
+	def sdk = file(providers.gradleProperty('sdkDir').get())
+	def compiler = providers.gradleProperty('compilerPath').map { file(it) }.getOrElse(new File(sdk, 'simple/SimpleCompiler.jar'))
+	def libraries = providers.gradleProperty('librariesDir').map { file(it) }.getOrElse(new File(sdk, 'simple/libs'))
 	dependencies {
-		classpath 'com.android.tools.build:gradle:7.4.2'
+		classpath files(compiler, fileTree(libraries) { include '*.jar' })
 	}
 }
 
@@ -84,12 +88,101 @@ tasks.register('resolveApplicationDependencies') {
 	doLast {
 		// 消费 Android 运行变体，保留原始 JAR/AAR，不输出 AGP 转换后的编译占位包。
 		def configuration = configurations.debugRuntimeClasspath
-		def artifacts = configuration.resolvedConfiguration.resolvedArtifacts
-		def entries = artifacts.collect { artifact ->
+		// 模块图与制品来自同一次解析，拒绝将旧 Support 依赖带入统一 AndroidX 的应用。
+		def components = configuration.incoming.resolutionResult.allComponents
+		def unresolved = components.collectMany { it.dependencies.findAll { it instanceof UnresolvedDependencyResult } }
+		if (unresolved) {
+			throw new GradleException('扩展库依赖图无法解析。', unresolved.first().failure)
+		}
+		def legacy = components.findAll { it.id instanceof ModuleComponentIdentifier && it.id.group == 'com.android.support' }
+		if (legacy) {
+			throw new GradleException("应用统一采用 AndroidX，存在旧 Support 依赖：${legacy*.id}")
+		}
+		def graph = components.collect { component ->
+			[id: component.id.displayName, dependencies: component.dependencies.findAll {
+				it instanceof ResolvedDependencyResult
+			}.collect { it.selected.id.displayName }]
+		}
+
+		// Gradle 不会跨仓库补齐已选模块的原包。只在主图选版完成后下载缺项，不另建选版算法。
+		def artifacts = []
+		def missing = []
+		configuration.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+			try {
+				// 原包延迟读取；逐项记录失败，不能因同模块已有另一个包而遗漏缺项。
+				artifact.file
+				artifacts.add(artifact)
+			} catch (GradleException failure) {
+				if (gradle.startParameter.offline) {
+					throw failure
+				}
+				missing.add([artifact: artifact, failure: failure])
+			}
+		}
+		missing.groupBy { it.artifact.moduleVersion.id.toString() }.each { coordinate, entries ->
+			def download = configurations.detachedConfiguration(dependencies.create(coordinate))
+			download.transitive = false
+			configuration.attributes.keySet().each { key ->
+				download.attributes.attribute(key, configuration.attributes.getAttribute(key))
+			}
+			def candidates = download.resolvedConfiguration.resolvedArtifacts
+			entries.each { entry ->
+				def replacement = candidates.find { candidate ->
+					candidate.moduleVersion.id.toString() == coordinate && candidate.name == entry.artifact.name &&
+						candidate.classifier == entry.artifact.classifier && candidate.extension == entry.artifact.extension
+				}
+				if (replacement == null) {
+					throw entry.failure
+				}
+				replacement.file
+				artifacts.add(replacement)
+			}
+		}
+
+		// 原始元数据由 Gradle 获取；不自行猜测个人缓存布局或直接发起 HTTP 请求。
+		def metadataFiles = [:]
+		def metadataSource = { String coordinate, String extension ->
+			def key = "${coordinate}@${extension}".toString()
+			if (!metadataFiles.containsKey(key)) {
+				def id = coordinate.split(':')
+				File metadataFile = new File(MavenRepository.directory(new File(work, 'repository'), coordinate), "${id[1]}-${id[2]}.${extension}")
+				if (!metadataFile.isFile()) {
+					metadataFile = null
+				}
+				if (metadataFile == null && extension == 'pom') {
+					def result = dependencies.createArtifactResolutionQuery().forModule(id[0], id[1], id[2])
+						.withArtifacts(MavenModule, MavenPomArtifact).execute()
+					result.resolvedComponents.each { component ->
+						component.getArtifacts(MavenPomArtifact).each { artifact ->
+							if (artifact instanceof ResolvedArtifactResult) {
+								metadataFile = artifact.file
+							}
+						}
+					}
+				} else if (metadataFile == null) {
+					def query = configurations.detachedConfiguration(dependencies.create(key))
+					query.transitive = false
+					def candidates = query.resolvedConfiguration.lenientConfiguration.files
+					metadataFile = candidates ? candidates.first() : null
+				}
+				metadataFiles[key] = metadataFile
+			}
+			metadataFiles[key]
+		} as MavenRepository.MetadataSource
+		def selected = components.findAll {
+			it.id instanceof ModuleComponentIdentifier && it.id.group != 'es4a.extension'
+		}.collect { "${it.id.group}:${it.id.module}:${it.id.version}".toString() }
+		def originals = artifacts.collect { artifact ->
 			def input = artifact.file
 			if (!(artifact.extension.toLowerCase(Locale.ROOT) in ['jar', 'aar'])) {
 				throw new GradleException("应用运行制品必须为 JAR/AAR：${artifact.moduleVersion.id} / ${input}")
 			}
+			new MavenRepository.Artifact(artifact.moduleVersion.id.toString(), input)
+		}
+		def repository = file(request.repository)
+		MavenRepository.export(repository, originals, selected, metadataSource)
+		def entries = artifacts.collect { artifact ->
+			def input = new File(MavenRepository.directory(repository, artifact.moduleVersion.id.toString()), artifact.file.name)
 			def digest = MessageDigest.getInstance('SHA-256')
 			input.withInputStream { stream ->
 				byte[] buffer = new byte[8192]
@@ -100,18 +193,6 @@ tasks.register('resolveApplicationDependencies') {
 			[id: artifact.moduleVersion.id.toString(), classifier: artifact.classifier ?: '', file: input.canonicalPath,
 				digest: digest.digest().encodeHex().toString()]
 		}.sort { left, right -> left.id <=> right.id ?: left.file <=> right.file }
-
-		// 模块图与制品来自同一次解析，拒绝将旧 Support 依赖带入统一 AndroidX 的应用。
-		def components = configuration.incoming.resolutionResult.allComponents
-		def legacy = components.findAll { it.id instanceof ModuleComponentIdentifier && it.id.group == 'com.android.support' }
-		if (legacy) {
-			throw new GradleException("应用统一采用 AndroidX，存在旧 Support 依赖：${legacy*.id}")
-		}
-		def graph = components.collect { component ->
-			[id: component.id.displayName, dependencies: component.dependencies.findAll {
-				it instanceof ResolvedDependencyResult
-			}.collect { it.selected.id.displayName }]
-		}
 
 		// 只有完整解析成功后才替换结果文件，失败不会覆盖上一次有效快照。
 		def result = [fingerprint: request.fingerprint, dependencies: entries, graph: graph]

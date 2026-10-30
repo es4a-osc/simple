@@ -1,16 +1,12 @@
 package simple.compiler;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import simple.compiler.util.Toolchain;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.MessageDigest;
@@ -46,8 +42,6 @@ public final class LibraryArtifacts {
 
 	private static final Pattern VERSION = Pattern.compile("^(.+?)-([0-9][0-9A-Za-z._+\\-]*)\\.jar$", Pattern.CASE_INSENSITIVE);
 	private final Map<File, List<Entry>> libraries = new LinkedHashMap<File, List<Entry>>();
-	private final Map<File, String> namespaces = new HashMap<File, String>();
-	private final Map<File, File> manifests = new HashMap<File, File>();
 	private final Map<String, Entry> selected = new LinkedHashMap<String, Entry>();
 	private final Map<String, List<String>> graph = new LinkedHashMap<String, List<String>>();
 	private final Map<File, AndroidLibrary> androidLibraries = new LinkedHashMap<File, AndroidLibrary>();
@@ -74,26 +68,14 @@ public final class LibraryArtifacts {
 		 * 保存交付目录或 AAR 展开目录与对应资源包名。
 		 *
 		 * @param directory Android 类库目录。
-		 * @param namespace 来自交付描述或清单的资源包名。
+		 * @param namespace 来自标准 Android 清单的资源包名。
 		 * @param source 原始归档或扩展库目录。
 		 */
 		private AndroidLibrary(File directory, String namespace, File source) {
-			this(directory, namespace, source, new File(directory, "AndroidManifest.xml"));
-		}
-
-		/**
-		 * 保存 Android 输入，并明确选择本库编译后清单或原始 AAR 清单。
-		 *
-		 * @param directory Android 类库目录。
-		 * @param namespace 来自交付描述或清单的资源包名。
-		 * @param source 原始归档或扩展库目录。
-		 * @param manifest 当前构建使用的清单文件。
-		 */
-		private AndroidLibrary(File directory, String namespace, File source, File manifest) {
 			this.directory = directory;
 			this.namespace = namespace;
 			this.source = source;
-			this.manifest = manifest;
+			this.manifest = new File(directory, "AndroidManifest.xml");
 		}
 	}
 
@@ -113,7 +95,7 @@ public final class LibraryArtifacts {
 		/**
 		 * 区分仓库坐标、本地文件与旧式 libs 文件名中的版本。
 		 *
-		 * @param id 交付描述中的依赖身份。
+		 * @param id 解析结果或本地归档的依赖身份。
 		 * @param file 已检查的原始归档。
 		 * @throws IOException 文件无法读取。
 		 */
@@ -154,27 +136,23 @@ public final class LibraryArtifacts {
 	}
 
 	/**
-	 * 读取已安装扩展库；有描述时只消费描述中的运行依赖，没有描述时沿用本地目录约定。
+	 * 按固定目录读取已安装扩展库，并统一解析其原生模块声明。
 	 *
 	 * @param roots 已安装且含 classes.jar 的扩展库目录。
 	 * @param workDirectory AAR 展开输出根目录；为空时使用系统临时目录。
-	 * @throws IOException 描述无效、文件缺失、版本冲突或归档损坏。
+	 * @throws IOException 模块无效、文件越界、版本冲突或归档损坏。
 	 */
 	public LibraryArtifacts(List<File> roots, File workDirectory) throws IOException {
 		this.workDirectory = workDirectory;
 		for (File root : roots) {
 			File directory = root.getCanonicalFile();
 			List<Entry> entries = new ArrayList<Entry>();
-			File index = new File(directory, "dependencies.json");
-			if (index.isFile()) {
-				readIndex(directory, index, entries);
-			} else {
-				for (File file : list(directory, "libs", ".jar")) {
-					entries.add(new Entry("legacy:" + file.getName(), file));
-				}
-				for (File file : list(directory, "aars", ".aar")) {
-					entries.add(new Entry("file:" + file.getName(), file));
-				}
+			// 固定目录就是本地运行依赖声明，不再维护第二份文件列表。
+			for (File file : list(directory, "libs", ".jar")) {
+				entries.add(new Entry("file:" + file.getName(), file));
+			}
+			for (File file : list(directory, "aars", ".aar")) {
+				entries.add(new Entry("file:" + file.getName(), file));
 			}
 			libraries.put(directory, entries);
 			for (Entry entry : entries) {
@@ -225,72 +203,7 @@ public final class LibraryArtifacts {
 	}
 
 	/**
-	 * 读取当前原生声明或旧式快照，拒绝越出交付目录的本地文件引用。
-	 *
-	 * @param directory 交付根目录。
-	 * @param index 依赖描述。
-	 * @param entries 当前库的声明列表。
-	 * @throws IOException 结构、平台要求或文件引用无效。
-	 */
-	private void readIndex(File directory, File index, List<Entry> entries) throws IOException {
-		try (Reader reader = Files.newBufferedReader(index.toPath(), StandardCharsets.UTF_8)) {
-			JsonObject object = JsonParser.parseReader(reader).getAsJsonObject();
-			int format = object.get("schemaVersion").getAsInt();
-			if (format != 1 && format != 2) {
-				throw new IOException("不支持的扩展库依赖描述版本：" + index);
-			}
-			if (object.get("minSdk").getAsInt() > Toolchain.MIN_API_LEVEL || object.get("java").getAsInt() > 11) {
-				throw new IOException("扩展库要求高于当前 API 24 / Java 11 的运行环境：" + index);
-			}
-			namespaces.put(directory, object.get("namespace").getAsString());
-			if (format == 2) {
-				DependencyResolver.contained(directory, object.get("module").getAsString());
-				if (object.has("manifest")) {
-					manifests.put(directory, DependencyResolver.contained(directory, object.get("manifest").getAsString()));
-				}
-				for (JsonElement value : object.getAsJsonArray("files")) {
-					String relative = value.getAsJsonObject().get("file").getAsString();
-					File file = DependencyResolver.contained(directory, relative);
-					String lower = file.getName().toLowerCase(Locale.ROOT);
-					if ((!lower.endsWith(".jar") && !lower.endsWith(".aar")) || lower.endsWith("-sources.jar")) {
-						throw new IOException("本地运行依赖必须是 JAR/AAR 原包：" + file);
-					}
-					entries.add(new Entry("file:" + file.getName(), file));
-				}
-				return;
-			}
-
-			for (JsonElement value : object.getAsJsonArray("dependencies")) {
-				JsonObject item = value.getAsJsonObject();
-				String relative = item.get("file").getAsString();
-				File file = new File(directory, relative).getCanonicalFile();
-				if (new File(relative).isAbsolute() || !file.toPath().startsWith(directory.toPath()) || !file.isFile()) {
-					throw new IOException("扩展库依赖路径无效或文件缺失：" + relative + "\n" + index);
-				}
-				String lower = file.getName().toLowerCase(Locale.ROOT);
-				if ((!lower.endsWith(".jar") && !lower.endsWith(".aar")) || lower.endsWith("-sources.jar")) {
-					throw new IOException("扩展库运行依赖必须为 JAR 或 AAR：" + file);
-				}
-				entries.add(new Entry(item.get("id").getAsString(), file, item.has("classifier") ? item.get("classifier").getAsString() : ""));
-			}
-			JsonArray relationships = object.getAsJsonArray("graph");
-			if (relationships != null) {
-				for (JsonElement value : relationships) {
-					JsonObject item = value.getAsJsonObject();
-					List<String> children = new ArrayList<String>();
-					for (JsonElement child : item.getAsJsonArray("dependencies")) {
-						children.add(child.getAsString());
-					}
-					graph.put(item.get("id").getAsString(), children);
-				}
-			}
-		} catch (RuntimeException failure) {
-			throw new IOException("扩展库依赖描述无效：" + index + "\n" + failure.getMessage(), failure);
-		}
-	}
-
-	/**
-	 * 合并旧式快照中的同坐标候选；新式模块已由 Gradle 完成选版。
+	 * 合并本地候选；仓库模块已由 Gradle 完成选版。
 	 *
 	 * @param entry 当前候选依赖。
 	 * @throws IOException 无法安全选择依赖。
@@ -494,12 +407,13 @@ public final class LibraryArtifacts {
 		}
 		for (File root : roots) {
 			File directory = root.getCanonicalFile();
-			String namespace = namespaces.get(directory);
-			if (namespace == null && new File(directory, "AndroidManifest.xml").isFile()) {
+			String namespace = null;
+			File manifest = new File(directory, "AndroidManifest.xml");
+			if (manifest.isFile()) {
+				DependencyResolver.contained(directory, manifest.getName());
 				namespace = AndroidLibraries.readNamespace(directory);
 			}
-			File manifest = manifests.getOrDefault(directory, new File(directory, "AndroidManifest.xml"));
-			result.put(directory.toString(), new AndroidLibrary(directory, namespace, directory, manifest));
+			result.put(directory.toString(), new AndroidLibrary(directory, namespace, directory));
 		}
 		return new ArrayList<AndroidLibrary>(result.values());
 	}
@@ -569,7 +483,7 @@ public final class LibraryArtifacts {
 		for (File file : children) {
 			String lower = file.getName().toLowerCase(Locale.ROOT);
 			if (file.isFile() && lower.endsWith(extension) && !lower.endsWith("-sources.jar")) {
-				result.add(file.getCanonicalFile());
+				result.add(DependencyResolver.contained(root, name + "/" + file.getName()));
 			}
 		}
 		return result;

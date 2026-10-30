@@ -916,8 +916,8 @@ public final class Compiler {
 
 				// AAPT2第一阶段：把项目res目录编译成可重复参与链接的resources.zip。
 				out.println("正在编译资源：" + compiledResourcesFile.getName());
-				if (!Toolchain.compileResources(buildDir, resDir, compiledResourcesFile, System.out, System.err)) {
-					internalError();
+				if (!Toolchain.compileResources(buildDir, resDir, compiledResourcesFile, out, err)) {
+					compiler.error(Scanner.NO_POSITION, "项目资源编译失败。");
 					return false;
 				}
 
@@ -927,7 +927,7 @@ public final class Compiler {
 				if (!Toolchain.generateResourceIndex(buildDir, apFile, manifestFile,
 						ANDROID_RUNTIME, assetsDirectories, resourceSymbolsFile, resourceBuildDirectory,
 						stableResourceIdsFile, compiledLibraryResourceFiles, compiledResourcesFile, out, err)) {
-					internalError();
+					compiler.error(Scanner.NO_POSITION, "资源索引生成失败。");
 					return false;
 				}
 
@@ -974,8 +974,8 @@ public final class Compiler {
 				out.println("正在打包资源：" + apFile.getName());
 				if (!Toolchain.packageResources(buildDir, apFile, manifestFile,
 						ANDROID_RUNTIME, assetsDirectories, stableResourceIdsFile,
-						compiledLibraryResourceFiles, compiledResourcesFile, System.out, System.err)) {
-					internalError();
+						compiledLibraryResourceFiles, compiledResourcesFile, out, err)) {
+					compiler.error(Scanner.NO_POSITION, "资源打包失败。");
 					return false;
 				}
 
@@ -995,13 +995,17 @@ public final class Compiler {
 					return false;
 				}
 				if (!Toolchain.compileJava(buildDir, classesDir, resourceSources, out, err)) {
-					internalError();
+					compiler.error(Scanner.NO_POSITION, "资源类编译失败。");
 					return false;
 				}
 
 				// 生成全部Simple类；内存中的SimpleResources.simple会在这里生成平铺的SimpleResources.class。
-				out.println("正在编译Simple资源索引：" + simpleResourceQualifiedName);
+				out.println("正在生成 Simple 类文件。");
 				compiler.generate(classesDir);
+				// 类生成可能记录写入失败或常量池溢出，错误产物不能继续进入 DEX 和签名。
+				if (compiler.errorCount > 0) {
+					return false;
+				}
 
 				// 统一转换项目类、资源索引及运行库；DEX 输出目录由本次构建独立管理。
 				File dexDirectory = new File(buildDir, "dexs");
@@ -1013,18 +1017,19 @@ public final class Compiler {
 					compiler.error(Scanner.NO_POSITION, failure.getMessage());
 					return false;
 				}
+				out.println("正在转换字节码：D8");
 				List<File> dexFiles = Toolchain.generateDex(dexDirectory, dexInputFiles, new File(ANDROID_RUNTIME),
-						Toolchain.MIN_API_LEVEL, System.out, System.err);
+						Toolchain.MIN_API_LEVEL, out, err);
 				if (dexFiles == null) {
-					internalError();
+					compiler.error(Scanner.NO_POSITION, "DEX 生成失败。");
 					return false;
 				}
 
 				// 只打包本次 D8 返回的全部 DEX，不扫描构建目录中的历史文件。
 				compiler.out.println("正在生成应用：" + unsignedApkFile.getName());
 				if (!Toolchain.buildApplication(unsignedApkFile, apFile, dexFiles,
-						resourceJars, nativeDirectories, System.err)) {
-					internalError();
+						resourceJars, nativeDirectories, err)) {
+					compiler.error(Scanner.NO_POSITION, "APK 组装失败。");
 					return false;
 				}
 			} catch (IOException failure) {
@@ -1034,8 +1039,8 @@ public final class Compiler {
 
 			// V2 签名保护 APK 的整体结构，所有对齐操作必须先于签名完成。
 			out.println("正在对齐应用：" + alignedApkFile.getName());
-			if (!Toolchain.alignApplication(unsignedApkFile, alignedApkFile, System.err)) {
-				internalError();
+			if (!Toolchain.alignApplication(unsignedApkFile, alignedApkFile, err)) {
+				compiler.error(Scanner.NO_POSITION, "APK 对齐失败。");
 				return false;
 			}
 
@@ -1057,8 +1062,8 @@ public final class Compiler {
 				if (!keystore.exists()) {
 					// 调用 keytool.exe 生成调试密钥。
 					out.println("正在生成调试密钥：" + ANDROID_DEBUG_KEYSTORE);
-					if (!Toolchain.createDebugKeystore(keystore, System.err)) {
-						internalError();
+					if (!Toolchain.createDebugKeystore(keystore, err)) {
+						compiler.error(Scanner.NO_POSITION, "调试密钥生成失败。");
 						return false;
 					}
 				}
@@ -1073,8 +1078,8 @@ public final class Compiler {
 
 			// 签名直接写入最终应用路径；工具失败时立即中断，不再复制或单独校验。
 			if (!Toolchain.signApplication(signingKeystoreLocation, signingPasswordSource,
-					alignedApkFile, apkFile, signingAlias, signingStoreType, System.err)) {
-				internalError();
+					alignedApkFile, apkFile, signingAlias, signingStoreType, err)) {
+				compiler.error(Scanner.NO_POSITION, "APK 签名失败。");
 				return false;
 			}
 			break;

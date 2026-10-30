@@ -5,12 +5,18 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import simple.compiler.util.MavenRepository;
 import junit.framework.TestCase;
+import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpExchange;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
@@ -18,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -26,7 +33,7 @@ import java.util.zip.ZipFile;
  * 从正式编译器 JAR 验证 SDK 外部脚本、Gradle 依赖规则和解析缓存。
  *
  * <p>依赖输入来自隔离的本地 Maven 仓库，测试不访问业务类库或修改 SDK 配置。
- * Gradle 与 AGP 使用构建编译器所需的 SDK 工具和已有缓存，全程以离线模式解析。
+ * Gradle 与 AGP 使用 SDK 离线工具和空用户缓存，全程以离线模式解析。
  *
  * @author 树先生 xhwsd@qq.com
  */
@@ -43,6 +50,9 @@ public final class DependencyResolverTest extends TestCase {
 
 	/** 当前用例临时引用真实工具的目录链接，结束时仅删除链接本身。 */
 	private File toolsLink;
+
+	/** 系统临时目录中的空 Gradle 用户缓存，避免同步软件介入工具缓存。 */
+	private File gradleUserHome;
 
 	/** 用例专用的 Maven 仓库。 */
 	private File repository;
@@ -64,10 +74,21 @@ public final class DependencyResolverTest extends TestCase {
 		Files.createDirectories(parent.toPath());
 		root = Files.createTempDirectory(parent.toPath(), "解析 中文 空格-").toFile().getCanonicalFile();
 		sdk = Files.createTempDirectory("simple-sdk-中文 空格-").toFile().getCanonicalFile();
+		gradleUserHome = Files.createTempDirectory("simple-gradle-home-").toFile().getCanonicalFile();
 		repository = new File(root, "repository");
 		work = new File(root, "application/build/dependencies");
-		compiler = new File("dist/common/SimpleCompiler.jar").getCanonicalFile();
-		assertTrue("请先生成正式编译器 JAR", compiler.isFile());
+		File distributionCompiler = new File("dist/common/SimpleCompiler.jar").getCanonicalFile();
+		assertTrue("请先生成正式编译器 JAR", distributionCompiler.isFile());
+		Files.createDirectories(new File(sdk, "simple").toPath());
+		compiler = new File(sdk, "simple/SimpleCompiler.jar");
+		Files.copy(distributionCompiler.toPath(), compiler.toPath());
+		File libraries = new File(sdk, "simple/libs");
+		Files.createDirectories(libraries.toPath());
+		for (File jar : new File("libs").listFiles()) {
+			if (jar.isFile() && jar.getName().endsWith(".jar")) {
+				Files.copy(jar.toPath(), new File(libraries, jar.getName()).toPath());
+			}
+		}
 
 		Files.createDirectories(repository.toPath());
 		File project = new File(sdk, "simple/gradle");
@@ -153,6 +174,31 @@ public final class DependencyResolverTest extends TestCase {
 		File library = writeLibrary("fixture.local", "[]", "[]");
 		result = DependencyResolver.resolve(Arrays.asList(library), work);
 		assertEquals(0, result.getAsJsonArray("dependencies").size());
+		assertFalse(work.exists());
+	}
+
+	/**
+	 * 模块声明必须与标准清单身份一致，缺失清单不能退回目录名。
+	 *
+	 * @throws Exception 测试输入无法准备。
+	 */
+	public void testModuleRequiresMatchingStandardManifest() throws Exception {
+		File library = writeLibrary("fixture.identity", "[]", "[]");
+		File manifest = new File(library, "AndroidManifest.xml");
+		Files.writeString(manifest.toPath(), "<manifest package=\"fixture.other\" />", StandardCharsets.UTF_8);
+		try {
+			DependencyResolver.resolve(Arrays.asList(library), work);
+			fail("模块和清单身份不同必须失败。");
+		} catch (IOException expected) {
+			assertTrue(expected.getMessage().contains("模块身份无效"));
+		}
+		Files.delete(manifest.toPath());
+		try {
+			DependencyResolver.resolve(Arrays.asList(library), work);
+			fail("模块缺失标准清单必须失败。");
+		} catch (IOException expected) {
+			assertTrue(expected.getMessage().contains("AndroidManifest.xml"));
+		}
 		assertFalse(work.exists());
 	}
 
@@ -316,6 +362,201 @@ public final class DependencyResolverTest extends TestCase {
 	}
 
 	/**
+	 * 两库和应用侧按文件互补，同一图中仍选择较高依赖版本；源目录保持只读。
+	 *
+	 * @throws Exception 夹具、解析或文件校验失败。
+	 */
+	public void testOfflineLibrariesAndApplicationRepositoryComplementEachOther() throws Exception {
+		linkSdkTools();
+		String helper = "<dependencies><dependency><groupId>fixture</groupId><artifactId>helper</artifactId>"
+				+ "<version>1.0</version></dependency></dependencies>";
+		writeMavenModule("shared", "1.0", helper);
+		writeMavenModule("helper", "2.0", "");
+		File first = writeLibrary("fixture.first", "[{\"group\":\"fixture\",\"module\":\"shared\","
+				+ "\"version\":{\"requires\":\"1.0\"}}]", "[]");
+		File second = writeLibrary("fixture.second", "[{\"group\":\"fixture\",\"module\":\"helper\","
+				+ "\"version\":{\"requires\":\"2.0\"}}]", "[]");
+		copyRepositoryFile("fixture/shared/1.0/shared-1.0.pom", new File(first, "dependencies"));
+		copyRepositoryFile("fixture/shared/1.0/shared-1.0.jar", new File(second, "dependencies"));
+		copyRepositoryFile("fixture/helper/2.0/helper-2.0.pom", new File(work, "repository"));
+		copyRepositoryFile("fixture/helper/2.0/helper-2.0.jar", new File(second, "dependencies"));
+		String before = MavenRepository.fingerprint(Arrays.asList(new File(first, "dependencies"), new File(second, "dependencies")));
+		runResolver(compiler, true, first, second);
+		assertIds("fixture:helper:2.0", "fixture:shared:1.0");
+		assertEquals(before, MavenRepository.fingerprint(Arrays.asList(new File(first, "dependencies"), new File(second, "dependencies"))));
+		for (JsonElement value : DependencyResolver.read(new File(work, "resolution/resolved.json")).getAsJsonArray("dependencies")) {
+			assertTrue(value.getAsJsonObject().get("file").getAsString().startsWith(new File(work, "repository").getCanonicalPath()));
+		}
+
+		// 即使已有解析快照，来源中同坐标不同内容也必须在执行 Gradle 前拒绝。
+		File conflict = new File(first, "dependencies/fixture/shared/1.0/shared-1.0.jar");
+		Files.writeString(conflict.toPath(), "conflicting same coordinate");
+		String failure = runResolver(compiler, false, first, second);
+		assertTrue(failure.contains("离线依赖内容冲突"));
+		assertFalse(failure.contains("正在准备依赖：Gradle"));
+	}
+
+	/**
+	 * 首次离线缺项失败，联网仅从回环 HTTP 仓库补齐，之后空缓存仍能离线解析。
+	 *
+	 * @throws Exception HTTP 夹具、解析或持久仓库校验失败。
+	 */
+	public void testMissingArtifactDownloadsThenWorksWithEmptyOfflineCache() throws Exception {
+		linkSdkTools();
+		writeMavenModule("helper", "1.0", "");
+		File first = writeLibrary("fixture.first", "[{\"group\":\"fixture\",\"module\":\"helper\","
+				+ "\"version\":{\"requires\":\"1.0\"}}]", "[]");
+		copyRepositoryFile("fixture/helper/1.0/helper-1.0.pom", new File(first, "dependencies"));
+		final AtomicInteger requests = new AtomicInteger();
+		HttpServer server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
+		server.createContext("/", new HttpHandler() {
+			@Override
+			public void handle(HttpExchange exchange) throws IOException {
+				requests.incrementAndGet();
+				File file = new File(repository, exchange.getRequestURI().getPath().substring(1)).getCanonicalFile();
+				try {
+					if (!file.toPath().startsWith(repository.getCanonicalFile().toPath()) || !file.isFile()) {
+						exchange.sendResponseHeaders(404, -1);
+						return;
+					}
+					if ("HEAD".equals(exchange.getRequestMethod())) {
+						exchange.getResponseHeaders().add("Content-Length", Long.toString(file.length()));
+						exchange.sendResponseHeaders(200, -1);
+					} else {
+						byte[] content = Files.readAllBytes(file.toPath());
+						exchange.sendResponseHeaders(200, content.length);
+						exchange.getResponseBody().write(content);
+					}
+				} finally {
+					exchange.close();
+				}
+			}
+		});
+		server.start();
+		try {
+			String address = "http://127.0.0.1:" + server.getAddress().getPort() + "/";
+			File settings = new File(sdk, "simple/gradle/settings.gradle");
+			String original = Files.readString(settings.toPath(), StandardCharsets.UTF_8);
+			String text = original.replace("google()", "").replace("mavenCentral()", "")
+					.replace("maven { url = uri('https://jitpack.io/') }", "");
+			text += "\r\ndependencyResolutionManagement.repositories.maven { url = uri('" + address + "'); allowInsecureProtocol = true }\r\n";
+			Files.writeString(settings.toPath(), text, StandardCharsets.UTF_8);
+			String missing = runResolver(compiler, false, first);
+			assertTrue(missing.contains("helper"));
+			assertEquals("离线模式不能访问 HTTP", 0, requests.get());
+
+			runResolver(compiler, true, false, first);
+			assertTrue("联网必须实际补齐原包", requests.get() > 0);
+			File stored = new File(work, "repository/fixture/helper/1.0/helper-1.0.jar");
+			assertTrue(stored.isFile());
+			assertTrue(new File(work, "repository/fixture/helper/1.0/helper-1.0.pom").isFile());
+			int previous = requests.get();
+			Files.delete(new File(work, "resolution/resolved.json").toPath());
+			gradleUserHome = Files.createTempDirectory("simple-offline-empty-home-").toFile();
+			runResolver(compiler, true, first);
+			assertEquals("已有本地仓库时不访问 HTTP", previous, requests.get());
+			assertIds("fixture:helper:1.0");
+
+			// 同一个原生运行变体可有多个包，其中一个已有时仍须补齐其它包。
+			writeMavenModule("helper", "2.0", "<!-- do_not_remove: published-with-gradle-metadata -->");
+			File moduleDirectory = new File(repository, "fixture/helper/2.0");
+			Files.copy(new File(moduleDirectory, "helper-2.0.jar").toPath(), new File(moduleDirectory, "helper-2.0-extra.jar").toPath());
+			Files.writeString(new File(moduleDirectory, "helper-2.0.module").toPath(),
+					"{\"formatVersion\":\"1.1\",\"component\":{\"group\":\"fixture\",\"module\":\"helper\",\"version\":\"2.0\"},"
+					+ "\"variants\":[{\"name\":\"runtime\",\"attributes\":{\"org.gradle.usage\":\"java-runtime\"},\"files\":["
+					+ "{\"name\":\"helper-2.0.jar\",\"url\":\"helper-2.0.jar\"},"
+					+ "{\"name\":\"helper-2.0-extra.jar\",\"url\":\"helper-2.0-extra.jar\"}]}]}", StandardCharsets.UTF_8);
+			writeLibrary("fixture.first", "[{\"group\":\"fixture\",\"module\":\"helper\",\"version\":{\"requires\":\"2.0\"}}]", "[]");
+			for (String suffix : new String[] {"pom", "module", "jar"}) {
+				copyRepositoryFile("fixture/helper/2.0/helper-2.0." + suffix, new File(first, "dependencies"));
+			}
+			runResolver(compiler, false, first);
+			runResolver(compiler, true, false, first);
+			assertTrue(new File(work, "repository/fixture/helper/2.0/helper-2.0-extra.jar").isFile());
+			assertFalse("补齐不能改写随库仓库", new File(first, "dependencies/fixture/helper/2.0/helper-2.0-extra.jar").exists());
+			Files.delete(new File(work, "resolution/resolved.json").toPath());
+			gradleUserHome = Files.createTempDirectory("simple-offline-multiple-artifacts-").toFile();
+			previous = requests.get();
+			runResolver(compiler, true, first);
+			assertEquals(previous, requests.get());
+			assertIds("fixture:helper:2.0", "fixture:helper:2.0");
+		} finally {
+			server.stop(0);
+		}
+	}
+
+	/**
+	 * 复制一个夹具仓库文件到指定补充仓库，保留标准相对路径。
+	 *
+	 * @param relative Maven 仓库相对路径。
+	 * @param destination 补充仓库目录。
+	 * @throws IOException 文件无法复制。
+	 */
+	private void copyRepositoryFile(String relative, File destination) throws IOException {
+		File target = new File(destination, relative);
+		Files.createDirectories(target.toPath().getParent());
+		Files.copy(new File(repository, relative).toPath(), target.toPath());
+	}
+
+	/**
+	 * 原生变体约束不能退化为 POM 的宽松依赖，冲突也必须由 Gradle 正常拒绝。
+	 *
+	 * @throws Exception 夹具、离线解析或原生元数据保真校验失败。
+	 */
+	public void testOfflineNativeMetadataRetainsStrictConstraints() throws Exception {
+		linkSdkTools();
+		writeMavenModule("helper", "1.0", "");
+		writeMavenModule("helper", "2.0", "");
+		writeMavenModule("shared", "1.0", "<!-- do_not_remove: published-with-gradle-metadata -->"
+				+ "<dependencies><dependency><groupId>fixture</groupId><artifactId>helper</artifactId>"
+				+ "<version>2.0</version></dependency></dependencies>");
+		File metadata = new File(repository, "fixture/shared/1.0/shared-1.0.module");
+		String nativeMetadata = "{\"formatVersion\":\"1.1\",\"component\":{\"group\":\"fixture\",\"module\":\"shared\","
+				+ "\"version\":\"1.0\"},\"variants\":[{\"name\":\"runtime\",\"attributes\":{\"org.gradle.usage\":\"java-runtime\"},"
+				+ "\"dependencies\":[{\"group\":\"fixture\",\"module\":\"helper\",\"version\":{\"strictly\":\"1.0\"}}],"
+				+ "\"files\":[{\"name\":\"shared-1.0.jar\",\"url\":\"shared-1.0.jar\"}]}]}";
+		Files.writeString(metadata.toPath(), nativeMetadata, StandardCharsets.UTF_8);
+		File first = writeLibrary("fixture.native", "[{\"group\":\"fixture\",\"module\":\"shared\","
+				+ "\"version\":{\"requires\":\"1.0\"}}]", "[]");
+		MavenRepository.merge(Arrays.asList(repository), new File(first, "dependencies"));
+		runResolver(compiler, true, first);
+		assertIds("fixture:helper:1.0", "fixture:shared:1.0");
+		assertEquals(nativeMetadata, Files.readString(new File(work, "repository/fixture/shared/1.0/shared-1.0.module").toPath()));
+
+		File second = writeLibrary("fixture.conflicting", "[{\"group\":\"fixture\",\"module\":\"helper\","
+				+ "\"version\":{\"requires\":\"2.0\"}}]", "[]");
+		String failure = runResolver(compiler, false, first, second);
+		assertTrue(failure, failure.contains("strictly 1.0"));
+		assertTrue(failure, failure.contains("2.0"));
+	}
+
+	/**
+	 * 空缓存中保留父 POM 与导入 BOM，Gradle 才能正确解析没有显式版本的依赖。
+	 *
+	 * @throws Exception 仓库输入或离线解析不符合预期。
+	 */
+	public void testOfflinePomParentsAndBomRemainResolvable() throws Exception {
+		linkSdkTools();
+		writeMavenModule("helper", "2.0", "");
+		writeMavenModule("bom", "1.0", "<packaging>pom</packaging><dependencyManagement><dependencies>"
+				+ "<dependency><groupId>fixture</groupId><artifactId>helper</artifactId><version>2.0</version>"
+				+ "</dependency></dependencies></dependencyManagement>");
+		writeMavenModule("parent", "1.0", "<packaging>pom</packaging><properties><bom.version>1.0</bom.version></properties>");
+		writeMavenModule("shared", "1.0", "<parent><groupId>fixture</groupId><artifactId>parent</artifactId>"
+				+ "<version>1.0</version></parent><dependencyManagement><dependencies><dependency>"
+				+ "<groupId>fixture</groupId><artifactId>bom</artifactId><version>${bom.version}</version>"
+				+ "<scope>import</scope><type>pom</type></dependency></dependencies></dependencyManagement>"
+				+ "<dependencies><dependency><groupId>fixture</groupId><artifactId>helper</artifactId></dependency></dependencies>");
+		File library = writeLibrary("fixture.managed", "[{\"group\":\"fixture\",\"module\":\"shared\","
+				+ "\"version\":{\"requires\":\"1.0\"}}]", "[]");
+		MavenRepository.merge(Arrays.asList(repository), new File(library, "dependencies"));
+		runResolver(compiler, true, library);
+		assertIds("fixture:helper:2.0", "fixture:shared:1.0");
+		assertTrue(new File(work, "repository/fixture/bom/1.0/bom-1.0.pom").isFile());
+		assertTrue(new File(work, "repository/fixture/parent/1.0/parent-1.0.pom").isFile());
+	}
+
+	/**
 	 * 启动只从交付 JAR 加载编译器的探针，隔离各次环境与类加载状态。
 	 *
 	 * @param jar 本轮使用的编译器 JAR。
@@ -325,8 +566,22 @@ public final class DependencyResolverTest extends TestCase {
 	 * @throws Exception 子进程超时、结果不符或日志无法读取。
 	 */
 	private String runResolver(File jar, boolean success, File... libraries) throws Exception {
+		return runResolver(jar, success, true, libraries);
+	}
+
+	/**
+	 * 使用明确的联网策略运行隔离解析探针。
+	 *
+	 * @param jar 本轮编译器 JAR。
+	 * @param success 预期成功状态。
+	 * @param offline 是否禁止 Gradle 访问远程仓库。
+	 * @param libraries 本轮实际引用的库。
+	 * @return 子进程诊断。
+	 * @throws Exception 探针超时或结果不符合预期。
+	 */
+	private String runResolver(File jar, boolean success, boolean offline, File... libraries) throws Exception {
 		String classPath = jar.getCanonicalPath() + File.pathSeparator
-				+ new File(new File("dist/common/libs").getCanonicalFile(), "*").getPath() + File.pathSeparator
+				+ System.getProperty("java.class.path") + File.pathSeparator
 				+ new File(DependencyResolverTest.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getPath()
 				+ File.pathSeparator + new File("third_party/junit-4.12.jar").getCanonicalPath();
 		List<String> command = new ArrayList<String>(Arrays.asList(
@@ -339,7 +594,8 @@ public final class DependencyResolverTest extends TestCase {
 		// 使用子进程的环境定位隔离 SDK，生产入口无需增加测试专用参数。
 		ProcessBuilder builder = new ProcessBuilder(command);
 		builder.environment().put("ES4A_SDK_HOME", sdk.getCanonicalPath());
-		builder.environment().put("ES4A_OFFLINE", "1");
+		builder.environment().put("ES4A_OFFLINE", offline ? "1" : "0");
+		builder.environment().put("GRADLE_USER_HOME", gradleUserHome.getCanonicalPath());
 		builder.environment().remove("ES4A_REFRESH_DEPENDENCIES");
 		File log = Files.createTempFile("simple-dependency-resolution-", ".log").toFile();
 		builder.redirectErrorStream(true);
@@ -403,12 +659,9 @@ public final class DependencyResolverTest extends TestCase {
 		metadata.add("variants", variants);
 		writeJson(new File(library, "dependencies.module"), metadata);
 
-		// 交付入口只引用本目录的原生声明，不携带任何解构后的依赖文件。
-		JsonObject index = new JsonObject();
-		index.addProperty("schemaVersion", 2);
-		index.addProperty("namespace", name);
-		index.addProperty("module", "dependencies.module");
-		writeJson(new File(library, "dependencies.json"), index);
+		// 标准清单是资源身份的唯一来源，不依赖额外的文件索引。
+		Files.writeString(new File(library, "AndroidManifest.xml").toPath(),
+				"<manifest package=\"" + name + "\" />", StandardCharsets.UTF_8);
 		return library;
 	}
 

@@ -10,4 +10,3 @@
 # ------------------------------------------------------------------------------------------
 
 exec "${JAVA_HOME}/bin/java" -classpath "${ANDROID_HOME}/platforms/android-30/tools/lib/d8.jar:${SIMPLE_HOME}/SimpleCompiler.jar:${SIMPLE_HOME}/libs/*" simple.compiler.Main "$@"
-
