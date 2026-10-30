@@ -20,7 +20,7 @@ import java.util.zip.CRC32;
 /**
  * 使用 JDK 归档接口组装未签名 APK，不依赖旧版 Android APK 组装库。
  *
- * <p>接收已经链接的 Android 资源、单个 DEX、所选 JAR 和原生库目录；
+ * <p>一次写入已经链接的 Android 资源、全部 DEX、所选 JAR 的 Java 资源和原生库；
  * Java 资源沿用统一合并规则，对齐与签名由后续工具完成。
  *
  * @author 树先生 xhwsd@qq.com
@@ -75,10 +75,12 @@ final class ApkBuilder {
 				for (File directory : nativeDirectories) {
 					addNativeDirectory(directory, output, owners);
 				}
+
+				// Java 资源直接进入同一归档，复用已有输入检查冲突，不再重写整份 APK。
+				resources.writeTo(output, resourcesFile, owners);
 			}
 
-			// 复用服务注册、许可合并及普通资源冲突规则，不修改原始依赖。
-			resources.addToApk(temporary.toFile());
+			// 全部内容和冲突检查成功后才替换目标，失败保留上次完整产物。
 			Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
 		} finally {
 			Files.deleteIfExists(temporary);

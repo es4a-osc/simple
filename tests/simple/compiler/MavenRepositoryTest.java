@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.attribute.FileTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -188,6 +189,51 @@ public final class MavenRepositoryTest extends TestCase {
 				Arrays.asList("test:sample:1.0"), source(metadata));
 		assertEquals(value, Files.readString(new File(target, "test/sample/1.0/sample-1.0.module").toPath()));
 		assertTrue(new File(target, "test/sample-jvm/1.0/sample-jvm-1.0.module").isFile());
+	}
+
+	/**
+	 * 导出合并到已有仓库时保留旧版本和原包时间，同坐标冲突不改变已提交内容。
+	 *
+	 * @throws Exception 导出、冲突诊断或仓库完整性校验失败。
+	 */
+	public void testExportPreservesExistingVersionsAndRejectsConflict() throws Exception {
+		Map<String, File> metadata = new HashMap<String, File>();
+		metadata.put("test:sample:1.0@pom", write(new File(root, "first.pom"), pom("sample", "1.0", "")));
+		metadata.put("test:sample:2.0@pom", write(new File(root, "second.pom"), pom("sample", "2.0", "")));
+		File first = write(new File(root, "input/sample-1.0.jar"), "first");
+		File second = write(new File(root, "input/sample-2.0.jar"), "second");
+		File target = new File(root, "repository");
+		MavenRepository.export(target, Arrays.asList(new MavenRepository.Artifact("test:sample:1.0", first)),
+				Arrays.asList("test:sample:1.0"), source(metadata));
+		File installed = new File(target, "test/sample/1.0/sample-1.0.jar");
+		FileTime marker = FileTime.fromMillis(1234567890000L);
+		Files.setLastModifiedTime(installed.toPath(), marker);
+
+		MavenRepository.export(target, Arrays.asList(new MavenRepository.Artifact("test:sample:2.0", second)),
+				Arrays.asList("test:sample:2.0"), source(metadata));
+		assertEquals("first", Files.readString(installed.toPath(), StandardCharsets.UTF_8));
+		assertEquals(marker, Files.getLastModifiedTime(installed.toPath()));
+		assertEquals("second", Files.readString(new File(target, "test/sample/2.0/sample-2.0.jar").toPath(), StandardCharsets.UTF_8));
+		String versions = Files.readString(new File(target, "test/sample/maven-metadata.xml").toPath(), StandardCharsets.UTF_8);
+		assertTrue(versions.contains("<version>1.0</version>") && versions.contains("<version>2.0</version>"));
+
+		// 失败时连版本列表也必须保持原样，不能留下部分已导出的新内容。
+		String previous = MavenRepository.fingerprint(Arrays.asList(target));
+		write(first, "different");
+		try {
+			MavenRepository.export(target, Arrays.asList(new MavenRepository.Artifact("test:sample:1.0", first)),
+					Arrays.asList("test:sample:1.0"), source(metadata));
+			fail("同坐标不同内容必须拒绝导出");
+		} catch (IOException expected) {
+			assertTrue(expected.getMessage().contains("离线依赖内容冲突"));
+		}
+		assertEquals(previous, MavenRepository.fingerprint(Arrays.asList(target)));
+		assertEquals(marker, Files.getLastModifiedTime(installed.toPath()));
+		for (File file : root.listFiles()) {
+			assertFalse(file.getName().startsWith(".export-"));
+			assertFalse(file.getName().startsWith(".repository-"));
+			assertFalse(file.getName().startsWith(".validated-"));
+		}
 	}
 
 	/**

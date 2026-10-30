@@ -107,7 +107,7 @@ public final class MavenRepository {
 	/**
 	 * 在独立暂存目录合并仓库，完成校验后同步目标文件，失败时恢复原目标内容。
 	 *
-	 * @param repositories 可互补的仓库目录，均只读。
+	 * @param repositories 可互补的仓库目录；合并准备阶段只读，可包含目标仓库本身。
 	 * @param destination 本轮拥有的合并仓库目录。
 	 * @throws IOException 内容冲突、路径无效或写入失败。
 	 */
@@ -175,13 +175,8 @@ public final class MavenRepository {
 			List<File> sources = new ArrayList<File>();
 			sources.add(destination);
 			sources.add(pending);
-			File validated = new File(destination.getAbsoluteFile().getParentFile(), ".validated-" + UUID.randomUUID());
-			try {
-				merge(sources, validated);
-				append(validated, destination);
-			} finally {
-				remove(validated);
-			}
+			// 合并入口已负责独立暂存、校验与失败恢复，不再另建已验证副本和第二次提交。
+			merge(sources, destination);
 		} finally {
 			remove(pending);
 		}

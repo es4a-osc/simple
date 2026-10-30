@@ -18,7 +18,10 @@ package simple.classfiles;
 
 import simple.util.Preconditions;
 
-import java.nio.charset.Charset;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.UTFDataFormatException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +34,7 @@ import java.util.Map;
  * specification.
  *
  * @author Herbert Czymontek
+ * @author 树先生 xhwsd@qq.com
  */
 final class ConstantPool {
 
@@ -334,26 +338,47 @@ final class ConstantPool {
 		}
 	}
 
-	/*
-	 * This is the Constant for string constant data (in UTF-8 encoding).
+	/**
+	 * 按 JVMS 4.4.7 保存字符串常量的 Modified UTF-8 内容。
+	 *
+	 * <p>普通 UTF-8 的 NUL 和四字节补充字符编码不能直接进入常量池；
+	 * 使用 JDK 编码器逐 UTF-16 代码单元写出，并按编码字节数检查 65535 字节上限。
+	 *
+	 * @author Herbert Czymontek
+	 * @author 树先生 xhwsd@qq.com
 	 */
 	private final class ConstantUtf8 extends Constant {
-		private byte[] string;
+		/** 包含两个字节长度前缀的完整 Modified UTF-8 数据。 */
+		private final byte[] encoded;
 
-		ConstantUtf8(String string){
+		/**
+		 * 编码字符串常量，保留 NUL、代理对及单独代理代码单元的原始含义。
+		 *
+		 * @param value 要写入常量池的 UTF-16 字符串。
+		 * @throws ConstantPoolOverflowException Modified UTF-8 编码超过 65535 字节。
+		 */
+		ConstantUtf8(String value) {
 			super(CONSTANT_Utf8);
-			this.string = string.getBytes(Charset.forName("UTF-8"));
 
-			if (this.string.length > MAX_CONSTANTPOOL_INDEX) {
+			// writeUTF 与常量池使用相同格式和字节上限，不能以普通 UTF-8 或字符数量替代。
+			ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+			try (DataOutputStream output = new DataOutputStream(bytes)) {
+				output.writeUTF(value);
+			} catch (UTFDataFormatException failure) {
+				// 沿用编译器既有的常量溢出异常，交由上层生成正常构建诊断。
 				throw new ConstantPoolOverflowException("utf8 constant too long");
+			} catch (IOException failure) {
+				// 当前输出仅为内存缓冲区；异常不能转换为成功或返回不完整常量。
+				throw new IllegalStateException("无法编码字符串常量", failure);
 			}
+			encoded = bytes.toByteArray();
 		}
 
 		@Override
 		void generate(ClassFile classFile) {
 			super.generate(classFile);
-			classFile.generate16((short)string.length);
-			classFile.generateBytes(string);
+			// writeUTF 已包含 u2 长度前缀，这里只追加完整数据，不能重复写入长度。
+			classFile.generateBytes(encoded);
 		}
 	}
 
@@ -576,10 +601,11 @@ final class ConstantPool {
 	}
 
 	/**
-	 * Creates a new constant pool index for string constant data encoded in UTF-8.
+	 * 为 UTF-16 字符串创建或复用常量池项，实际写出采用 Modified UTF-8。
 	 *
-	 * @param utf8String  string constant data encoded in UTF-8
-	 * @return  constant pool index
+	 * @param utf8String 原始字符串，不是已编码的字节数据。
+	 * @return 常量池索引。
+	 * @throws ConstantPoolOverflowException 编码字节数或常量池索引超过上限。
 	 */
 	protected short newConstantUtf8(String utf8String) {
 		ConstantUtf8 cu = utf8HashMap.get(utf8String);

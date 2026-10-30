@@ -8,8 +8,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -26,7 +24,7 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 /**
- * 收集已选 JAR 的 Java 资源，并在签名前补入 APK。
+ * 收集已选 JAR 的 Java 资源，供 APK 统一组装时写入。
  *
  * <p>服务注册按标准语法合并，普通资源冲突明确报错；不修改依赖 JAR，
  * 不负责 Android 资源链接、DEX 转换、原生库选择或签名。
@@ -38,8 +36,7 @@ final class JarResources {
 	private static final String SERVICES = "META-INF/services/";
 
 	// 使用路径排序，避免 JAR 内部条目顺序影响最终 APK。
-	private final Map<String, byte[]> resources = new TreeMap<String, byte[]>();
-	private final Map<String, File> owners = new TreeMap<String, File>();
+	private final Map<String, Resource> resources = new TreeMap<String, Resource>();
 
 	/**
 	 * 在 APK 组装前读取资源并检查冲突，保留调用方已经确定的 JAR 顺序。
@@ -85,73 +82,48 @@ final class JarResources {
 			} else if (values.size() > 1) {
 				data = mergeNotices(name, values);
 			}
-			resources.put(name, data);
-			owners.put(name, values.get(0).owner);
+			resources.put(name, new Resource(values.get(0).owner, data));
 		}
 	}
 
 	/**
-	 * 将资源写入独立的未签名 APK 副本，全部成功后替换组装结果。
+	 * 将 Java 资源写入正在组装的 APK，不创建另一份归档或接管输出流。
 	 *
-	 * @param apk 尚未对齐或签名的 APK。
-	 * @throws IOException APK 无法读取、资源冲突或写入失败。
+	 * <p>与已有条目同名时直接核对原始输入；相同内容保留已有条目的压缩方式，
+	 * 不同内容报告双方来源。归档关闭和失败保护统一由组装入口处理。
+	 *
+	 * @param output 正在组装的归档。
+	 * @param androidResources AAPT2 已链接的资源包。
+	 * @param entries 已写入条目及其原始输入，资源包内条目以资源包文件为来源。
+	 * @throws IOException 原始输入无法读取、资源冲突或写入失败。
 	 */
-	void addToApk(File apk) throws IOException {
+	void writeTo(ZipOutputStream output, File androidResources, Map<String, File> entries) throws IOException {
 		if (resources.isEmpty()) {
 			return;
 		}
 
-		Path target = apk.toPath().toAbsolutePath();
-		Path temporary = Files.createTempFile(target.getParent(), "jar-resources-", ".apk");
-		try {
-			Set<String> existing = new LinkedHashSet<String>();
-			try (ZipFile input = new ZipFile(apk);
-					ZipOutputStream output = new ZipOutputStream(Files.newOutputStream(temporary))) {
-				if (input.getComment() != null) {
-					output.setComment(input.getComment());
-				}
-
-				// 保留原条目的压缩方式，后续仍按既有流程执行 zipalign 和签名。
-				Enumeration<? extends ZipEntry> entries = input.entries();
-				while (entries.hasMoreElements()) {
-					ZipEntry entry = entries.nextElement();
-					String name = entry.getName();
-					existing.add(name);
-					ZipEntry copy = new ZipEntry(entry);
-					if (copy.getMethod() == ZipEntry.DEFLATED) {
-						copy.setCompressedSize(-1);
-					}
-					output.putNextEntry(copy);
-					try (InputStream stream = input.getInputStream(entry)) {
-						if (resources.containsKey(name)) {
-							if (!Arrays.equals(read(stream), resources.get(name))) {
-								throw new IOException("JAR 资源与 APK 条目冲突：" + name
-										+ "\n来源：" + apk + "\n来源：" + owners.get(name));
-							}
-							output.write(resources.get(name));
-						} else {
-							byte[] buffer = new byte[8192];
-							for (int count; (count = stream.read(buffer)) != -1;) {
-								output.write(buffer, 0, count);
-							}
+		// 只有发生同名碰撞的内容需要重新读取，比较的是原输入，不读取正在写入的 APK。
+		try (ZipFile linked = new ZipFile(androidResources)) {
+			for (Map.Entry<String, Resource> entry : resources.entrySet()) {
+				String name = entry.getKey();
+				Resource resource = entry.getValue();
+				File previous = entries.get(name);
+				if (previous != null) {
+					ZipEntry linkedEntry = previous.equals(androidResources) ? linked.getEntry(name) : null;
+					try (InputStream input = linkedEntry == null ? Files.newInputStream(previous.toPath())
+							: linked.getInputStream(linkedEntry)) {
+						if (!Arrays.equals(read(input), resource.data)) {
+							throw new IOException("JAR 资源与 APK 条目冲突：" + name
+								+ "\n来源：" + previous + "\n来源：" + resource.owner);
 						}
 					}
-					output.closeEntry();
+					continue;
 				}
 
-				// 新增 Java 资源不进入 Android 资源表，仍使用原 JAR 内的资源路径。
-				for (Map.Entry<String, byte[]> resource : resources.entrySet()) {
-					if (!existing.contains(resource.getKey())) {
-						output.putNextEntry(new ZipEntry(resource.getKey()));
-						output.write(resource.getValue());
-						output.closeEntry();
-					}
-				}
+				output.putNextEntry(new ZipEntry(name));
+				output.write(resource.data);
+				output.closeEntry();
 			}
-
-			Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
-		} finally {
-			Files.deleteIfExists(temporary);
 		}
 	}
 
