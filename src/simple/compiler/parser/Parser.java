@@ -61,6 +61,7 @@ import simple.compiler.expressions.synthetic.NewComponentExpression;
 import simple.compiler.scanner.Scanner;
 import simple.compiler.scanner.TokenKind;
 import simple.compiler.scopes.Scope;
+import simple.compiler.scopes.InitializerScope;
 import simple.compiler.statements.DoUntilStatement;
 import simple.compiler.statements.DoWhileStatement;
 import simple.compiler.statements.ExitStatement;
@@ -1352,8 +1353,53 @@ public final class Parser {
 		return new WhileStatement(stmtStartPosition, condition, loopStatements);
 	}
 
-	/*
-	 * 解析局部变量声明。
+	/**
+	 * 解析可选初值；有尺寸的数组分配与显式初值互斥。
+	 *
+	 * @param position  变量声明的源码起始位置，用于报告诊断
+	 * @param dimensions  数组维度列表；非数组变量为 {@code null}
+	 * @param local  是否限制初值对当前及后续局部变量的访问
+	 * @return  初始化表达式；未指定初值时为 {@code null}
+	 * @throws SyntaxError  初值表达式不符合语法时抛出
+	 */
+	private Expression parseVariableInitializer(long position, List<Expression> dimensions,
+			boolean local) {
+		if (scanner.getToken() != TokenKind.TOK_EQUAL) {
+			return null;
+		}
+		scanner.nextToken();
+		if (dimensions != null && dimensions.get(0) != null) {
+			compiler.error(position, "指定数组尺寸的变量不能同时指定初始化表达式。");
+		}
+		Scope savedScope = currentScope;
+		try {
+			if (local) {
+				currentScope = new InitializerScope(savedScope, position);
+			}
+			return parseExpression();
+		} finally {
+			currentScope = savedScope;
+		}
+	}
+
+	/**
+	 * 将初值表示为普通赋值表达式，复用值检查、类型转换及对象和数组的 JVM 写入规则。
+	 *
+	 * @param position  变量声明的源码起始位置
+	 * @param name  接收初值的变量名称
+	 * @param initializer  已解析的初始化表达式
+	 * @return  在当前作用域中向变量写入初值的赋值表达式
+	 */
+	private AssignmentExpression variableInitialization(long position, String name,
+			Expression initializer) {
+		return new AssignmentExpression(position,
+				new SimpleIdentifierExpression(position, currentScope, name), initializer);
+	}
+
+	/**
+	 * 解析局部变量声明，并将显式初值转换为紧接声明的普通赋值语句。
+	 *
+	 * @throws SyntaxError  变量声明不符合语法时抛出
 	 */
 	private void parseLocalVariableDeclaration() {
 		Preconditions.checkState(scanner.getToken() == TokenKind.TOK_DIM);
@@ -1376,6 +1422,8 @@ public final class Parser {
 				type = new ArrayType(type, dimensions.size());
 			}
 
+			Expression initializer = parseVariableInitializer(symStartPosition, dimensions, true);
+
 			// 声明局部变量。
 			LocalVariableSymbol local =
 					currentFunction.addLocalVariable(symStartPosition, name, type, currentScope);
@@ -1386,6 +1434,10 @@ public final class Parser {
 				currentStatementList.add(marker);
 				local.setBeginScope(marker);
 				local.setStaticArrayDimensions(dimensions);
+				if (initializer != null) {
+					currentStatementList.add(new ExpressionStatement(symStartPosition,
+							variableInitialization(symStartPosition, name, initializer)));
+				}
 			}
 
 			// 除非有逗号，否则我们就完成了。
@@ -1602,8 +1654,11 @@ public final class Parser {
 		acceptAndSkipEndOfStatement();
 	}
 
-	/*
-	 * Parses a field (data member) declaration for either a static (object) or an instance field.
+	/**
+	 * 解析静态或实例成员变量声明，登记类型、数组维度及可选初值。
+	 *
+	 * @param isStatic  是否声明静态成员变量
+	 * @throws SyntaxError  成员变量声明不符合语法时抛出
 	 */
 	private void parseFieldDeclaration(boolean isStatic) {
 		Preconditions.checkState(scanner.getToken() == TokenKind.TOK_DIM);
@@ -1626,6 +1681,8 @@ public final class Parser {
 				type = new ArrayType(type, dimensions.size());
 			}
 
+			Expression initializer = parseVariableInitializer(symStartPosition, dimensions, false);
+
 			// Add a new field member to the current class
 			DataMemberSymbol field = isStatic ?
 					new ObjectDataMemberSymbol(symStartPosition, currentObjectSymbol, name, type) :
@@ -1634,6 +1691,9 @@ public final class Parser {
 				compiler.error(symStartPosition, Error.errSymbolRedefinition, name);
 			}
 			field.setStaticArrayDimensions(dimensions);
+			if (initializer != null) {
+				field.setInitializer(variableInitialization(symStartPosition, name, initializer));
+			}
 
 			// Unless there is a comma, we are done.
 			if (scanner.getToken() != TokenKind.TOK_COMMA) {

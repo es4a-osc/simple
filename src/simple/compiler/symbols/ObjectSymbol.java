@@ -68,6 +68,9 @@ public class ObjectSymbol extends Symbol
 	// 默认构造函数
 	private ConstructorSymbol constructor;
 
+	// 仅用于初值的解析及临时槽分配，不登记为用户可见的函数。
+	private ObjectFunctionSymbol classInitializer;
+
 	// 由对象定义的数据成员列表
 	private List<DataMemberSymbol> dataMembers;
 
@@ -188,6 +191,8 @@ public class ObjectSymbol extends Symbol
 	public void markAsCompiled() {
 		// 这只是需要生成默认构造函数
 		constructor = new ConstructorSymbol(this);
+		classInitializer = new ObjectFunctionSymbol(Scanner.NO_POSITION, this, "<clinit>");
+		classInitializer.setIsCompiled();
 	}
 
 	/**
@@ -591,6 +596,7 @@ public class ObjectSymbol extends Symbol
 		// 解析构造函数（如果对象有一个）
 		if (constructor != null) {
 			constructor.resolve(compiler, null);
+			classInitializer.resolve(compiler, null);
 		}
 
 		// 不要忘记再次删除别名符号 （它们是在此对象本地定义的，必须徘徊并被其他对象拾取）
@@ -627,6 +633,15 @@ public class ObjectSymbol extends Symbol
 		Scope globalScope = compiler.getGlobalNamespaceSymbol().getScope();
 		for (AliasExpression alias : aliases) {
 			globalScope.enterSymbol(alias.getAliasSymbol());
+		}
+
+		// 所有声明已解析；初值在独立阶段处理，避免字段互相引用时递归解析初值。
+		// 静态和实例上下文分别分配临时槽，并沿用普通赋值的本对象访问检查。
+		if (constructor != null) {
+			for (DataMemberSymbol dataMember : dataMembers) {
+				dataMember.resolveInitializer(compiler,
+						dataMember instanceof InstanceDataMemberSymbol ? constructor : classInitializer);
+			}
 		}
 
 		// 解析函数体

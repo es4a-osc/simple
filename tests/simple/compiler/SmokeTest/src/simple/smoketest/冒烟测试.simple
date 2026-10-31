@@ -25,6 +25,7 @@
 	' 验证百分号求模运算符 xhwsd@qq.com 2026-9-4
 	测试集合.加入(创建 simple.smoketest.expressions.取模表达式测试)
 	测试集合.加入(创建 simple.smoketest.expressions.创建表达式测试)
+	测试集合.加入(创建 simple.smoketest.expressions.变量初始化测试)
 	测试集合.加入(创建 simple.smoketest.expressions.或表达式测试)
 	测试集合.加入(创建 simple.smoketest.expressions.类型判断表达式测试)
 	测试集合.加入(创建 simple.smoketest.expressions.异或表达式测试)

@@ -28,6 +28,7 @@ def resolverRoot = new File(simpleRoot, 'gradle/resolver')
 def resolverFiles = ['settings.gradle', 'build.gradle', 'gradle.properties']
 def manifestNames = ['SimpleCompiler.json', 'SimpleAndroidRuntime.json']
 def iconsRoot = new File(simpleRoot, 'icons')
+def examplesRoot = new File(simpleRoot, 'examples')
 layout.buildDirectory = outputRoot
 
 repositories {
@@ -88,6 +89,12 @@ def validateTools = tasks.register('validateTools') {
 		}
 		if (!iconsRoot.isDirectory() || fileTree(iconsRoot) { include '*.svg' }.isEmpty()) {
 			throw new GradleException("缺少交付图标：${iconsRoot}")
+		}
+		if (!examplesRoot.isDirectory() || fileTree(examplesRoot) {
+			include '**/project.properties'
+			exclude '**/build/**'
+		}.isEmpty()) {
+			throw new GradleException("缺少交付示例：${examplesRoot}")
 		}
 	}
 }
@@ -150,6 +157,21 @@ def commonDistribution = tasks.register('commonDistribution', Sync) {
 	from(resolverRoot) {
 		include resolverFiles
 		into 'gradle'
+	}
+	// 分类可以继续细分；示例与对应的编译器、运行库进入同一轮分发。
+	from(examplesRoot) {
+		into 'examples'
+		// 只排除项目根下的构建目录，保留资源或资产中同名的目录。
+		exclude { entry ->
+			def directory = entry.file
+			while (directory != null && directory != examplesRoot) {
+				if (directory.name == 'build' && new File(directory.parentFile, 'project.properties').isFile()) {
+					return true
+				}
+				directory = directory.parentFile
+			}
+			return false
+		}
 	}
 }
 

@@ -571,7 +571,7 @@ public abstract class FunctionSymbol extends Symbol implements SymbolWithType {
 				// variables to appease the verifier (even if they later re-initialized).
 				if (compilationInformation.onErrorStatement != null) {
 					for (LocalVariableSymbol local : compilationInformation.locals) {
-						local.generateInitializer(m);
+						local.generateDefaultInitialization(m);
 					}
 				}
 

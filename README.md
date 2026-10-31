@@ -1,6 +1,6 @@
 # Simple
 
-基于谷歌 [Simple](https://code.google.com/archive/p/simple/) 进行中文化、功能扩展和 Android 兼容性改进，提供编译器与运行库源码、样例和测试。
+基于谷歌 [Simple](https://code.google.com/archive/p/simple/) 进行中文化、功能扩展和 Android 兼容性改进，提供编译器与运行库源码、样本、示例和测试。
 
 > 普通用户和扩展库开发者请下载[完整 SDK](https://dwz.wsd.cx/es4a-sdk)。
 
@@ -9,7 +9,9 @@
 
 - `src/`：编译器与 Android 运行库源码。
 - `SimpleCompiler.json`、`SimpleAndroidRuntime.json`、`icons/`：编译器与运行库清单及组件图标。
-- `samples/`、`tests/`：样例与测试。
+- `samples/`：语言样本。
+- `examples/`：按组件、对象、辅助、其它分类的可运行示例，随发布交付到 SDK；组件下再分可视组件、传感器组件、组件容器、非可视组件。
+- `tests/`：编译器与运行库测试。
 - `gradle/`、`scripts/`：构建配置和工具脚本；`gradle/resolver/` 为随编译器交付的依赖解析工程源码。
 
 
@@ -23,7 +25,7 @@
 
 默认增量构建并运行 JVM 测试，支持追加 Gradle 任务和参数，如 `clean build`、`test`、`--offline`。依赖自动准备到 `libs/`，无需提交 Git。
 
-分发产物位于 `dist/`，测试报告位于 `reports/tests/`。验证后执行以下命令，将已有产物发布到同级 `sdk/simple/`：
+分发产物位于 `dist/`，包含编译器、运行库及 `examples/` 示例，排除各示例的 `build/`；测试报告位于 `reports/tests/`。验证后执行以下命令，将已有产物发布到同级 `sdk/simple/`，同步更新示例并清理旧交付残留：
 
 ```powershell
 .\scripts\release.bat
@@ -46,6 +48,7 @@ flowchart TD
 
 ## 相关链接
 
+- [更新日志](CHANGELOG.md)
 - [使用与开发文档](https://gitee.com/es4a/sdk/blob/main/docs/README.md)
 - [开源仓库](https://gitee.com/es4a)
 - [留言反馈](https://dwz.wsd.cx/wsd-ly)

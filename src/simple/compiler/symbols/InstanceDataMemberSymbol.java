@@ -20,10 +20,8 @@ import simple.classfiles.ClassFile;
 import simple.classfiles.Field;
 import simple.classfiles.Method;
 import simple.compiler.RuntimeLoader;
-import simple.compiler.expressions.Expression;
 import simple.compiler.types.Type;
 
-import java.util.List;
 
 /**
  * Symbol used for instance data members.
@@ -65,9 +63,9 @@ public final class InstanceDataMemberSymbol extends DataMemberSymbol implements 
 	}
 
 	@Override
-	protected void generateInitializer(Method m, List<Expression> dimensions) {
+	protected void prepareInitializerWrite(Method m) {
+		// 只在确实写入默认值或分配数组时压入 this；显式初值走普通赋值 AST。
 		m.generateInstrAload((short) 0);
-		super.generateInitializer(m, dimensions);
 	}
 
 	@Override

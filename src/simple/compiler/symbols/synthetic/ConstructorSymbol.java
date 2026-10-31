@@ -43,6 +43,8 @@ public class ConstructorSymbol extends FunctionSymbol {
 	 */
 	public ConstructorSymbol(ObjectSymbol objectSymbol) {
 		super(Scanner.NO_POSITION, objectSymbol, "<init>");
+		// 成员初值中的调用可能需要临时局部槽；实例上下文必须为 this 保留槽 0。
+		setIsCompiled();
 	}
 
 	@Override

@@ -14098,7 +14098,7 @@
 					"functions": [
 						{
 							"name": "取事件组件",
-							"description": "取当前发生事件的对象。",
+							"description": "取当前发生事件的对象；应在事件处理过程的第一行调用并保存结果。",
 							"global": true,
 							"return": "组件"
 						},

@@ -27,9 +27,10 @@ import simple.compiler.types.Type;
 import java.util.List;
 
 /**
- * Symbol used for local variables.
+ * 局部变量符号，记录局部槽、作用域及传址参数的临时值。
  *
  * @author Herbert Czymontek
+ * @author 树先生 xhwsd@qq.com
  */
 public final class LocalVariableSymbol extends VariableSymbol {
 
@@ -125,7 +126,7 @@ public final class LocalVariableSymbol extends VariableSymbol {
 
 		// We will copy reference parameters into a local upon function entry and copy them back
 		// upon function exit.
-		if (isReferenceParameter) {
+		if (isReferenceParameter && deRefTemp == null) {
 			deRefTemp = currentFunction.addTempVariable(getType());
 		}
 	}
@@ -182,6 +183,17 @@ public final class LocalVariableSymbol extends VariableSymbol {
 		} else {
 			getType().generateDefaultInitializationValue(m);
 		}
+		generateWrite(m);
+	}
+
+	/**
+	 * 错误处理入口只写默认值以满足 JVM 验证；不执行数组尺寸或用户初值。
+	 * 用户表达式由声明处的普通赋值语句执行，保持分支、循环及异常范围不变。
+	 *
+	 * @param m  生成局部变量默认值写入代码的 JVM 方法
+	 */
+	public void generateDefaultInitialization(Method m) {
+		getType().generateDefaultInitializationValue(m);
 		generateWrite(m);
 	}
 
