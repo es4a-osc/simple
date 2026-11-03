@@ -157,6 +157,20 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	}
 
 	/**
+	 * 窗口焦点变化监听器。
+	 *
+	 * <p>接收当前 Activity 窗口获得或失去焦点的通知，与活动生命周期独立。
+	 */
+	public interface OnWindowFocusChangedListener {
+		/**
+		 * 响应活动窗口焦点变化。
+		 *
+		 * @param hasFocus 活动窗口获得焦点时为真，失去焦点时为假
+		 */
+		public void onWindowFocusChanged(boolean hasFocus);
+	}
+
+	/**
 	 * 配置更改监听器
 	 *
 	 * <p>用于将 Activity onConfigurationChanged() 方法分发给感兴趣的组件。
@@ -234,6 +248,8 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	private final List<OnSaveInstanceStateListener> onSaveInstanceStateListeners;
 	// 活动恢复实例状态监听器
 	private final List<OnRestoreInstanceStateListener> onRestoreInstanceStateListeners;
+	// 活动窗口焦点变化监听器
+	private final List<OnWindowFocusChangedListener> onWindowFocusChangedListeners;
 	// 配置更改监听器
 	private final List<OnConfigurationChangedListener> onConfigurationChangedListeners;
 	// 活动新意图监听器
@@ -287,6 +303,7 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 		onDestroyListeners = new CopyOnWriteArrayList<OnDestroyListener>();
 		onSaveInstanceStateListeners = new CopyOnWriteArrayList<OnSaveInstanceStateListener>();
 		onRestoreInstanceStateListeners = new CopyOnWriteArrayList<OnRestoreInstanceStateListener>();
+		onWindowFocusChangedListeners = new CopyOnWriteArrayList<OnWindowFocusChangedListener>();
 		onConfigurationChangedListeners = new CopyOnWriteArrayList<OnConfigurationChangedListener>();
 		onNewIntentListeners = new CopyOnWriteArrayList<OnNewIntentListener>();
 		onActivityResultListeners = new CopyOnWriteArrayList<OnActivityResultListener>();
@@ -419,13 +436,12 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 			return;
 		}
 
-		// 程序启动事件
+		// 应用启动事件
 		if (activeForm != null) {
-			// 返回启动此活动的意图。
+			// 返回启动此活动的意图
 			Intent intent = getIntent();
-			日志输出.输出信息(日志输出.MODULE_NAME_RTL, "MainActivity.onCreate 程序被启动；行为=" + intent.getAction());
-
-			activeForm.程序被启动(new 意图(intent));
+			日志输出.输出信息(日志输出.MODULE_NAME_RTL, "MainActivity.onCreate 应用被启动；行为=" + intent.getAction());
+			activeForm.应用被启动(new 意图(intent));
 		}
 	}
 
@@ -438,7 +454,7 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	protected void onRestart() {
 		super.onRestart();
 
-		日志输出.输出信息(日志输出.MODULE_NAME_RTL, "MainActivity.onRestart 程序被重启");
+		日志输出.输出信息(日志输出.MODULE_NAME_RTL, "MainActivity.onRestart 应用被重启");
 
 		// 分发事件
 		for (OnRestartListener onRestartListener : onRestartListeners) {
@@ -456,7 +472,7 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 		super.onResume();
 		inForeground = true;
 
-		日志输出.输出信息(日志输出.MODULE_NAME_RTL, "MainActivity.onResume 程序被恢复");
+		日志输出.输出信息(日志输出.MODULE_NAME_RTL, "MainActivity.onResume 应用被恢复");
 
 		// 分发事件
 		for (OnResumeListener onResumeListener : onResumeListeners) {
@@ -474,7 +490,7 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 		super.onPause();
 		inForeground = false;
 
-		日志输出.输出信息(日志输出.MODULE_NAME_RTL, "MainActivity.onPause 程序被暂停");
+		日志输出.输出信息(日志输出.MODULE_NAME_RTL, "MainActivity.onPause 应用被暂停");
 
 		// 分发事件
 		for (OnPauseListener onPauseListener : onPauseListeners) {
@@ -492,7 +508,7 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	protected void onStop() {
 		super.onStop();
 
-		日志输出.输出信息(日志输出.MODULE_NAME_RTL, "MainActivity.onStop 程序被停止");
+		日志输出.输出信息(日志输出.MODULE_NAME_RTL, "MainActivity.onStop 应用被停止");
 
 		// 分发事件
 		for (OnStopListener onStopListener : onStopListeners) {
@@ -509,7 +525,7 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	protected void onDestroy() {
 		inForeground = false;
 		try {
-			日志输出.info("MainActivity.onDestroy 程序被销毁");
+			日志输出.info("MainActivity.onDestroy 应用被销毁");
 			for (OnDestroyListener listener : onDestroyListeners) {
 				listener.onDestroy();
 			}
@@ -522,6 +538,7 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 			onDestroyListeners.clear();
 			onSaveInstanceStateListeners.clear();
 			onRestoreInstanceStateListeners.clear();
+			onWindowFocusChangedListeners.clear();
 			onConfigurationChangedListeners.clear();
 			onNewIntentListeners.clear();
 			onActivityResultListeners.clear();
@@ -591,6 +608,22 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	}
 
 	/**
+	 * 将活动窗口焦点变化分发给全部已注册监听器。
+	 *
+	 * <p>不筛选当前 Simple 窗口，也不将焦点变化视为活动恢复或暂停。
+	 *
+	 * @param hasFocus 活动窗口获得焦点时为真，失去焦点时为假
+	 */
+	@Override
+	public void onWindowFocusChanged(boolean hasFocus) {
+		super.onWindowFocusChanged(hasFocus);
+
+		for (OnWindowFocusChangedListener listener : onWindowFocusChangedListeners) {
+			listener.onWindowFocusChanged(hasFocus);
+		}
+	}
+
+	/**
 	 * 配置更改
 	 *
 	 * <p>在活动运行时设备配置更改时由系统调用。
@@ -616,14 +649,14 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 *
 	 * <p>如果应用已创建，再去启动将收到该事件
 	 *
-	 * @param intent 启动时传递给程序的意图
+	 * @param intent 启动时传递给应用的意图
 	 */
 	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
 		setIntent(intent);
 
-		日志输出.输出信息(日志输出.MODULE_NAME_RTL, "MainActivity.onNewIntent 程序被启动；行为=" + intent.getAction());
+		日志输出.输出信息(日志输出.MODULE_NAME_RTL, "MainActivity.onNewIntent 应用被启动；行为=" + intent.getAction());
 
 		// 分发事件
 		for (OnNewIntentListener onNewIntentListener : onNewIntentListeners) {
@@ -905,6 +938,24 @@ public final class MainActivity extends Activity implements ApplicationFunctions
 	 */
 	public void removeOnRestoreInstanceStateListener(OnRestoreInstanceStateListener listener) {
 		onRestoreInstanceStateListeners.remove(listener);
+	}
+
+	/**
+	 * 将给定的监听器添加到窗口焦点变化监听器列表。
+	 *
+	 * @param listener 要添加的监听器
+	 */
+	public void addOnWindowFocusChangedListener(OnWindowFocusChangedListener listener) {
+		onWindowFocusChangedListeners.add(listener);
+	}
+
+	/**
+	 * 从窗口焦点变化监听器列表中移除给定的监听器。
+	 *
+	 * @param listener 要移除的监听器
+	 */
+	public void removeOnWindowFocusChangedListener(OnWindowFocusChangedListener listener) {
+		onWindowFocusChangedListeners.remove(listener);
 	}
 
 	/**

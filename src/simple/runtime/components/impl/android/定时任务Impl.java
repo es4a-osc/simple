@@ -129,7 +129,7 @@ public final class 定时任务Impl extends 组件Impl implements 定时任务 {
 	/**
 	 * 设置或覆盖单次、重复应用启动任务，并保留原有主界面复用规则。
 	 *
-	 * <p>启动参数通过程序被启动事件传递，界面能否从后台显示仍由系统决定。</p>
+	 * <p>启动参数通过应用被启动事件传递，界面能否从后台显示仍由系统决定。</p>
 	 *
 	 * @param taskId 非负任务编号。
 	 * @param delayMillis 首次执行延迟，单位毫秒，不能为负；0 表示尽快执行。
@@ -143,7 +143,7 @@ public final class 定时任务Impl extends 组件Impl implements 定时任务 {
 			Intent intent = applicationIntent(taskId);
 			putParameters(intent, taskId, parameter);
 
-			// 复用已有主 Activity，由其分发程序被启动事件，避免重复窗口实例。
+			// 复用已有主 Activity，由其分发应用被启动事件，避免重复窗口实例。
 			PendingIntent operation = PendingIntent.getActivity(context, taskId, intent,
 				PendingIntent.FLAG_UPDATE_CURRENT | immutableFlag());
 			schedule(triggerTime, intervalMillis, operation);
@@ -275,7 +275,7 @@ public final class 定时任务Impl extends 组件Impl implements 定时任务 {
 	}
 
 	/**
-	 * 写入服务处理和程序被启动事件共同使用的参数。
+	 * 写入服务处理和应用被启动事件共同使用的参数。
 	 *
 	 * @param intent 目标意图。
 	 * @param taskId 任务编号。

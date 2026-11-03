@@ -16,7 +16,7 @@
 	广播接收器1.注销动作("simple.runtime.tests.DEVICE_BROADCAST")
 结束 事件
 
-事件 广播接收器测试.程序被停止()
+事件 广播接收器测试.应用被停止()
 	广播接收器1.注销动作("simple.runtime.tests.DEVICE_BROADCAST")
 结束 事件
 

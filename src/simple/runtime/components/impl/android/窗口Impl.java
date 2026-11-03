@@ -67,7 +67,7 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 		context.addOnResumeListener(new MainActivity.OnResumeListener() {
 			@Override
 			public void onResume() {
-				程序被恢复();
+				应用被恢复();
 			}
 		});
 
@@ -75,7 +75,7 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 		context.addOnStopListener(new MainActivity.OnStopListener() {
 			@Override
 			public void onStop() {
-				程序被停止();
+				应用被停止();
 			}
 		});
 
@@ -84,10 +84,22 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 			@Override
 			public void onDestroy() {
 				try {
-					程序被销毁();
+					应用被销毁();
 				} finally {
 					// 普通活动销毁不再杀进程，注销本窗口拥有的全部事件闭包。
 					EventDispatcher.unregisterEvent(窗口Impl.this);
+				}
+			}
+		});
+
+		// 焦点监听器
+		context.addOnWindowFocusChangedListener(new MainActivity.OnWindowFocusChangedListener() {
+			@Override
+			public void onWindowFocusChanged(boolean hasFocus) {
+				if (hasFocus) {
+					应用获得焦点();
+				} else {
+					应用失去焦点();
 				}
 			}
 		});
@@ -107,7 +119,7 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 		context.addOnNewIntentListener(new MainActivity.OnNewIntentListener() {
 			@Override
 			public void onNewIntent(Intent intent) {
-				程序被启动(new 意图(intent));
+				应用被启动(new 意图(intent));
 			}
 		});
 	}
@@ -115,23 +127,33 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 	/* 组件事件 */
 
 	@Override
-	public void 程序被启动(意图 intent) {
-		EventDispatcher.dispatchEvent(this, "程序被启动", intent);
+	public void 应用被启动(意图 intent) {
+		EventDispatcher.dispatchEvent(this, "应用被启动", intent);
 	}
 
 	@Override
-	public void 程序被恢复() {
-		EventDispatcher.dispatchEvent(this, "程序被恢复");
+	public void 应用被恢复() {
+		EventDispatcher.dispatchEvent(this, "应用被恢复");
 	}
 
 	@Override
-	public void 程序被停止() {
-		EventDispatcher.dispatchEvent(this, "程序被停止");
+	public void 应用被停止() {
+		EventDispatcher.dispatchEvent(this, "应用被停止");
 	}
 
 	@Override
-	public void 程序被销毁() {
-		EventDispatcher.dispatchEvent(this, "程序被销毁");
+	public void 应用被销毁() {
+		EventDispatcher.dispatchEvent(this, "应用被销毁");
+	}
+
+	@Override
+	public void 应用获得焦点() {
+		EventDispatcher.dispatchEvent(this, "应用获得焦点");
+	}
+
+	@Override
+	public void 应用失去焦点() {
+		EventDispatcher.dispatchEvent(this, "应用失去焦点");
 	}
 
 	@Override
@@ -305,6 +327,12 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 	}
 
 	/* 组件方法 */
+
+	@Override
+	public boolean 是否当前() {
+		MainActivity context = MainActivity.getContext();
+		return context != null && context.isActiveForm(this);
+	}
 
 	@Override
 	public void 投递消息(final Variant mark, final Variant param) {
