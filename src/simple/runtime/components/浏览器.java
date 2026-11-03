@@ -26,7 +26,7 @@ import simple.runtime.parameters.StringReferenceParameter;
 	// 联网加载网页；组件不提供定位授权或网页定位回调。
 	"android.permission.INTERNET"
 )
-public interface 网页浏览框 extends 可视组件 {
+public interface 浏览器 extends 可视组件 {
 	/**
 	 * 按平台默认策略使用网页缓存。
 	 *
@@ -149,7 +149,7 @@ public interface 网页浏览框 extends 可视组件 {
 	 *
 	 * @param url 网址。
 	 * @param message 警告信息。
-	 * @param handle 处理方式；可选值请参考{@link 网页浏览框#处理方式_忽略}。
+	 * @param handle 处理方式；可选值请参考{@link 浏览器#处理方式_忽略}。
 	 */
 	@SimpleEvent
 	void 弹出确认框(String url, String message, IntegerReferenceParameter handle);
@@ -160,7 +160,7 @@ public interface 网页浏览框 extends 可视组件 {
 	 * @param url 网址。
 	 * @param message 警告信息。
 	 * @param value 输入内容。
-	 * @param handle 处理方式；可选值请参考{@link 网页浏览框#处理方式_忽略}。
+	 * @param handle 处理方式；可选值请参考{@link 浏览器#处理方式_忽略}。
 	 */
 	@SimpleEvent
 	void 弹出输入框(String url, String message, StringReferenceParameter value, IntegerReferenceParameter handle);
@@ -276,7 +276,7 @@ public interface 网页浏览框 extends 可视组件 {
 	/**
 	 * 缓存模式属性获取方法。
 	 *
-	 * @return 返回当前网页浏览器的缓存模式，可选值请参考{@link 网页浏览框#缓存模式_默认}等常量。
+	 * @return 返回当前网页浏览器的缓存模式，可选值请参考{@link 浏览器#缓存模式_默认}等常量。
 	 */
 	@SimpleProperty
 	int 缓存模式();
@@ -285,7 +285,7 @@ public interface 网页浏览框 extends 可视组件 {
 	 * 缓存模式属性设置方法。
 	 *
 	 * @param mode 设置当前网页浏览器的缓存模式，
-	 * 可选值请参考{@link 网页浏览框#缓存模式_默认}等常量。
+	 * 可选值请参考{@link 浏览器#缓存模式_默认}等常量。
 	 */
 	@SimpleProperty(
 		type = SimpleProperty.PROPERTY_TYPE_INTEGER,
@@ -388,7 +388,7 @@ public interface 网页浏览框 extends 可视组件 {
 	 * <p>应在加载页面前注册，注册后的对象在下一次页面载入时对脚本生效。
 	 *
 	 * <p>JS中调用格式为{@code 接口对象名.call(param)}，
-	 * 将触发{@link 网页浏览框#接口调用(String, String)}事件。
+	 * 将触发{@link 浏览器#接口调用(String, String)}事件。
 	 *
 	 * @param name 非空接口对象名
 	 * @throws IllegalArgumentException 名称为空或只有空白

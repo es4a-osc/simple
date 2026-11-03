@@ -25,7 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import simple.runtime.android.MainActivity;
-import simple.runtime.components.网页浏览框;
+import simple.runtime.components.浏览器;
 import simple.runtime.components.组件容器;
 import simple.runtime.events.EventDispatcher;
 import simple.runtime.parameters.BooleanReferenceParameter;
@@ -37,7 +37,7 @@ import simple.runtime.parameters.StringReferenceParameter;
  *
  * @author 树先生 xhwsd@qq.com
  */
-public class 网页浏览框Impl extends 视图组件 implements 网页浏览框,
+public class 浏览器Impl extends 视图组件 implements 浏览器,
 		MainActivity.OnPauseListener, MainActivity.OnResumeListener, MainActivity.OnDestroyListener {
 
 	// createView() 在父类构造期间执行，这些字段不能用子类字段初始化器覆盖。
@@ -54,11 +54,11 @@ public class 网页浏览框Impl extends 视图组件 implements 网页浏览框
 	private JsResult activeDialog;
 
 	/**
-	 * 创建浏览框并订阅宿主生命周期；必须在主线程创建。
+	 * 创建浏览器并订阅宿主生命周期；必须在主线程创建。
 	 *
-	 * @param container 放置浏览框的组件容器
+	 * @param container 放置浏览器的组件容器
 	 */
-	public 网页浏览框Impl(组件容器 container) {
+	public 浏览器Impl(组件容器 container) {
 		super(container);
 		activity.addOnPauseListener(this);
 		activity.addOnResumeListener(this);
@@ -73,7 +73,7 @@ public class 网页浏览框Impl extends 视图组件 implements 网页浏览框
 		requireMainThread();
 		activity = MainActivity.getContext();
 		if (activity == null) {
-			throw new IllegalStateException("网页浏览框需要有效的主活动");
+			throw new IllegalStateException("浏览器需要有效的主活动");
 		}
 		handler = new Handler(Looper.getMainLooper());
 		interfaces = new LinkedHashMap<>();
@@ -437,7 +437,7 @@ public class 网页浏览框Impl extends 视图组件 implements 网页浏览框
 	public boolean 调用接口(final String script, boolean withResult) {
 		requireMainThread();
 		if (destroyed) {
-			lastError = "网页浏览框已销毁";
+			lastError = "浏览器已销毁";
 			return false;
 		}
 		String source = normalizeScript(script);
@@ -510,7 +510,7 @@ public class 网页浏览框Impl extends 视图组件 implements 网页浏览框
 	private WebView requireBrowser() {
 		requireMainThread();
 		if (destroyed) {
-			throw new IllegalStateException("网页浏览框已销毁");
+			throw new IllegalStateException("浏览器已销毁");
 		}
 		return browser;
 	}
@@ -522,7 +522,7 @@ public class 网页浏览框Impl extends 视图组件 implements 网页浏览框
 	 */
 	private static void requireMainThread() {
 		if (Looper.myLooper() != Looper.getMainLooper()) {
-			throw new IllegalStateException("网页浏览框必须在主线程操作");
+			throw new IllegalStateException("浏览器必须在主线程操作");
 		}
 	}
 
@@ -697,7 +697,7 @@ public class 网页浏览框Impl extends 视图组件 implements 网页浏览框
 				lastError = detail.didCrash() ? "网页渲染进程崩溃，组件已销毁" : "网页渲染进程退出，组件已销毁";
 				try {
 					// 先使原生操作失效，再报告终止事件；注销事件必须在通知完成之后。
-					EventDispatcher.dispatchEvent(网页浏览框Impl.this, "载入失败", ERROR_UNKNOWN, lastUrl);
+					EventDispatcher.dispatchEvent(浏览器Impl.this, "载入失败", ERROR_UNKNOWN, lastUrl);
 				} finally {
 					dispose(true);
 				}

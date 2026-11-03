@@ -10130,11 +10130,11 @@
 					]
 				},
 				{
-					"name": "网页浏览框",
+					"name": "浏览器",
 					"description": "承载网页与 JavaScript 交互，需要系统提供可用的 WebView。调用与事件在主线程执行，宿主销毁时自动释放。脚本接口可被页面及子框架访问，只注册到可信内容。",
 					"icon": "icons/world-www.svg",
 					"kind": "component",
-					"type": "simple.runtime.components.网页浏览框",
+					"type": "simple.runtime.components.浏览器",
 					"inherits": [
 						"simple.runtime.components.可视组件"
 					],
