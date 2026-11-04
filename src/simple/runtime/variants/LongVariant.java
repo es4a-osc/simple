@@ -16,6 +16,8 @@
 
 package simple.runtime.variants;
 
+import java.util.Calendar;
+
 import simple.runtime.helpers.ConvHelpers;
 import simple.runtime.helpers.ExprHelpers;
 
@@ -23,6 +25,7 @@ import simple.runtime.helpers.ExprHelpers;
  * Long variant implementation.
  *
  * @author Herbert Czymontek
+ * @author 树先生 xhwsd@qq.com
  */
 public final class LongVariant extends Variant {
 
@@ -40,9 +43,7 @@ public final class LongVariant extends Variant {
 	}
 
 	/**
-	 * 将长整数包装为对应的 Simple 变体。
-	 *
-	 * @param value 要包装的长整数。
+	 * Creates a new Long variant.
 	 */
 	private LongVariant(long value) {
 		super(VARIANT_LONG);
@@ -87,6 +88,12 @@ public final class LongVariant extends Variant {
 	@Override
 	public String getString() {
 		return Long.toString(value);
+	}
+
+	@Override
+	public Calendar getDate() {
+		// 将当前值作为 Unix 毫秒时间戳转换为日期时间。
+		return ConvHelpers.long2date(value);
 	}
 
 	@Override

@@ -23,6 +23,7 @@ import simple.compiler.Compiler;
  * Represents the primitive Variant type.
  *
  * @author Herbert Czymontek
+ * @author 树先生 xhwsd@qq.com
  */
 public final class VariantType extends Type {
 

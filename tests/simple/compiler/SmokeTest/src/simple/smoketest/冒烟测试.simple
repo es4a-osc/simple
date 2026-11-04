@@ -10,6 +10,8 @@
 	测试集合.加入(创建 simple.smoketest.conversions.短整数型转换测试)
 	测试集合.加入(创建 simple.smoketest.conversions.整数型转换测试)
 	测试集合.加入(创建 simple.smoketest.conversions.长整数型转换测试)
+	测试集合.加入(创建 simple.smoketest.conversions.文本型转换测试)
+	测试集合.加入(创建 simple.smoketest.conversions.日期时间型转换测试)
 
 	' 表达式测试。
 	测试集合.加入(创建 simple.smoketest.expressions.加法表达式测试)

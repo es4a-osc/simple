@@ -335,6 +335,11 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 	}
 
 	@Override
+	public void 投递消息(final Variant mark) {
+		投递消息(mark, null);
+	}
+
+	@Override
 	public void 投递消息(final Variant mark, final Variant param) {
 		// Activity.runOnUiThread
 		// https://developer.android.google.cn/reference/android/app/Activity.html#runOnUiThread(java.lang.Runnable)}
@@ -344,11 +349,6 @@ public abstract class 窗口Impl extends 面板Impl implements 窗口 {
 				反馈消息(mark, param);
 			}
 		});
-	}
-
-	@Override
-	public void 投递消息(final Variant mark) {
-		投递消息(mark, null);
 	}
 
 	/* 面板 */

@@ -20,20 +20,24 @@ import simple.compiler.CompilerSmokeTest;
 import simple.compiler.parser.ParserTest;
 import simple.compiler.scanner.ScannerTest;
 import simple.compiler.util.ResourceTest;
-
 import simple.runtime.ArraysTest;
+import simple.runtime.AssertionsTest;
+import simple.runtime.BigNumbersTest;
+import simple.runtime.ByteSequencesTest;
+import simple.runtime.CollectionTest;
 import simple.runtime.ConversionsTest;
 import simple.runtime.DatesTest;
-import simple.runtime.FilesPathTest;
 import simple.runtime.FilesTest;
+import simple.runtime.HashTableTest;
 import simple.runtime.MathTest;
-import simple.runtime.PixelsTest;
-import simple.runtime.OtherOperationsTest;
 import simple.runtime.ObjectOperationsTest;
 import simple.runtime.RadixConversionsTest;
-import simple.runtime.SequencesTest;
+import simple.runtime.RegexTest;
 import simple.runtime.StringsTest;
-import simple.runtime.TextFormattingTest;
+import simple.runtime.components.impl.android.util.BatterySnapshotTest;
+import simple.runtime.components.impl.android.util.DataTableModelTest;
+import simple.runtime.components.impl.android.util.PopupMenuModelTest;
+import simple.runtime.components.impl.android.util.RichTextRangesTest;
 
 import junit.framework.TestSuite;
 import junit.framework.Test;
@@ -69,18 +73,23 @@ public class AllTests {
 
 		// simple.runtime
 		suite.addTestSuite(ArraysTest.class);
+		suite.addTestSuite(AssertionsTest.class);
+		suite.addTestSuite(BigNumbersTest.class);
+		suite.addTestSuite(ByteSequencesTest.class);
+		suite.addTestSuite(CollectionTest.class);
+		suite.addTestSuite(BatterySnapshotTest.class);
+		suite.addTestSuite(DataTableModelTest.class);
+		suite.addTestSuite(PopupMenuModelTest.class);
+		suite.addTestSuite(RichTextRangesTest.class);
 		suite.addTestSuite(ConversionsTest.class);
-		suite.addTestSuite(RadixConversionsTest.class);
 		suite.addTestSuite(DatesTest.class);
 		suite.addTestSuite(FilesTest.class);
-		suite.addTestSuite(FilesPathTest.class);
+		suite.addTestSuite(HashTableTest.class);
 		suite.addTestSuite(MathTest.class);
-		suite.addTestSuite(PixelsTest.class);
-		suite.addTestSuite(OtherOperationsTest.class);
 		suite.addTestSuite(ObjectOperationsTest.class);
+		suite.addTestSuite(RadixConversionsTest.class);
+		suite.addTestSuite(RegexTest.class);
 		suite.addTestSuite(StringsTest.class);
-		suite.addTestSuite(TextFormattingTest.class);
-		suite.addTestSuite(SequencesTest.class);
 
 		return suite;
 	}

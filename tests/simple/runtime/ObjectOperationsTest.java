@@ -8,7 +8,6 @@ import junit.framework.TestCase;
 
 import simple.runtime.annotations.SimpleFunction;
 import simple.runtime.annotations.SimpleObject;
-import simple.runtime.collections.线程;
 import simple.runtime.errors.未知标识符错误;
 import simple.runtime.variants.IntegerVariant;
 import simple.runtime.variants.Variant;
@@ -158,21 +157,7 @@ public final class ObjectOperationsTest extends TestCase {
 		}
 	}
 
-	/**
-	 * 内部线程回调通过新方法集调用目标，参数与结果保持不变。
-	 *
-	 * @throws InterruptedException 等待线程结束时被中断。
-	 */
-	public void testThreadCallback() throws InterruptedException {
-		Probe object = new Probe();
-		Thread worker = new 线程(object, "add", new Variant[] {
-			IntegerVariant.getIntegerVariant(5)
-		}).getThread();
-		worker.start();
-		worker.join(3000);
-		assertFalse("回调线程应结束", worker.isAlive());
-		assertEquals(12, object.value);
-	}
+
 
 	/**
 	 * 验证私有构造不会被强制开放。

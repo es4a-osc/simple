@@ -18,10 +18,13 @@ package simple.runtime.variants;
 
 import java.util.Calendar;
 
+import simple.runtime.helpers.ConvHelpers;
+
 /**
  * Date variant implementation.
  *
  * @author Herbert Czymontek
+ * @author 树先生 xhwsd@qq.com
  */
 public final class DateVariant extends Variant {
 
@@ -39,13 +42,23 @@ public final class DateVariant extends Variant {
 	}
 
 	/**
-	 * 将日期时间对象包装为对应的 Simple 变体。
-	 *
-	 * @param value 要包装的日期时间对象。
+	 * Creates a new date variant.
 	 */
 	private DateVariant(Calendar value) {
 		super(VARIANT_DATE);
 		this.value = value;
+	}
+
+	@Override
+	public long getLong() {
+		// 取日期时间对应的 Unix 毫秒时间戳。
+		return ConvHelpers.date2long(value);
+	}
+
+	@Override
+	public String getString() {
+		// 取带三位毫秒和 Z 标记的 ISO 8601 UTC 日期时间文本。
+		return ConvHelpers.date2string(value);
 	}
 
 	@Override

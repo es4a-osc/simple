@@ -23,6 +23,7 @@ import simple.compiler.Compiler;
  * Represents the primitive String type.
  *
  * @author Herbert Czymontek
+ * @author 树先生 xhwsd@qq.com
  */
 public final class StringType extends Type {
 
@@ -65,6 +66,8 @@ public final class StringType extends Type {
 			case SINGLE:
 			case DOUBLE:
 			case STRING:
+			// 支持文本直转日期时间 xhwsd@qq.com 2026-11-4
+			case DATE:
 			case VARIANT:
 				return true;
 		}
@@ -120,6 +123,12 @@ public final class StringType extends Type {
 				break;
 
 			case STRING:
+				break;
+
+			// 支持文本直转日期时间 xhwsd@qq.com 2026-11-4
+			case DATE:
+				m.generateInstrInvokestatic(CONVERSION_HELPERS_INTERNAL_NAME, "string2date",
+						"(Ljava/lang/String;)Ljava/util/Calendar;");
 				break;
 
 			case VARIANT:

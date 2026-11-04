@@ -17,8 +17,14 @@
 package simple.runtime.helpers;
 
 import java.lang.reflect.Array;
+import java.text.ParsePosition;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.Locale;
+import java.util.TimeZone;
 
 import simple.runtime.errors.转换错误;
 import simple.runtime.variants.ArrayVariant;
@@ -39,6 +45,7 @@ import simple.runtime.variants.Variant;
  * Helper methods for doing runtime value conversions from one type to another.
  *
  * @author Herbert Czymontek
+ * @author 树先生 xhwsd@qq.com
  */
 public final class ConvHelpers {
 
@@ -176,6 +183,20 @@ public final class ConvHelpers {
 	}
 
 	/**
+	 * 将 Unix 毫秒时间戳转换为 UTC 公历日期时间。
+	 *
+	 * @param l 自 1970-01-01T00:00:00Z 起经过的毫秒数，支持负值。
+	 * @return UTC 时区的日期时间。
+	 */
+	public static Calendar long2date(long l) {
+		GregorianCalendar date = new GregorianCalendar(TimeZone.getTimeZone("UTC"), Locale.ROOT);
+		// ISO 日期统一使用公历，避免 1582 年历法切换影响文本往返。
+		date.setGregorianChange(new Date(Long.MIN_VALUE));
+		date.setTimeInMillis(l);
+		return date;
+	}
+
+	/**
 	 * Converts a Single value to a Boolean value.
 	 *
 	 * @param f  Single value
@@ -233,6 +254,38 @@ public final class ConvHelpers {
 	 */
 	public static short double2short(double d) {
 		return (short) (((long) d << 48) >> 48);
+	}
+
+	/**
+	 * 将日期时间转换为 Unix 毫秒时间戳。
+	 *
+	 * @param date 日期时间。
+	 * @return 自 1970-01-01T00:00:00Z 起经过的毫秒数，不受显示时区影响。
+	 * @throws 转换错误 日期时间为空。
+	 */
+	public static long date2long(Calendar date) {
+		if (date == null) {
+			throw new 转换错误();
+		}
+		return date.getTimeInMillis();
+	}
+
+	/**
+	 * 将日期时间转换为带三位毫秒和 Z 标记的 ISO 8601 UTC 文本。
+	 *
+	 * @param date 日期时间，不修改输入的时间戳和时区。
+	 * @return yyyy-MM-dd'T'HH:mm:ss.SSS'Z' 格式的文本，年份范围为公元 0001 至 9999 年。
+	 * @throws 转换错误 日期时间为空或 UTC 年份超出文本格式范围。
+	 */
+	public static String date2string(Calendar date) {
+		Calendar utc = long2date(date2long(date));
+		if (utc.get(Calendar.ERA) != GregorianCalendar.AD || utc.get(Calendar.YEAR) > 9999) {
+			throw new 转换错误();
+		}
+
+		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ROOT);
+		format.setCalendar(utc);
+		return format.format(utc.getTime());
 	}
 
 	/**
@@ -319,6 +372,55 @@ public final class ConvHelpers {
 		} catch (NumberFormatException nfe) {
 			throw new 转换错误();
 		}
+	}
+
+	/**
+	 * 将 ISO 8601 日期或日期时间文本转换为 UTC 日期时间。
+	 *
+	 * @param s yyyy-MM-dd 或 yyyy-MM-dd'T'HH:mm:ss 文本，日期时间可附一至三位小数秒及 Z 或 ±HH:mm 偏移。
+	 * @return UTC 日期时间，纯日期补零点，未指定时区时按 UTC 解释。
+	 * @throws 转换错误 文本为空、格式不符或日期时间无效。
+	 */
+	public static Calendar string2date(String s) {
+		if (s == null) {
+			throw new 转换错误();
+		}
+
+		String text = s;
+
+		// 小数秒按十进制补足毫秒，避免解析器把 .1 当作 1 毫秒。
+		int fractionStart = text.indexOf('.');
+		if (fractionStart >= 0) {
+			int fractionEnd = fractionStart + 1;
+			while (fractionEnd < text.length() && Character.isDigit(text.charAt(fractionEnd))) {
+				fractionEnd++;
+			}
+			int digits = fractionEnd - fractionStart - 1;
+			if (digits < 1 || digits > 3) {
+				throw new 转换错误();
+			}
+			text = text.substring(0, fractionEnd) + "000".substring(digits) + text.substring(fractionEnd);
+		}
+
+		// 每次独立创建格式器，按固定 UTC 历法解析，拒绝无效日期和尾随内容。
+		String[] patterns = {
+			"yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+			"yyyy-MM-dd'T'HH:mm:ssXXX",
+			"yyyy-MM-dd'T'HH:mm:ss.SSS",
+			"yyyy-MM-dd'T'HH:mm:ss",
+			"yyyy-MM-dd"
+		};
+		for (String pattern : patterns) {
+			SimpleDateFormat format = new SimpleDateFormat(pattern, Locale.ROOT);
+			format.setCalendar(long2date(0));
+			format.setLenient(false);
+			ParsePosition position = new ParsePosition(0);
+			Date date = format.parse(text, position);
+			if (date != null && position.getIndex() == text.length()) {
+				return long2date(date.getTime());
+			}
+		}
+		throw new 转换错误();
 	}
 
 	/* 自定义扩展 */

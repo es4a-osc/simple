@@ -112,7 +112,7 @@ public final class HTTP请求 {
 	}
 
 	/**
-	 * 打开一个请求地址。
+	 * 打开 HTTP 或 HTTPS 请求地址；无效地址或不支持的协议返回假。
 	 *
 	 * @param requestUrl 请求地址
 	 * @return 成功返回{@code true}，否则返回{@code false}
@@ -122,11 +122,15 @@ public final class HTTP请求 {
 		// 重置
 		postData = null;
 		responseData = null;
+		connection = null;
 
 		// 创建HTTP连接
 		try {
 			// URL对象
 			URL url = new URL(requestUrl);
+			if (!"http".equalsIgnoreCase(url.getProtocol()) && !"https".equalsIgnoreCase(url.getProtocol())) {
+				throw new MalformedURLException("请求地址仅支持 HTTP 和 HTTPS");
+			}
 
 			// 使用URL打开一个链接，注意这里还未建立连接
 			connection = (HttpURLConnection) url.openConnection(proxy);
@@ -467,7 +471,10 @@ public final class HTTP请求 {
 
 		try {
 			// 将输入流读出字节集
-			InputStream is = connection.getResponseCode() == HttpURLConnection.HTTP_OK ? connection.getInputStream() : connection.getErrorStream();
+			// 201 等成功状态同样携带正常正文；仅错误状态使用错误响应流。
+			int status = connection.getResponseCode();
+			InputStream is = status >= HttpURLConnection.HTTP_BAD_REQUEST
+				? connection.getErrorStream() : connection.getInputStream();
 			if (is != null) {
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();
 				byte[] buffer = new byte[1024];

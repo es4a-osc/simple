@@ -30,9 +30,15 @@ import junit.framework.TestCase;
  * Tests for {@link 数值运算}.
  *
  * @author Herbert Czymontek
+ * @author 树先生 xhwsd@qq.com
  */
 public class MathTest extends TestCase {
 
+	/**
+	 * 创建指定名称的运行库用例。
+	 *
+	 * @param testName 用例名称
+	 */
 	public MathTest(String testName) {
 		super(testName);
 	}
@@ -509,5 +515,27 @@ public class MathTest extends TestCase {
 		assertEquals(java.lang.Math.tan(数值运算.PI / 2), 数值运算.求正切(数值运算.PI / 2));
 		assertEquals(java.lang.Math.tan(3 * (数值运算.PI / 4)), 数值运算.求正切(3 * (数值运算.PI / 4)));
 		assertEquals(java.lang.Math.tan(数值运算.PI), 数值运算.求正切(数值运算.PI));
+	}
+
+	/**
+	 * 双参数反正切按纵坐标、横坐标顺序区分四象限，并保留带符号零。
+	 */
+	public void testAtan2QuadrantsAndSpecialValues() {
+		// 固定几何角度检查参数顺序与各象限。
+		assertEquals(Math.PI / 4, 数值运算.求反正切2(1, 1), 1e-15);
+		assertEquals(3 * Math.PI / 4, 数值运算.求反正切2(1, -1), 1e-15);
+		assertEquals(-3 * Math.PI / 4, 数值运算.求反正切2(-1, -1), 1e-15);
+		assertEquals(-Math.PI / 4, 数值运算.求反正切2(-1, 1), 1e-15);
+
+		// 轴线、有符号零、无穷大和 NaN 均属于公开浮点输入范围。
+		assertEquals(Math.PI / 2, 数值运算.求反正切2(1, 0), 0.0);
+		assertEquals(-Math.PI / 2, 数值运算.求反正切2(-1, 0), 0.0);
+		assertEquals(Double.doubleToRawLongBits(-0.0),
+			Double.doubleToRawLongBits(数值运算.求反正切2(-0.0, 1)));
+		assertEquals(Math.PI, 数值运算.求反正切2(0.0, -1), 0.0);
+		assertEquals(-Math.PI, 数值运算.求反正切2(-0.0, -1), 0.0);
+		assertEquals(Math.PI / 4, 数值运算.求反正切2(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY), 0.0);
+		assertTrue(Double.isNaN(数值运算.求反正切2(Double.NaN, 1)));
+		assertTrue(Double.isNaN(数值运算.求反正切2(1, Double.NaN)));
 	}
 }

@@ -31,6 +31,7 @@ import simple.runtime.annotations.SimpleObject;
  * 实现各种与日期和时间相关的运行时功能。
  *
  * @author Herbert Czymontek
+ * @author 树先生 xhwsd@qq.com
  */
 @SimpleObject
 public final class 日期时间操作 {

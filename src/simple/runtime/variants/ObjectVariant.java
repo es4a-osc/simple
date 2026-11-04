@@ -19,6 +19,7 @@ package simple.runtime.variants;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Calendar;
 
 import simple.runtime.errors.未知标识符错误;
 import simple.runtime.helpers.ConvHelpers;
@@ -105,6 +106,11 @@ public final class ObjectVariant extends Variant {
 			return variant.getString();
 		}
 
+		// 补变体转到Calendar xhwsd@qq.com 2026-11-4
+		if (type == Calendar.class) {
+			return variant.getDate();
+		}
+		
 		// 解决调用函数或方法参数类型为变体型的异常 xhwsd@qq.com 2021-6-8
 		if (type == Variant.class) {
 			// 向上转型
@@ -149,6 +155,12 @@ public final class ObjectVariant extends Variant {
 		if (type == String.class) {
 			return StringVariant.getStringVariant((String)object);
 		}
+
+		// 补Calendar转到变体 xhwsd@qq.com 2026-11-4
+		if (type == Calendar.class) {
+			return DateVariant.getDateVariant((Calendar)object);
+		}
+
 		if (type.isArray()) {
 			return ArrayVariant.getArrayVariant(object);
 		}

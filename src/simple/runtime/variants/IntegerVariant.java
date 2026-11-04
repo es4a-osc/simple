@@ -40,9 +40,7 @@ public final class IntegerVariant extends Variant {
 	}
 
 	/**
-	 * 将整数包装为对应的 Simple 变体。
-	 *
-	 * @param value 要包装的整数。
+	 * Creates a new Integer variant.
 	 */
 	private IntegerVariant(int value) {
 		super(VARIANT_INTEGER);

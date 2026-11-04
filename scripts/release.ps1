@@ -77,7 +77,8 @@ try {
 		if (Test-Path -LiteralPath $directory) {
 			$items = @((Get-Item -LiteralPath $directory -Force)) +
 				@(Get-ChildItem -LiteralPath $directory -Recurse -Force)
-			if (@($items | Where-Object { $_.Attributes -band [IO.FileAttributes]::ReparsePoint }).Count) {
+			# 云同步标记也使用 ReparsePoint；仅拒绝实际的文件系统链接。
+			if (@($items | Where-Object { $_.LinkType }).Count) {
 				throw "示例交付目录不能包含路径链接：$directory"
 			}
 		}

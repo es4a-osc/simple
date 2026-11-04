@@ -23,6 +23,7 @@ import simple.compiler.Compiler;
  * Represents the primitive Long type.
  *
  * @author Herbert Czymontek
+ * @author 树先生 xhwsd@qq.com
  */
 public final class LongType extends IntegerNumberType {
 
@@ -59,6 +60,12 @@ public final class LongType extends IntegerNumberType {
 	@Override
 	public boolean isWideType() {
 		return true;
+	}
+
+	@Override
+	public boolean canConvertTo(Type toType) {
+		// 支持长整数直转日期时间 xhwsd@qq.com 2026-11-4
+		return toType.getKind() == TypeKind.DATE || super.canConvertTo(toType);
 	}
 
 	@Override
@@ -104,6 +111,12 @@ public final class LongType extends IntegerNumberType {
 
 			case STRING:
 				generateToString(m);
+				break;
+
+			// 支持长整数直转日期时间 xhwsd@qq.com 2026-11-4
+			case DATE:
+				m.generateInstrInvokestatic(CONVERSION_HELPERS_INTERNAL_NAME, "long2date",
+						"(J)Ljava/util/Calendar;");
 				break;
 
 			case VARIANT:

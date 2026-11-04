@@ -39,9 +39,7 @@ public final class ArrayVariant extends Variant {
 	}
 
 	/**
-	 * 将数组包装为对应的 Simple 变体。
-	 *
-	 * @param value 要包装的数组。
+	 * Creates a new array variant.
 	 */
 	private ArrayVariant(Object value) {
 		super(VARIANT_ARRAY);
@@ -64,10 +62,7 @@ public final class ArrayVariant extends Variant {
 	}
 
 	/**
-	 * 沿多维索引取得最后一维所在数组。
-	 *
-	 * @param indices 各维度的数组索引
-	 * @return 最后一维所在的数组对象
+	 * Returns the array object for the last dimension.
 	 */
 	private Object getArrayOfLastDimension(Variant[] indices) {
 		int lastDimension = indices.length - 1;

@@ -16,6 +16,8 @@
 
 package simple.runtime.variants;
 
+import java.util.Calendar;
+
 import simple.runtime.helpers.ConvHelpers;
 import simple.runtime.helpers.ExprHelpers;
 
@@ -23,6 +25,7 @@ import simple.runtime.helpers.ExprHelpers;
  * String variant implementation.
  *
  * @author Herbert Czymontek
+ * @author 树先生 xhwsd@qq.com
  */
 public final class StringVariant extends Variant {
 
@@ -40,9 +43,7 @@ public final class StringVariant extends Variant {
 	}
 
 	/**
-	 * 将文本包装为对应的 Simple 变体。
-	 *
-	 * @param value 要包装的文本。
+	 * Creates a new String variant.
 	 */
 	private StringVariant(String value) {
 		super(VARIANT_STRING);
@@ -87,6 +88,12 @@ public final class StringVariant extends Variant {
 	@Override
 	public String getString() {
 		return value;
+	}
+
+	@Override
+	public Calendar getDate() {
+		// 将当前 ISO 8601 日期或日期时间文本转换为 UTC 日期时间。
+		return ConvHelpers.string2date(value);
 	}
 
 	@Override

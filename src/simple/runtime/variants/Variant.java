@@ -36,7 +36,6 @@ public abstract class Variant {
 	 * 判断 Variant 是否符合目标类型的检查接口。
 	 */
 	private static interface TypeOfChecker {
-
 		/**
 		 * 判断 Variant 是否满足当前类型检查条件。
 		 *
@@ -49,7 +48,6 @@ public abstract class Variant {
 	static Map<String, TypeOfChecker> TYPEOF_CHECKER_MAP = new HashMap<String, TypeOfChecker>();
 	static {
 		TYPEOF_CHECKER_MAP.put("java/lang/String", new TypeOfChecker() {
-
 			@Override
 			public boolean check(Variant v) {
 				try {
@@ -62,7 +60,6 @@ public abstract class Variant {
 		});
 
 		TYPEOF_CHECKER_MAP.put("java/util/Calendar", new TypeOfChecker() {
-
 			@Override
 			public boolean check(Variant v) {
 				try {
@@ -75,7 +72,6 @@ public abstract class Variant {
 		});
 
 		TYPEOF_CHECKER_MAP.put("Z", new TypeOfChecker() {
-
 			@Override
 			public boolean check(Variant v) {
 				try {
@@ -88,7 +84,6 @@ public abstract class Variant {
 		});
 
 		TYPEOF_CHECKER_MAP.put("B", new TypeOfChecker() {
-
 			@Override
 			public boolean check(Variant v) {
 				try {
@@ -101,7 +96,6 @@ public abstract class Variant {
 		});
 
 		TYPEOF_CHECKER_MAP.put("S", new TypeOfChecker() {
-
 			@Override
 			public boolean check(Variant v) {
 				try {
@@ -114,7 +108,6 @@ public abstract class Variant {
 		});
 
 		TYPEOF_CHECKER_MAP.put("I", new TypeOfChecker() {
-
 			@Override
 			public boolean check(Variant v) {
 				try {
@@ -127,7 +120,6 @@ public abstract class Variant {
 		});
 
 		TYPEOF_CHECKER_MAP.put("J", new TypeOfChecker() {
-
 			@Override
 			public boolean check(Variant v) {
 				try {
@@ -140,7 +132,6 @@ public abstract class Variant {
 		});
 
 		TYPEOF_CHECKER_MAP.put("F", new TypeOfChecker() {
-
 			@Override
 			public boolean check(Variant v) {
 				try {
@@ -153,7 +144,6 @@ public abstract class Variant {
 		});
 
 		TYPEOF_CHECKER_MAP.put("D", new TypeOfChecker() {
-
 			@Override
 			public boolean check(Variant v) {
 				try {
@@ -473,8 +463,9 @@ public abstract class Variant {
 		}
 
 		try {
-			return Class.forName(internalName.replace('/', '.')).isInstance(kind == VARIANT_ARRAY ?
-					getArray() : getObject());
+			return Class.forName(internalName.replace('/', '.')).isInstance(
+				kind == VARIANT_ARRAY ? getArray() : getObject()
+			);
 		} catch (转换错误 e) {
 			return false;
 		} catch (ClassNotFoundException e) {

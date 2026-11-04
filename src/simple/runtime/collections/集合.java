@@ -23,6 +23,7 @@ import simple.runtime.errors.索引超出界限错误;
 import simple.runtime.variants.Variant;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * 集合是一组有序的项目。与所有成员必须具有相同数据类型的数组不同，集合不具有该限制。
@@ -203,6 +204,6 @@ public final class 集合 {
 	 */
 	@SimpleFunction
 	public void 打乱() {
-		java.util.Collections.shuffle(list);
+		Collections.shuffle(list);
 	}
 }

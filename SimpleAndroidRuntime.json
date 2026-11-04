@@ -11441,7 +11441,7 @@
 						},
 						{
 							"name": "打开",
-							"description": "打开一个请求地址。",
+							"description": "打开 HTTP 或 HTTPS 请求地址；无效地址或不支持的协议返回假。",
 							"params": [
 								{
 									"name": "网址",

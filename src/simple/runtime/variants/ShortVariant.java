@@ -40,9 +40,7 @@ public final class ShortVariant extends Variant {
 	}
 
 	/**
-	 * 将短整数包装为对应的 Simple 变体。
-	 *
-	 * @param value 要包装的短整数。
+	 * Creates a new Short variant.
 	 */
 	private ShortVariant(short value) {
 		super(VARIANT_SHORT);

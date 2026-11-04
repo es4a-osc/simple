@@ -23,6 +23,7 @@ import simple.compiler.Compiler;
  * Represents the Date type.
  *
  * @author Herbert Czymontek
+ * @author 树先生 xhwsd@qq.com
  */
 public final class DateType extends Type {
 
@@ -57,7 +58,9 @@ public final class DateType extends Type {
 
 	@Override
 	public boolean canConvertTo(Type toType) {
-		return toType.isVariantType();
+		// 支持日期时间直转长整数和文本 xhwsd@qq.com 2026-11-4
+		return toType.getKind() == TypeKind.LONG || toType.getKind() == TypeKind.STRING
+				|| toType.isVariantType();
 	}
 
 	@Override
@@ -74,6 +77,17 @@ public final class DateType extends Type {
 				break;
 				// COV_NF_END
 
+			// 支持日期时间直转长整数 xhwsd@qq.com 2026-11-4
+			case LONG:
+				m.generateInstrInvokestatic(CONVERSION_HELPERS_INTERNAL_NAME, "date2long",
+						"(" + DATE_SIGNATURE + ")J");
+				break;
+
+			// 支持日期时间直转文本 xhwsd@qq.com 2026-11-4
+			case STRING:
+				generateToString(m);
+				break;
+
 			case VARIANT:
 				m.generateInstrInvokestatic(DATE_VARIANT_INTERNAL_NAME,
 						"getDateVariant",
@@ -81,6 +95,14 @@ public final class DateType extends Type {
 				break;
 		}
 	}
+
+	@Override
+	public void generateToString(Method m) {
+		// 日期文本统一使用运行库的 ISO 8601 UTC 格式 xhwsd@qq.com 2026-11-4
+		m.generateInstrInvokestatic(CONVERSION_HELPERS_INTERNAL_NAME, "date2string",
+				"(" + DATE_SIGNATURE + ")Ljava/lang/String;");
+	}
+
 	@Override
 	public void generateLoadLocal(Method m, short varIndex) {
 		m.generateInstrAload(varIndex);

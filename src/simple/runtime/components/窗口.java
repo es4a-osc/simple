@@ -260,7 +260,7 @@ public interface 窗口 extends 可视组件, 组件容器 {
 	 * @param mark 参数
 	 */
 	@SimpleFunction
-	void 投递消息(Variant mark, Variant param);
+	void 投递消息(Variant mark);
 
 	/**
 	 * 将消息投递给窗口，可在线程下调用。
@@ -271,7 +271,7 @@ public interface 窗口 extends 可视组件, 组件容器 {
 	 * @param mark 参数
 	 */
 	@SimpleFunction
-	void 投递消息(Variant mark);
+	void 投递消息(Variant mark, Variant param);
 
 	/* 覆盖属性默认值 */
 

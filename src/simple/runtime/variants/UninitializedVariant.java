@@ -35,7 +35,7 @@ public final class UninitializedVariant extends Variant {
 	}
 
 	/**
-	 * 创建表示尚未初始化状态的变体。
+	 * Creates a new uninitialized variant.
 	 */
 	private UninitializedVariant() {
 		super(VARIANT_UNINITIALIZED);

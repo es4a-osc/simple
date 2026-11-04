@@ -160,7 +160,7 @@ public final class 文件操作 {
 	 */
 	@SimpleFunction
 	public static boolean 路径是否存在(String name) {
-		return new File(rootDirectory, name).exists();
+		return resolveFile(name).exists();
 	}
 
 	/**
@@ -395,7 +395,7 @@ public final class 文件操作 {
 	public static void 重命名文件(String oldname, String newname) {
 
 		File oldfile = getExistingFile(oldname);
-		File newfile = new File(rootDirectory, newname);
+		File newfile = resolveFile(newname);
 
 		if (!oldfile.equals(newfile)) {
 			if (newfile.exists()) {
@@ -769,7 +769,7 @@ public final class 文件操作 {
 	 */
 	@SimpleFunction
 	public static int 打开文件(String name) {
-		File file = new File(rootDirectory, name);
+		File file = resolveFile(name);
 		if (!file.exists()) {
 			try {
 				file.createNewFile();
@@ -1152,7 +1152,7 @@ public final class 文件操作 {
 	 * @return 已存在的文件对象
 	 */
 	private static File getExistingFile(String name) {
-		File file = new File(rootDirectory, name);
+		File file = resolveFile(name);
 		if (!file.exists()) {
 			throw new 文件未存在错误(name);
 		}
@@ -1167,7 +1167,7 @@ public final class 文件操作 {
 	 * @return 尚未存在的目标文件对象
 	 */
 	private static File getNonExistingFile(String name) {
-		File file = new File(rootDirectory, name);
+		File file = resolveFile(name);
 		if (file.exists()) {
 			throw new 文件已存在错误(name);
 		}
@@ -1239,6 +1239,16 @@ public final class 文件操作 {
 			throw new IllegalArgumentException("请提供非空文件系统路径，暂不支持 content URI");
 		}
 
+		return resolveFile(path);
+	}
+
+	/**
+	 * 统一解析文件路径，绝对路径不再次拼接应用私有目录。
+	 *
+	 * @param path 文件路径；旧接口的空文本和空引用约定保持原样
+	 * @return 对应的文件对象
+	 */
+	private static File resolveFile(String path) {
 		File file = new File(path);
 		return file.isAbsolute() ? file : new File(rootDirectory, path);
 	}

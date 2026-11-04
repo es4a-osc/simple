@@ -40,9 +40,7 @@ public final class SingleVariant extends Variant {
 	}
 
 	/**
-	 * 将单精度小数包装为对应的 Simple 变体。
-	 *
-	 * @param value 要包装的单精度小数。
+	 * Creates a new Single variant.
 	 */
 	private SingleVariant(float value) {
 		super(VARIANT_SINGLE);
